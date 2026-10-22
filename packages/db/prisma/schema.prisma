@@ -1,0 +1,142 @@
+// GymApps v1 schema. Source of truth: docs/data-model.md.
+// Phase 1 scope: users, sessions, entitlements, muscles, equipment.
+// email uses TEXT (lowercased in app) instead of CITEXT so Prisma migrate stays drift-free.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MuscleGroup {
+  chest
+  back
+  shoulders
+  biceps
+  triceps
+  forearms
+  quads
+  hamstrings
+  glutes
+  calves
+  abs
+  obliques
+  adductors
+  abductors
+  lats
+  traps
+  lower_back
+  full_body
+  cardio
+  core
+
+  @@map("muscle_group")
+}
+
+enum EquipmentType {
+  bodyweight
+  dumbbell
+  barbell
+  machine
+  cable
+  bench
+  pullup_bar
+  kettlebell
+  resistance_band
+  cardio_machine
+  smith_machine
+  dip_bar
+  landmine
+  sled
+  other
+
+  @@map("equipment_type")
+}
+
+model User {
+  id                    String    @id
+  email                 String    @unique
+  emailVerifiedAt       DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  passwordHash          String    @map("password_hash")
+  displayName           String?   @map("display_name")
+  locale                String    @default("id")
+  unitSystem            String    @default("metric") @map("unit_system")
+  timezone              String    @default("Asia/Jakarta")
+  theme                 String    @default("system")
+  role                  String    @default("user")
+  status                String    @default("active")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at") @db.Timestamptz(3)
+  emailOptIn            Boolean   @default(false) @map("email_opt_in")
+  lastLoginAt           DateTime? @map("last_login_at") @db.Timestamptz(3)
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sessions     Session[]
+  entitlements Entitlement[]
+
+  @@index([status], map: "idx_users_status")
+  @@index([deletedAt], map: "idx_users_deleted_at")
+  @@map("users")
+}
+
+model Session {
+  id               String    @id
+  sessionTokenHash String    @unique @map("session_token_hash")
+  userId           String    @map("user_id")
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(3)
+  lastUsedAt       DateTime  @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  userAgent        String?   @map("user_agent")
+  ipAddress        String?   @map("ip_address")
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt(sort: Desc)], map: "idx_sessions_user")
+  @@map("sessions")
+}
+
+model Entitlement {
+  id                   String    @id
+  userId               String    @map("user_id")
+  plan                 String    @default("free")
+  features             Json      @default("{}")
+  aiChatDailyLimit     Int       @default(30) @map("ai_chat_daily_limit")
+  aiGenerateDailyLimit Int       @default(5) @map("ai_generate_daily_limit")
+  validFrom            DateTime  @default(now()) @map("valid_from") @db.Timestamptz(3)
+  validUntil           DateTime? @map("valid_until") @db.Timestamptz(3)
+  source               String    @default("system")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, plan], map: "uniq_entitlement_user_plan")
+  @@map("entitlements")
+}
+
+model Muscle {
+  code      MuscleGroup @id
+  nameId    String      @map("name_id")
+  nameEn    String      @map("name_en")
+  icon      String?
+  sortOrder Int         @default(0) @map("sort_order")
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("muscles")
+}
+
+model Equipment {
+  code      EquipmentType @id
+  nameId    String        @map("name_id")
+  nameEn    String        @map("name_en")
+  icon      String?
+  sortOrder Int           @default(0) @map("sort_order")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("equipment")
+}

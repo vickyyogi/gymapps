@@ -1,0 +1,61 @@
+{
+  "app": {
+    "name": "GymApps",
+    "tagline": "Catat latihan, lihat progres."
+  },
+  "nav": {
+    "dashboard": "Dasbor",
+    "logout": "Keluar"
+  },
+  "theme": {
+    "label": "Tema",
+    "light": "Terang",
+    "dark": "Gelap",
+    "system": "Sistem"
+  },
+  "locale": {
+    "label": "Bahasa",
+    "id": "Indonesia",
+    "en": "English"
+  },
+  "common": {
+    "email": "Email",
+    "password": "Kata sandi",
+    "displayName": "Nama tampilan",
+    "loading": "Memuat…"
+  },
+  "auth": {
+    "login": {
+      "title": "Masuk",
+      "description": "Lanjutkan latihan dari tempat terakhir.",
+      "submit": "Masuk",
+      "submitting": "Memproses…",
+      "noAccount": "Belum punya akun?",
+      "register": "Daftar"
+    },
+    "register": {
+      "title": "Buat akun",
+      "description": "Satu akun untuk semua catatan latihan.",
+      "submit": "Daftar",
+      "submitting": "Memproses…",
+      "hasAccount": "Sudah punya akun?",
+      "login": "Masuk"
+    }
+  },
+  "dashboard": {
+    "title": "Dasbor",
+    "greeting": "Halo, {name}",
+    "emptyTitle": "Belum ada latihan",
+    "emptyDescription": "Sesi pertama Anda akan muncul di sini setelah dicatat.",
+    "emptyAction": "Mulai latihan"
+  },
+  "errors": {
+    "EMAIL_TAKEN": "Email sudah terdaftar.",
+    "INVALID_CREDENTIALS": "Email atau kata sandi salah.",
+    "RATE_LIMITED": "Terlalu banyak percobaan. Coba lagi nanti.",
+    "VALIDATION_ERROR": "Periksa kembali isian Anda.",
+    "UNAUTHENTICATED": "Sesi berakhir. Silakan masuk lagi.",
+    "INTERNAL_ERROR": "Terjadi kesalahan. Coba lagi.",
+    "NETWORK_ERROR": "Tidak dapat terhubung ke server."
+  }
+}

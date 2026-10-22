@@ -1,0 +1,2254 @@
+openapi: 3.1.0
+
+info:
+  title: GymApps API
+  version: 1.0.0
+  description: |
+    REST API untuk GymApps — workout tracker + AI coach.
+
+    **Konvensi**
+    - Base path: `/api/v1`
+    - Auth: `Cookie: gymapps_session=<token>` (web) atau `Authorization: Bearer <jwt>` (mobile)
+    - Sesi web persisten 30 hari (sliding). Saat app dibuka, panggil `GET /auth/me` untuk restore sesi; 401 = belum login.
+    - Pagination: cursor-based (`?cursor=&limit=`), respons `{ "data": [...], "nextCursor": string|null }`
+    - Error: `{ "error": { "code": "...", "message": "...", "details": [...] } }`
+    - Semua timestamp ISO-8601 UTC. Semua satuan metric (kg, km, cm).
+    - Mutation kritikal menerima header `Idempotency-Key` (UUID).
+    - Rate limit: header `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`; 429 saat habis.
+
+  contact:
+    name: GymApps Engineering
+    email: engineering@gymapps.id
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.gymapps.id/api/v1
+    description: Production
+  - url: https://staging.api.gymapps.id/api/v1
+    description: Staging
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Registrasi, login, sesi persisten (email + password)
+  - name: Profile
+    description: Profil latihan & preferensi
+  - name: Exercises
+    description: Katalog gerakan
+  - name: Programs
+    description: Program latihan manual
+  - name: Workouts
+    description: Sesi latihan & set
+  - name: Analytics
+    description: Statistik & progres
+  - name: AI
+    description: Program generator, coach chat, rekomendasi
+  - name: BodyMetrics
+    description: Berat & ukuran tubuh
+  - name: Notes
+    description: Catatan user
+  - name: Templates
+    description: Workout template
+  - name: Exports
+    description: Export data & laporan PDF
+  - name: Meta
+    description: Health check & data master
+
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+
+paths:
+  # ──────────────────────────────── AUTH ────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Daftar dengan email + password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, locale]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8, maxLength: 128 }
+                display_name: { type: string, maxLength: 80 }
+                locale: { type: string, enum: [id, en], default: id }
+                accept_terms: { type: boolean, const: true }
+      responses:
+        '201':
+          description: Akun dibuat, email verifikasi dikirim, dan sesi login langsung dibuat (cookie 30 hari)
+          headers:
+            Set-Cookie:
+              description: '`gymapps_session=<token>; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`'
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login dengan email + password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Berhasil. Cookie sesi persisten 30 hari dikirim; sesi bertahan walau browser/aplikasi ditutup
+          headers:
+            Set-Cookie:
+              description: '`gymapps_session=<token>; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`'
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Hapus session saat ini dan cookie
+      responses:
+        '204':
+          description: Berhasil
+          headers:
+            Set-Cookie:
+              description: '`gymapps_session=; Path=/; Max-Age=0`'
+              schema: { type: string }
+
+  /auth/logout-all:
+    post:
+      tags: [Auth]
+      summary: Revoke semua session user
+      responses:
+        '204': { description: Berhasil }
+
+  /auth/token:
+    post:
+      tags: [Auth]
+      summary: Tukar refresh token menjadi access token JWT (untuk mobile)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: Token baru
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      access_token: { type: string }
+                      refresh_token: { type: string }
+                      token_type: { type: string, example: Bearer }
+                      expires_in: { type: integer, example: 900 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: User saat ini + profil + entitlement (dipakai untuk restore sesi saat app dibuka)
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CurrentUser' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/password/forgot:
+    post:
+      tags: [Auth]
+      summary: Kirim email reset password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '202': { description: Selalu 202 (respons generik demi keamanan) }
+
+  /auth/password/reset:
+    post:
+      tags: [Auth]
+      summary: Set password baru dengan token reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        '204': { description: Berhasil }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  # ──────────────────────────────── PROFILE ────────────────────────────────
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Ambil profil latihan
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/UserProfile' }
+    patch:
+      tags: [Profile]
+      summary: Update profil latihan & preferensi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserProfileInput' }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/UserProfile' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /profile/onboarding:
+    post:
+      tags: [Profile]
+      summary: Tandai onboarding selesai
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                step: { type: string, enum: [goal, level, schedule, equipment, preferences, done] }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      onboarding_completed: { type: boolean }
+                      step: { type: string }
+
+  # ──────────────────────────────── EXERCISES ────────────────────────────────
+  /exercises:
+    get:
+      tags: [Exercises]
+      summary: Cari & filter katalog exercise
+      parameters:
+        - { name: q, in: query, schema: { type: string }, description: 'Pencarian nama (ID/EN/alias)' }
+        - { name: muscle, in: query, schema: { $ref: '#/components/schemas/Muscle' } }
+        - { name: equipment, in: query, schema: { type: array, items: { $ref: '#/components/schemas/Equipment' } }, style: form, explode: false }
+        - { name: difficulty, in: query, schema: { type: string, enum: [beginner, intermediate, advanced] } }
+        - { name: available_only, in: query, schema: { type: boolean }, description: 'Hanya exercise yang cocok dengan equipment user' }
+        - { name: include_custom, in: query, schema: { type: boolean, default: true } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 30 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Exercise' }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [Exercises]
+      summary: Buat exercise custom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name_id, primary_muscle, equipment]
+              properties:
+                name_id: { type: string, maxLength: 120 }
+                name_en: { type: string, maxLength: 120 }
+                description_id: { type: string, maxLength: 500 }
+                instructions_id: { type: array, items: { type: string }, maxItems: 6 }
+                primary_muscle: { $ref: '#/components/schemas/Muscle' }
+                secondary_muscles: { type: array, items: { $ref: '#/components/schemas/Muscle' } }
+                equipment: { type: array, items: { $ref: '#/components/schemas/Equipment' } }
+                difficulty: { type: string, enum: [beginner, intermediate, advanced] }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Exercise' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /exercises/{exerciseId}:
+    parameters:
+      - { name: exerciseId, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Exercises]
+      summary: Detail exercise + statistik user
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ExerciseDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Exercises]
+      summary: Edit exercise (custom milik sendiri, atau global bila admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name_id: { type: string, maxLength: 120 }
+                name_en: { type: string, maxLength: 120 }
+                description_id: { type: string, maxLength: 500 }
+                instructions_id: { type: array, items: { type: string }, maxItems: 6 }
+                instructions_en: { type: array, items: { type: string }, maxItems: 6 }
+                primary_muscle: { $ref: '#/components/schemas/Muscle' }
+                secondary_muscles: { type: array, items: { $ref: '#/components/schemas/Muscle' } }
+                equipment: { type: array, items: { $ref: '#/components/schemas/Equipment' } }
+                difficulty: { type: string, enum: [beginner, intermediate, advanced] }
+                status: { type: string, enum: [draft, published, archived] }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Exercise' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Exercises]
+      summary: Archive exercise custom (ditolak bila sudah dipakai)
+      responses:
+        '204': { description: Berhasil }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /muscles:
+    get:
+      tags: [Meta]
+      summary: Master data otot
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code: { $ref: '#/components/schemas/Muscle' }
+                        name_id: { type: string }
+                        name_en: { type: string }
+                        group: { type: string, enum: [push, pull, legs, core, full_body, cardio] }
+
+  /equipment:
+    get:
+      tags: [Meta]
+      summary: Master data equipment
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code: { $ref: '#/components/schemas/Equipment' }
+                        name_id: { type: string }
+                        name_en: { type: string }
+
+  # ──────────────────────────────── PROGRAMS ────────────────────────────────
+  /programs:
+    get:
+      tags: [Programs]
+      summary: Daftar program user
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [draft, active, completed, archived] } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Program' }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [Programs]
+      summary: Buat program manual
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProgramInput' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Program' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /programs/{programId}:
+    parameters:
+      - { name: programId, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Programs]
+      summary: Detail program lengkap (weeks → sessions → exercises)
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ProgramDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Programs]
+      summary: Update program
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProgramInput' }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Program' }
+    delete:
+      tags: [Programs]
+      summary: Archive program
+      responses:
+        '204': { description: Berhasil }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /programs/{programId}/activate:
+    parameters:
+      - { name: programId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Programs]
+      summary: Aktifkan program (program aktif lain di-arsipkan)
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Program' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /programs/{programId}/duplicate:
+    parameters:
+      - { name: programId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Programs]
+      summary: Duplikat program
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Program' }
+
+  /programs/{programId}/sessions:
+    parameters:
+      - { name: programId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Programs]
+      summary: Tambah sesi ke program
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [week_number, day_index, name]
+              properties:
+                week_number: { type: integer, minimum: 1, maximum: 52 }
+                day_index: { type: integer, minimum: 1, maximum: 7 }
+                name: { type: string, maxLength: 60 }
+                notes: { type: string, maxLength: 1000 }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ProgramSession' }
+
+  /programs/{programId}/sessions/{sessionId}/exercises:
+    parameters:
+      - { name: programId, in: path, required: true, schema: { type: string } }
+      - { name: sessionId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Programs]
+      summary: Tambah exercise ke sesi program
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProgramExerciseInput' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ProgramExercise' }
+
+  /programs/{programId}/sessions/{sessionId}/exercises/{programExerciseId}:
+    parameters:
+      - { name: programId, in: path, required: true, schema: { type: string } }
+      - { name: sessionId, in: path, required: true, schema: { type: string } }
+      - { name: programExerciseId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [Programs]
+      summary: Update exercise di program
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProgramExerciseInput' }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ProgramExercise' }
+    delete:
+      tags: [Programs]
+      summary: Hapus exercise dari program
+      responses:
+        '204': { description: Berhasil }
+
+  # ──────────────────────────────── WORKOUTS ────────────────────────────────
+  /workouts:
+    get:
+      tags: [Workouts]
+      summary: Riwayat workout
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: program_id, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [active, finished, abandoned] } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Workout' }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [Workouts]
+      summary: Mulai sesi latihan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source]
+              properties:
+                source: { type: string, enum: [quick, program, template] }
+                program_session_id: { type: string }
+                template_id: { type: string }
+                title: { type: string, maxLength: 120 }
+                started_at: { type: string, format: date-time }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutDetail' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /workouts/active:
+    get:
+      tags: [Workouts]
+      summary: Sesi draft yang belum selesai
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Workout' }
+
+  /workouts/{workoutId}:
+    parameters:
+      - { name: workoutId, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Workouts]
+      summary: Detail sesi + exercise + set
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Workouts]
+      summary: Update sesi (judul, notes, status)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, maxLength: 120 }
+                notes: { type: string, maxLength: 5000 }
+                bodyweight_kg: { type: number, minimum: 0, maximum: 500 }
+                session_rpe: { type: number, minimum: 1, maximum: 10 }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutDetail' }
+    delete:
+      tags: [Workouts]
+      summary: Hapus sesi (soft delete)
+      responses:
+        '204': { description: Berhasil }
+
+  /workouts/{workoutId}/exercises:
+    parameters:
+      - { name: workoutId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Workouts]
+      summary: Tambah exercise ke sesi berjalan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [exercise_id]
+              properties:
+                exercise_id: { type: string }
+                notes: { type: string, maxLength: 1000 }
+                superset_group: { type: integer, minimum: 1, maximum: 9 }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutExercise' }
+
+  /workouts/{workoutId}/exercises/{workoutExerciseId}/sets:
+    parameters:
+      - { name: workoutId, in: path, required: true, schema: { type: string } }
+      - { name: workoutExerciseId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Workouts]
+      summary: Catat set
+      description: |
+        Menghitung `volume_kg`, `est_1rm_kg`, mendeteksi PR, dan memperbarui agregat sesi.
+        Mendukung header `Idempotency-Key` untuk mencegah duplikasi saat offline sync.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weight_kg: { type: number, minimum: 0, maximum: 1000 }
+                reps: { type: integer, minimum: 0, maximum: 500 }
+                rpe: { type: number, minimum: 0.5, maximum: 10 }
+                is_warmup: { type: boolean, default: false }
+                is_completed: { type: boolean, default: true }
+                duration_seconds: { type: integer, minimum: 0 }
+                distance_km: { type: number, minimum: 0 }
+                avg_heart_rate: { type: integer, minimum: 30, maximum: 230 }
+                calories: { type: integer, minimum: 0 }
+      responses:
+        '201':
+          description: Set tercatat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutSet' }
+                  meta:
+                    type: object
+                    properties:
+                      workout_total_volume_kg: { type: number }
+                      prs_created: { type: integer }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /workouts/{workoutId}/exercises/{workoutExerciseId}/sets/{setId}:
+    parameters:
+      - { name: workoutId, in: path, required: true, schema: { type: string } }
+      - { name: workoutExerciseId, in: path, required: true, schema: { type: string } }
+      - { name: setId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [Workouts]
+      summary: Ubah set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weight_kg: { type: number, minimum: 0, maximum: 1000 }
+                reps: { type: integer, minimum: 0, maximum: 500 }
+                rpe: { type: number, minimum: 0.5, maximum: 10 }
+                is_completed: { type: boolean }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutSet' }
+    delete:
+      tags: [Workouts]
+      summary: Hapus set
+      responses:
+        '204': { description: Berhasil }
+
+  /workouts/{workoutId}/finish:
+    parameters:
+      - { name: workoutId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Workouts]
+      summary: Selesaikan sesi
+      description: Menghitung durasi, memverifikasi PR, dan memicu evaluation rule engine.
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutDetail' }
+                  meta:
+                    type: object
+                    properties:
+                      prs_created: { type: integer }
+                      recommendations_created: { type: integer }
+
+  # ──────────────────────────────── ANALYTICS ────────────────────────────────
+  /analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: KPI dashboard
+      parameters:
+        - { name: range, in: query, schema: { type: string, enum: ['4w', '3m', '6m', '1y', 'all'], default: '4w' } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/AnalyticsSummary' }
+
+  /analytics/volume:
+    get:
+      tags: [Analytics]
+      summary: Trend volume mingguan
+      parameters:
+        - { name: range, in: query, schema: { type: string, enum: ['4w', '3m', '6m', '1y', 'all'], default: '3m' } }
+        - { name: exercise_id, in: query, schema: { type: string } }
+        - { name: muscle, in: query, schema: { $ref: '#/components/schemas/Muscle' } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      series:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            week_start: { type: string, format: date }
+                            volume_kg: { type: number }
+                            working_sets: { type: integer }
+                            workouts: { type: integer }
+                      insight:
+                        type: object
+                        properties:
+                          text: { type: string }
+                          delta_pct: { type: number }
+
+  /analytics/personal-records:
+    get:
+      tags: [Analytics]
+      summary: Daftar personal record
+      parameters:
+        - { name: exercise_id, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/PersonalRecord' }
+
+  /analytics/muscle-balance:
+    get:
+      tags: [Analytics]
+      summary: Volume & set per kelompok otot
+      parameters:
+        - { name: weeks, in: query, schema: { type: integer, default: 4 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      muscles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            muscle: { $ref: '#/components/schemas/Muscle' }
+                            volume_kg: { type: number }
+                            working_sets: { type: integer }
+                            share_pct: { type: number }
+
+  /analytics/adherence:
+    get:
+      tags: [Analytics]
+      summary: Adherence per minggu (planned vs done)
+      parameters:
+        - { name: weeks, in: query, schema: { type: integer, default: 12 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        week_start: { type: string, format: date }
+                        planned_sessions: { type: integer }
+                        completed_sessions: { type: integer }
+                        adherence: { type: number, minimum: 0, maximum: 1 }
+
+  /analytics/one-rm:
+    get:
+      tags: [Analytics]
+      summary: Kurva estimasi 1RM
+      parameters:
+        - { name: exercise_id, in: query, required: true, schema: { type: string } }
+        - { name: range, in: query, schema: { type: string, default: '3m' } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      points:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date: { type: string, format: date-time }
+                            est_1rm_kg: { type: number }
+                            formula: { type: string, enum: [epley, brzycki] }
+
+  /analytics/calendar:
+    get:
+      tags: [Analytics]
+      summary: Heatmap aktivitas
+      parameters:
+        - { name: weeks, in: query, schema: { type: integer, default: 12, maximum: 26 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      days:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date: { type: string, format: date }
+                            volume_kg: { type: number }
+                            intensity: { type: integer, minimum: 0, maximum: 4 }
+
+  # ──────────────────────────────── AI ────────────────────────────────
+  /ai/programs/generate:
+    post:
+      tags: [AI]
+      summary: Buat program dengan AI (async job)
+      description: |
+        Membuat job generate program. Program hasil **selalu** berstatus `draft` dan wajib
+        di-review/aktivasi user. Jika output AI gagal validasi 2×, sistem memakai generator
+        rule-based fallback.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProgramGenerateInput' }
+      responses:
+        '202':
+          description: Job dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      job_id: { type: string }
+                      status: { type: string, enum: [queued, running, succeeded, failed] }
+                      steps:
+                        type: array
+                        items: { type: string, enum: [analyzing_profile, drafting_program, validating, finalizing] }
+        '429':
+          description: Kuota harian habis
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /ai/jobs/{jobId}:
+    get:
+      tags: [AI]
+      summary: Status job AI
+      parameters:
+        - { name: jobId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      job_id: { type: string }
+                      status: { type: string, enum: [queued, running, succeeded, failed] }
+                      current_step: { type: string }
+                      progress_pct: { type: integer }
+                      result:
+                        type: object
+                        properties:
+                          program_id: { type: string }
+                          fallback_used: { type: boolean }
+                          repair_attempts: { type: integer }
+                      error: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /ai/programs/{programId}/regenerate:
+    parameters:
+      - { name: programId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [AI]
+      summary: Regenerate program dengan constraint baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProgramGenerateInput' }
+      responses:
+        '202':
+          description: Job dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      job_id: { type: string }
+                      status: { type: string }
+
+  /ai/recommendations:
+    get:
+      tags: [AI]
+      summary: Daftar rekomendasi proaktif
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [new, read, dismissed, acted] } }
+        - { name: limit, in: query, schema: { type: integer, default: 30 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Recommendation' }
+
+  /ai/recommendations/{recommendationId}:
+    parameters:
+      - { name: recommendationId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [AI]
+      summary: Update status rekomendasi (read/dismissed/acted)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [read, dismissed, acted] }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Recommendation' }
+
+  /ai/coach/threads:
+    get:
+      tags: [AI]
+      summary: Daftar thread chat
+      parameters:
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 30 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ChatThread' }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [AI]
+      summary: Buat thread chat baru
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, maxLength: 120 }
+                program_id: { type: string }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ChatThread' }
+
+  /ai/coach/threads/{threadId}/messages:
+    parameters:
+      - { name: threadId, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [AI]
+      summary: Riwayat pesan (cursor pagination, urutan kronologis)
+      parameters:
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ChatMessage' }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [AI]
+      summary: Kirim pesan ke coach (SSE stream)
+      description: |
+        Mengembalikan `text/event-stream` dengan event: `meta`, `delta`, `tool`, `done`, `error`.
+        Mendukung `Idempotency-Key` untuk mencegah pesan ganda saat retry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string, minLength: 1, maxLength: 4000 }
+                language: { type: string, enum: [id, en] }
+      responses:
+        '200':
+          description: Stream SSE
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                stream:
+                  value: |
+                    event: meta
+                    data: {"message_id":"msg_01HQ8Z...","thread_id":"thr_01HQ8Y..."}
+
+                    event: delta
+                    data: {"text":"Program kamu 4 hari"}
+
+                    event: tool
+                    data: {"name":"get_active_program","status":"done"}
+
+                    event: done
+                    data: {"input_tokens":812,"output_tokens":146,"cost_usd":0.0021}
+
+        '429':
+          description: Kuota habis
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /ai/coach/threads/{threadId}:
+    parameters:
+      - { name: threadId, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [AI]
+      summary: Hapus thread
+      responses:
+        '204': { description: Berhasil }
+
+  /ai/coach/messages/{messageId}/feedback:
+    parameters:
+      - { name: messageId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [AI]
+      summary: Berikan rating pada jawaban coach
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating: { type: integer, enum: [1, -1] }
+                comment: { type: string, maxLength: 1000 }
+      responses:
+        '204': { description: Berhasil }
+
+  # ──────────────────────────────── BODY METRICS ────────────────────────────────
+  /body-metrics:
+    get:
+      tags: [BodyMetrics]
+      summary: Riwayat body metrics
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/BodyMetric' }
+    post:
+      tags: [BodyMetrics]
+      summary: Tambah atau perbarui body metric (upsert per tanggal)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recorded_on]
+              properties:
+                recorded_on: { type: string, format: date }
+                weight_kg: { type: number, minimum: 20, maximum: 500 }
+                body_fat_pct: { type: number, minimum: 1, maximum: 70 }
+                chest_cm: { type: number }
+                waist_cm: { type: number }
+                hip_cm: { type: number }
+                arm_cm: { type: number }
+                thigh_cm: { type: number }
+                calf_cm: { type: number }
+                shoulder_cm: { type: number }
+                photo_urls: { type: array, items: { type: string }, maxItems: 3 }
+                notes: { type: string, maxLength: 1000 }
+      responses:
+        '201':
+          description: Tersimpan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/BodyMetric' }
+
+  /body-metrics/{bodyMetricId}:
+    parameters:
+      - { name: bodyMetricId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [BodyMetrics]
+      summary: Update body metric
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weight_kg: { type: number }
+                body_fat_pct: { type: number }
+                waist_cm: { type: number }
+                notes: { type: string, maxLength: 1000 }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/BodyMetric' }
+    delete:
+      tags: [BodyMetrics]
+      summary: Hapus body metric
+      responses:
+        '204': { description: Berhasil }
+
+  # ──────────────────────────────── NOTES ────────────────────────────────
+  /notes:
+    get:
+      tags: [Notes]
+      summary: Daftar catatan
+      parameters:
+        - { name: category, in: query, schema: { type: string, enum: [general, injury, nutrition, mood, equipment] } }
+        - { name: pinned_first, in: query, schema: { type: boolean, default: true } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 30 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Note' }
+                  nextCursor: { type: [string, 'null'] }
+    post:
+      tags: [Notes]
+      summary: Buat catatan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 5000 }
+                category: { type: string, enum: [general, injury, nutrition, mood, equipment], default: general }
+                workout_id: { type: string }
+                is_pinned: { type: boolean, default: false }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Note' }
+
+  /notes/{noteId}:
+    parameters:
+      - { name: noteId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [Notes]
+      summary: Update catatan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body: { type: string, maxLength: 5000 }
+                category: { type: string, enum: [general, injury, nutrition, mood, equipment] }
+                is_pinned: { type: boolean }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Note' }
+    delete:
+      tags: [Notes]
+      summary: Hapus catatan
+      responses:
+        '204': { description: Berhasil }
+
+  # ──────────────────────────────── TEMPLATES ────────────────────────────────
+  /templates:
+    get:
+      tags: [Templates]
+      summary: Daftar workout template
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/WorkoutTemplate' }
+    post:
+      tags: [Templates]
+      summary: Simpan workout template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 120 }
+                notes: { type: string, maxLength: 1000 }
+                exercises:
+                  type: array
+                  maxItems: 20
+                  items:
+                    type: object
+                    required: [exercise_id]
+                    properties:
+                      exercise_id: { type: string }
+                      target_sets: { type: integer, minimum: 1, maximum: 10 }
+                      target_reps_min: { type: integer }
+                      target_reps_max: { type: integer }
+                      rest_seconds: { type: integer }
+                      notes: { type: string }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutTemplate' }
+
+  /templates/{templateId}/start:
+    parameters:
+      - { name: templateId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Templates]
+      summary: Mulai workout dari template
+      responses:
+        '201':
+          description: Sesi dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/WorkoutDetail' }
+
+  /templates/{templateId}:
+    parameters:
+      - { name: templateId, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [Templates]
+      summary: Hapus template
+      responses:
+        '204': { description: Berhasil }
+
+  # ──────────────────────────────── EXPORTS ────────────────────────────────
+  /exports:
+    post:
+      tags: [Exports]
+      summary: Buat job export data (CSV/JSON)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [format]
+              properties:
+                format: { type: string, enum: [csv, json] }
+                entities:
+                  type: array
+                  items: { type: string, enum: [workouts, sets, programs, body_metrics, notes, exercises] }
+                from: { type: string, format: date }
+                to: { type: string, format: date }
+      responses:
+        '202':
+          description: Job dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      export_id: { type: string }
+                      status: { type: string, enum: [queued, running, ready, failed] }
+
+  /exports/{exportId}:
+    get:
+      tags: [Exports]
+      summary: Status export + link download (bertanda tangan, berlaku 7 hari)
+      parameters:
+        - { name: exportId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      export_id: { type: string }
+                      status: { type: string, enum: [queued, running, ready, failed] }
+                      download_url: { type: [string, 'null'] }
+                      expires_at: { type: [string, 'null'], format: date-time }
+                      file_size_bytes: { type: [integer, 'null'] }
+
+  /reports/monthly:
+    post:
+      tags: [Exports]
+      summary: Buat job laporan PDF bulanan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [month]
+              properties:
+                month: { type: string, pattern: '^\d{4}-\d{2}$', example: '2026-10' }
+                include_body_metrics: { type: boolean, default: true }
+      responses:
+        '202':
+          description: Job dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      report_id: { type: string }
+                      status: { type: string }
+
+  /reports/{reportId}:
+    get:
+      tags: [Exports]
+      summary: Status laporan PDF
+      parameters:
+        - { name: reportId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      report_id: { type: string }
+                      status: { type: string, enum: [queued, running, ready, failed] }
+                      download_url: { type: [string, 'null'] }
+                      expires_at: { type: [string, 'null'], format: date-time }
+
+  # ──────────────────────────────── META ────────────────────────────────
+  /summary/today:
+    get:
+      tags: [Meta]
+      summary: Ringkasan hari ini (untuk widget mobile)
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      active_program: { type: [string, 'null'] }
+                      today_session_name: { type: [string, 'null'] }
+                      today_session_exercises: { type: integer }
+                      week_workouts: { type: integer }
+                      week_volume_kg: { type: number }
+                      current_streak: { type: integer }
+                      unread_recommendations: { type: integer }
+
+  /health:
+    get:
+      tags: [Meta]
+      summary: Health check (public, tanpa data sensitif)
+      security: []
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  version: { type: string }
+                  timestamp: { type: string, format: date-time }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: gymapps_session
+      description: Token opaque; cookie `HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`, di-refresh otomatis selama aktif
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    ValidationError:
+      description: Validasi gagal
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Unauthorized:
+      description: Belum terautentikasi atau session kedaluwarsa
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: Tidak diizinkan
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: Resource tidak ditemukan
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Conflict:
+      description: Konflik state (mis. email sudah terdaftar, program aktif sudah ada)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    RateLimited:
+      description: Rate limit terlampaui
+      headers:
+        X-RateLimit-Limit: { schema: { type: integer } }
+        X-RateLimit-Remaining: { schema: { type: integer } }
+        X-RateLimit-Reset: { schema: { type: integer } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  path: { type: string }
+                  message: { type: string }
+            request_id: { type: string }
+
+    Muscle:
+      type: string
+      enum: [chest, back, shoulders, biceps, triceps, forearms, quads, hamstrings, glutes, calves, abs, obliques, adductors, abductors, lats, traps, lower_back, full_body, cardio, core]
+
+    Equipment:
+      type: string
+      enum: [bodyweight, dumbbell, barbell, machine, cable, bench, pullup_bar, kettlebell, resistance_band, cardio_machine, smith_machine, dip_bar, landmine, sled, other]
+
+    AuthSession:
+      type: object
+      description: Sesi persisten 30 hari (sliding). Cookie `gymapps_session` diset saat register/login.
+      properties:
+        data:
+          type: object
+          properties:
+            user: { $ref: '#/components/schemas/CurrentUser' }
+            expires_at: { type: string, format: date-time }
+
+    CurrentUser:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        display_name: { type: [string, 'null'] }
+        locale: { type: string, enum: [id, en] }
+        unit_system: { type: string, enum: [metric, imperial] }
+        timezone: { type: string }
+        theme: { type: string, enum: [light, dark, system] }
+        onboarding_completed: { type: boolean }
+        entitlement:
+          type: object
+          properties:
+            plan: { type: string, enum: [free, pro] }
+            ai_chat_daily_limit: { type: integer }
+            ai_generate_daily_limit: { type: integer }
+            features: { type: object, additionalProperties: true }
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/UserProfileInput'
+        - type: object
+          properties:
+            id: { type: string }
+            user_id: { type: string }
+            height_cm: { type: [number, 'null'] }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+
+    UserProfileInput:
+      type: object
+      properties:
+        goals:
+          type: array
+          maxItems: 2
+          items:
+            type: string
+            enum: [lose_weight, gain_muscle, strength, endurance, general_fitness, body_recomposition]
+        experience_level: { type: string, enum: [beginner, intermediate, advanced] }
+        days_per_week: { type: integer, minimum: 1, maximum: 7 }
+        session_minutes: { type: integer, minimum: 20, maximum: 120 }
+        equipment:
+          type: array
+          items: { $ref: '#/components/schemas/Equipment' }
+        injury_areas:
+          type: array
+          items:
+            type: string
+            enum: [knee, shoulder, lower_back, elbow, wrist, hip, ankle, neck, hamstring, groin, none]
+        injury_notes: { type: string, maxLength: 1000 }
+        preferred_split:
+          type: string
+          enum: [full_body, upper_lower, push_pull_legs, bro_split, custom]
+        preferred_cardio: { type: array, items: { type: string } }
+        height_cm: { type: number, minimum: 80, maximum: 250 }
+        birth_date: { type: string, format: date }
+        sex: { type: string, enum: [male, female, other, prefer_not_to_say] }
+        program_style_notes: { type: string, maxLength: 2000 }
+        display_name: { type: string, maxLength: 80 }
+        locale: { type: string, enum: [id, en] }
+        unit_system: { type: string, enum: [metric, imperial] }
+        timezone: { type: string }
+        theme: { type: string, enum: [light, dark, system] }
+
+    Exercise:
+      type: object
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        name_id: { type: string }
+        name_en: { type: string }
+        description_id: { type: [string, 'null'] }
+        description_en: { type: [string, 'null'] }
+        primary_muscle: { $ref: '#/components/schemas/Muscle' }
+        secondary_muscles:
+          type: array
+          items: { $ref: '#/components/schemas/Muscle' }
+        equipment:
+          type: array
+          items: { $ref: '#/components/schemas/Equipment' }
+        difficulty: { type: string, enum: [beginner, intermediate, advanced] }
+        movement_pattern: { type: [string, 'null'] }
+        impact_level: { type: string, enum: [low, medium, high] }
+        is_compound: { type: boolean }
+        status: { type: string, enum: [draft, published, archived] }
+        source: { type: string, enum: [seed, custom, admin] }
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              kind: { type: string, enum: [image, video] }
+              url: { type: string }
+              is_primary: { type: boolean }
+
+    ExerciseDetail:
+      allOf:
+        - $ref: '#/components/schemas/Exercise'
+        - type: object
+          properties:
+            instructions_id:
+              type: array
+              items: { type: string }
+            instructions_en:
+              type: array
+              items: { type: string }
+            stats:
+              type: object
+              properties:
+                last_performed_at: { type: [string, 'null'], format: date-time }
+                session_count: { type: integer }
+                best_set: { type: [string, 'null'] }
+                best_est_1rm_kg: { type: [number, 'null'] }
+                volume_30d_kg: { type: number }
+
+    Program:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        status: { type: string, enum: [draft, active, completed, archived] }
+        source: { type: string, enum: [manual, ai, template] }
+        goal: { type: [string, 'null'] }
+        split_type: { type: string }
+        duration_weeks: { type: integer }
+        days_per_week: { type: integer }
+        session_minutes: { type: integer }
+        start_date: { type: [string, 'null'], format: date }
+        progression_type: { type: string }
+        ai_generated: { type: boolean }
+        ai_rationale:
+          type: [object, 'null']
+          properties:
+            summary: { type: string }
+            assumptions: { type: array, items: { type: string } }
+            safety_notes: { type: array, items: { type: string } }
+        completion_pct: { type: number }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ProgramInput:
+      type: object
+      required: [name, split_type, duration_weeks, days_per_week]
+      properties:
+        name: { type: string, maxLength: 80 }
+        description: { type: string, maxLength: 1000 }
+        goal: { type: string }
+        split_type: { type: string, enum: [full_body, upper_lower, push_pull_legs, bro_split, custom] }
+        duration_weeks: { type: integer, minimum: 1, maximum: 52 }
+        days_per_week: { type: integer, minimum: 1, maximum: 7 }
+        session_minutes: { type: integer, minimum: 20, maximum: 120 }
+        start_date: { type: string, format: date }
+        progression_type:
+          type: string
+          enum: [double_progression, linear, rpe_target, percent_1rm, none]
+          default: double_progression
+
+    ProgramDetail:
+      allOf:
+        - $ref: '#/components/schemas/Program'
+        - type: object
+          properties:
+            weeks:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: string }
+                  week_number: { type: integer }
+                  focus_note: { type: [string, 'null'] }
+                  is_deload: { type: boolean }
+                  volume_multiplier: { type: number }
+                  sessions:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProgramSession' }
+
+    ProgramSession:
+      type: object
+      properties:
+        id: { type: string }
+        week_number: { type: integer }
+        day_index: { type: integer, minimum: 1, maximum: 7 }
+        name: { type: string }
+        notes: { type: [string, 'null'] }
+        estimated_minutes: { type: [integer, 'null'] }
+        completed_at: { type: [string, 'null'], format: date-time }
+        exercises:
+          type: array
+          items: { $ref: '#/components/schemas/ProgramExercise' }
+
+    ProgramExercise:
+      type: object
+      properties:
+        id: { type: string }
+        exercise_id: { type: string }
+        exercise_name: { type: string }
+        position: { type: integer }
+        target_sets: { type: integer }
+        target_reps_min: { type: integer }
+        target_reps_max: { type: integer }
+        target_rpe: { type: [number, 'null'] }
+        rest_seconds: { type: integer }
+        tempo: { type: [string, 'null'] }
+        is_warmup: { type: boolean }
+        superset_group: { type: [integer, 'null'] }
+        notes: { type: [string, 'null'] }
+        progression:
+          type: object
+          properties:
+            type: { type: string }
+            increment_kg: { type: [number, 'null'] }
+            increment_reps: { type: [integer, 'null'] }
+            max_reps: { type: [integer, 'null'] }
+
+    ProgramExerciseInput:
+      type: object
+      required: [exercise_id]
+      properties:
+        exercise_id: { type: string }
+        position: { type: integer, minimum: 1, maximum: 20 }
+        target_sets: { type: integer, minimum: 1, maximum: 10 }
+        target_reps_min: { type: integer, minimum: 1, maximum: 50 }
+        target_reps_max: { type: integer, minimum: 1, maximum: 50 }
+        target_rpe: { type: number, minimum: 5, maximum: 10 }
+        rest_seconds: { type: integer, minimum: 30, maximum: 300 }
+        tempo: { type: string }
+        is_warmup: { type: boolean }
+        superset_group: { type: integer }
+        notes: { type: string, maxLength: 200 }
+
+    ProgramGenerateInput:
+      type: object
+      required: [goal, split_type, duration_weeks, days_per_week]
+      properties:
+        goal:
+          type: string
+          enum: [lose_weight, gain_muscle, strength, endurance, general_fitness, body_recomposition]
+        split_type:
+          type: string
+          enum: [full_body, upper_lower, push_pull_legs, bro_split, custom]
+        duration_weeks: { type: integer, minimum: 1, maximum: 52 }
+        days_per_week: { type: integer, minimum: 1, maximum: 7 }
+        session_minutes: { type: integer, minimum: 20, maximum: 120 }
+        equipment_overrides:
+          type: array
+          items: { $ref: '#/components/schemas/Equipment' }
+        focus_areas:
+          type: array
+          items: { $ref: '#/components/schemas/Muscle' }
+        avoid_areas:
+          type: array
+          items: { type: string }
+        notes: { type: string, maxLength: 1000 }
+
+    Workout:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: [string, 'null'] }
+        status: { type: string, enum: [active, finished, abandoned] }
+        program_id: { type: [string, 'null'] }
+        started_at: { type: string, format: date-time }
+        ended_at: { type: [string, 'null'], format: date-time }
+        duration_seconds: { type: [integer, 'null'] }
+        total_volume_kg: { type: number }
+        total_sets: { type: integer }
+        total_reps: { type: integer }
+        bodyweight_kg: { type: [number, 'null'] }
+        session_rpe: { type: [number, 'null'] }
+        exercise_count: { type: integer }
+        pr_count: { type: integer }
+
+    WorkoutDetail:
+      allOf:
+        - $ref: '#/components/schemas/Workout'
+        - type: object
+          properties:
+            notes: { type: [string, 'null'] }
+            exercises:
+              type: array
+              items: { $ref: '#/components/schemas/WorkoutExercise' }
+
+    WorkoutExercise:
+      type: object
+      properties:
+        id: { type: string }
+        exercise_id: { type: string }
+        exercise_name: { type: string }
+        position: { type: integer }
+        notes: { type: [string, 'null'] }
+        superset_group: { type: [integer, 'null'] }
+        previous_performance:
+          type: [object, 'null']
+          properties:
+            date: { type: string, format: date-time }
+            sets:
+              type: array
+              items:
+                type: object
+                properties:
+                  weight_kg: { type: number }
+                  reps: { type: integer }
+        sets:
+          type: array
+          items: { $ref: '#/components/schemas/WorkoutSet' }
+
+    WorkoutSet:
+      type: object
+      properties:
+        id: { type: string }
+        set_number: { type: integer }
+        weight_kg: { type: number }
+        reps: { type: integer }
+        rpe: { type: [number, 'null'] }
+        is_warmup: { type: boolean }
+        is_completed: { type: boolean }
+        is_pr: { type: boolean }
+        est_1rm_kg: { type: [number, 'null'] }
+        volume_kg: { type: number }
+        duration_seconds: { type: [integer, 'null'] }
+        distance_km: { type: [number, 'null'] }
+        delta_vs_last:
+          type: [object, 'null']
+          properties:
+            weight_kg: { type: number }
+            reps: { type: integer }
+
+    PersonalRecord:
+      type: object
+      properties:
+        id: { type: string }
+        exercise_id: { type: string }
+        exercise_name: { type: string }
+        record_type: { type: string, enum: [max_weight, max_reps, max_volume, est_1rm] }
+        value: { type: number }
+        reps: { type: [integer, 'null'] }
+        weight_kg: { type: [number, 'null'] }
+        achieved_at: { type: string, format: date-time }
+        is_current: { type: boolean }
+
+    Recommendation:
+      type: object
+      properties:
+        id: { type: string }
+        rule:
+          type: string
+          enum: [plateau_detection, deload_suggestion, volume_imbalance, adherence_drop, overtraining_risk, pr_milestone, stale_program, missing_equipment_conflict, frequency_low]
+        severity: { type: string, enum: [P1, P2, P3] }
+        title: { type: string }
+        body: { type: [string, 'null'] }
+        evidence:
+          type: object
+          additionalProperties: true
+          properties:
+            metric: { type: string }
+            value: { type: number }
+            unit: { type: string }
+            delta_pct: { type: [number, 'null'] }
+        action_type: { type: [string, 'null'] }
+        status: { type: string, enum: [new, read, dismissed, acted] }
+        created_at: { type: string, format: date-time }
+
+    ChatThread:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: [string, 'null'] }
+        program_id: { type: [string, 'null'] }
+        message_count: { type: integer }
+        last_message_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: string }
+        thread_id: { type: string }
+        role: { type: string, enum: [user, assistant, system] }
+        content: { type: string }
+        status: { type: string, enum: [streaming, complete, aborted, error] }
+        citations:
+          type: [array, 'null']
+          items:
+            type: object
+            properties:
+              type: { type: string, example: workout }
+              ref_id: { type: string }
+              label: { type: string }
+        feedback: { type: [integer, 'null'] }
+        created_at: { type: string, format: date-time }
+
+    BodyMetric:
+      type: object
+      properties:
+        id: { type: string }
+        recorded_on: { type: string, format: date }
+        weight_kg: { type: [number, 'null'] }
+        body_fat_pct: { type: [number, 'null'] }
+        chest_cm: { type: [number, 'null'] }
+        waist_cm: { type: [number, 'null'] }
+        hip_cm: { type: [number, 'null'] }
+        arm_cm: { type: [number, 'null'] }
+        thigh_cm: { type: [number, 'null'] }
+        calf_cm: { type: [number, 'null'] }
+        shoulder_cm: { type: [number, 'null'] }
+        photo_urls:
+          type: array
+          items: { type: string }
+        notes: { type: [string, 'null'] }
+
+    Note:
+      type: object
+      properties:
+        id: { type: string }
+        body: { type: string }
+        category: { type: string, enum: [general, injury, nutrition, mood, equipment] }
+        workout_id: { type: [string, 'null'] }
+        is_pinned: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    WorkoutTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        notes: { type: [string, 'null'] }
+        is_public: { type: boolean }
+        last_used_at: { type: [string, 'null'], format: date-time }
+        exercises:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              exercise_id: { type: string }
+              exercise_name: { type: string }
+              position: { type: integer }
+              target_sets: { type: [integer, 'null'] }
+              target_reps_min: { type: [integer, 'null'] }
+              target_reps_max: { type: [integer, 'null'] }
+              rest_seconds: { type: [integer, 'null'] }
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        weekly_logged_workouts: { type: integer }
+        volume_7d_kg: { type: number }
+        volume_30d_kg: { type: number }
+        current_streak: { type: integer }
+        adherence_current_week: { type: [number, 'null'] }
+        total_prs: { type: integer }
+        last_pr:
+          type: [object, 'null']
+          properties:
+            exercise_name: { type: string }
+            value: { type: number }
+            unit: { type: string }
+            achieved_at: { type: string, format: date-time }
+        previous_period_delta_pct:
+          type: object
+          additionalProperties: { type: number }
+          example: { volume: 12.4, workouts: 8.1, adherence: -4.2 }
+        muscle_balance:
+          type: array
+          items:
+            type: object
+            properties:
+              muscle: { $ref: '#/components/schemas/Muscle' }
+              share_pct: { type: number }
+        insights:
+          type: array
+          items: { type: string }

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://gymapps:gymapps@localhost:5432/gymapps?schema=public
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gymapps
+          POSTGRES_PASSWORD: gymapps
+          POSTGRES_DB: gymapps
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gymapps -d gymapps"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run gen:api
+      - run: npm run db:generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run db:migrate:deploy -w @gymapps/db
+      - run: npm run db:seed -w @gymapps/db
+      - run: npm run build

@@ -1,0 +1,30 @@
+{
+  "name": "gymapps",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @gymapps/web",
+    "build": "npm run build -w @gymapps/web",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "gen:api": "npm run gen:api -w @gymapps/shared",
+    "db:generate": "npm run db:generate -w @gymapps/db",
+    "db:migrate": "npm run db:migrate -w @gymapps/db",
+    "db:seed": "npm run db:seed -w @gymapps/db",
+    "setup": "npm install && npm run gen:api && npm run db:generate"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.28",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

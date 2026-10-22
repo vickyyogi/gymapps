@@ -1,0 +1,61 @@
+{
+  "app": {
+    "name": "GymApps",
+    "tagline": "Track workouts, see progress."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "logout": "Log out"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "locale": {
+    "label": "Language",
+    "id": "Indonesia",
+    "en": "English"
+  },
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display name",
+    "loading": "Loading…"
+  },
+  "auth": {
+    "login": {
+      "title": "Log in",
+      "description": "Pick up where you left off.",
+      "submit": "Log in",
+      "submitting": "Working…",
+      "noAccount": "No account yet?",
+      "register": "Sign up"
+    },
+    "register": {
+      "title": "Create account",
+      "description": "One account for every workout you log.",
+      "submit": "Sign up",
+      "submitting": "Working…",
+      "hasAccount": "Already have an account?",
+      "login": "Log in"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "greeting": "Hi, {name}",
+    "emptyTitle": "No workouts yet",
+    "emptyDescription": "Your first session shows up here once you log it.",
+    "emptyAction": "Start workout"
+  },
+  "errors": {
+    "EMAIL_TAKEN": "Email is already registered.",
+    "INVALID_CREDENTIALS": "Email or password is incorrect.",
+    "RATE_LIMITED": "Too many attempts. Try again later.",
+    "VALIDATION_ERROR": "Check your input again.",
+    "UNAUTHENTICATED": "Session ended. Please log in again.",
+    "INTERNAL_ERROR": "Something went wrong. Try again.",
+    "NETWORK_ERROR": "Cannot reach the server."
+  }
+}
