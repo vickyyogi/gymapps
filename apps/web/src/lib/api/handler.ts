@@ -128,6 +128,11 @@ export async function parseJson<T extends ZodTypeAny>(
 }
 
 export function clientIp(request: NextRequest) {
+  // Forwarding headers are client-controlled unless a trusted proxy sets them.
+  // Default off keeps rate-limit keys from being spoofable; set
+  // TRUST_PROXY_HEADERS=true only behind a proxy that overwrites the header.
+  if (process.env.TRUST_PROXY_HEADERS !== "true") return "direct";
+
   return (
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||

@@ -39,7 +39,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Akun dibuat, email verifikasi dikirim, dan sesi login langsung dibuat (cookie 30 hari) */
+                /** @description Akun dibuat dan sesi login langsung dibuat (cookie 30 hari) */
                 201: {
                     headers: {
                         /** @description `gymapps_session=<token>; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000` */
@@ -3172,6 +3172,21 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** @example ok */
+                            status?: string;
+                            version?: string;
+                            /** Format: date-time */
+                            timestamp?: string;
+                        };
+                    };
+                };
+                /** @description Database unreachable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example degraded */
                             status?: string;
                             version?: string;
                             /** Format: date-time */

@@ -1,6 +1,6 @@
 # ADR-003 — Retry Anthropic Sebelum Fallback (Q-08)
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-10-22)
 - **Tanggal:** 2026-10-22
 - **Pemilik keputusan:** Engineering
 - **Batas:** sebelum AI orchestrator & job generator
@@ -34,9 +34,7 @@ Kegagalan AI tidak boleh membuat job menggantung atau user menunggu tanpa batas.
 
 ## Keputusan
 
-_TBD — isi setelah review._
-
-Rekomendasi awal: **B**, dengan deadline total job 90 detik. Setelah batas: program memakai rule-based fallback dan `ai_generations.status = 'fallback'`.
+**B — retry terbatas per jenis error.** Timeout/5xx maksimal 2 retry (backoff 1s lalu 4s); 429 maksimal 1 retry dengan `Retry-After` dan tunggu maksimal 10s; output invalid schema memakai 1 repair pass; budget habis/safety tanpa retry. Deadline total job 90 detik. Setelah batas: rule-based fallback dan `ai_generations.status = 'fallback'`.
 
 ## Konsekuensi
 

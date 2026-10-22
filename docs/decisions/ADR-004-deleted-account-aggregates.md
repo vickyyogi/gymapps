@@ -1,6 +1,6 @@
 # ADR-004 — Data User Terhapus pada Statistik Agregat (Q-10)
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-10-22)
 - **Tanggal:** 2026-10-22
 - **Pemilik keputusan:** Product + Legal
 - **Batas:** sebelum job hard-delete akun
@@ -32,9 +32,7 @@ Hapus `user_id` dan seluruh quasi-identifier; simpan hanya angka agregat dengan 
 
 ## Keputusan
 
-_TBD — isi setelah review._
-
-Rekomendasi awal: **A** untuk data operasional + **B** hanya untuk tabel agregat yang memang dirancang anonim (tanpa `user_id`, ambang n ≥ 10), dengan penjelasan di kebijakan privasi.
+**A untuk data operasional + B untuk tabel agregat anonim.** Hard-delete menghapus seluruh data user-scoped; tabel agregat yang dirancang tanpa `user_id` dipertahankan hanya bila ambang minimum n ≥ 10, dengan penjelasan di kebijakan privasi.
 
 ## Konsekuensi
 

@@ -1,6 +1,6 @@
 # ADR-001 — Bentuk Program AI (Q-02)
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-10-22)
 - **Tanggal:** 2026-10-22
 - **Pemilik keputusan:** Product + Coach
 - **Batas:** sebelum schema Prisma & AI layer
@@ -40,9 +40,7 @@ Buat kerangka semua minggu + detail minggu 1; detail minggu berikutnya diisi saa
 
 ## Keputusan
 
-_TBD — isi setelah review._
-
-Rekomendasi awal: **A**, dengan output per minggu divalidasi sebagai bagian dari satu program dan progresi disimpan sebagai rule per-exercise.
+**A — program penuh sejak awal.** AI menghasilkan seluruh `duration_weeks` dalam satu job. Setiap minggu tetap divalidasi sebagai bagian dari satu program, dan progresi disimpan sebagai rule per-exercise.
 
 ## Konsekuensi
 

@@ -14,6 +14,11 @@ import { createSession, attachSessionCookie, getEntitlement, toCurrentUser } fro
 
 export const runtime = "nodejs";
 
+// Valid Argon2id hash of a throwaway password. Verifying it for unknown emails
+// keeps login latency flat and avoids user enumeration by timing.
+const DUMMY_PASSWORD_HASH =
+  "$argon2id$v=19$m=65536,t=3,p=1$BCzChgutrgiE23n1Insgsw$NR20YdLoA8smfI7lEnKiCevqnOTHGjoLxKuT5rV69UA";
+
 export const POST = withApi(async ({ request }) => {
   const input = await parseJson(request, loginSchema);
   const ip = clientIp(request);
@@ -30,7 +35,10 @@ export const POST = withApi(async ({ request }) => {
   }
 
   const user = await prisma.user.findUnique({ where: { email: input.email } });
-  const passwordOk = user ? await verifyPassword(user.passwordHash, input.password) : false;
+  const passwordOk = await verifyPassword(
+    user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    input.password
+  );
 
   if (!user || !passwordOk || user.deletedAt || user.status !== "active") {
     recordLoginFailure(key);

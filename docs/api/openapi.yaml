@@ -82,7 +82,7 @@ paths:
                 accept_terms: { type: boolean, const: true }
       responses:
         '201':
-          description: Akun dibuat, email verifikasi dikirim, dan sesi login langsung dibuat (cookie 30 hari)
+          description: Akun dibuat dan sesi login langsung dibuat (cookie 30 hari)
           headers:
             Set-Cookie:
               description: '`gymapps_session=<token>; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`'
@@ -1687,6 +1687,16 @@ paths:
                 type: object
                 properties:
                   status: { type: string, example: ok }
+                  version: { type: string }
+                  timestamp: { type: string, format: date-time }
+        '503':
+          description: Database unreachable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: degraded }
                   version: { type: string }
                   timestamp: { type: string, format: date-time }
 

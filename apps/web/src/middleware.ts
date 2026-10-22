@@ -1,5 +1,7 @@
 import createMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
+import { SESSION_COOKIE_NAME } from "@gymapps/shared";
+import { attachSessionCookie } from "@/lib/auth/cookie";
 import { routing } from "@/i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
@@ -24,7 +26,7 @@ export default function middleware(request: NextRequest) {
   if (
     locale &&
     APP_SEGMENTS.has(maybeSegment ?? "") &&
-    !request.cookies.get("gymapps_session")?.value
+    !request.cookies.get(SESSION_COOKIE_NAME)?.value
   ) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = `/${locale}/login`;
@@ -33,7 +35,14 @@ export default function middleware(request: NextRequest) {
   }
 
   request.headers.set("x-pathname", `${pathname}${request.nextUrl.search}`);
-  return intlMiddleware(request);
+  const response = intlMiddleware(request);
+
+  // Sliding expiry for page navigation. API responses refresh in withApi();
+  // server components cannot set cookies. DB still validates the token.
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (token) attachSessionCookie(response, token);
+
+  return response;
 }
 
 export const config = {

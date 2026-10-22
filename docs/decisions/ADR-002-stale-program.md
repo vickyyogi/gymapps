@@ -1,6 +1,6 @@
 # ADR-002 — Kapan Program Dianggap Stale (Q-06)
 
-- **Status:** Proposed
+- **Status:** Accepted (2026-10-22)
 - **Tanggal:** 2026-10-22
 - **Pemilik keputusan:** Coach + Product
 - **Batas:** sebelum rule engine (`domain/rules`)
@@ -39,9 +39,7 @@ Stale bila salah satu terpenuhi:
 
 ## Keputusan
 
-_TBD — isi setelah review._
-
-Rekomendasi awal: **C**, dievaluasi setelah workout `finished` dan sekali sehari. `is_stale` hanya flag; regenerasi tetap keputusan user (`FR-07-06`).
+**C — gabungan.** Stale bila salah satu terpenuhi: `duration_weeks + 2` minggu terlewati, 6 minggu sejak aktivasi tanpa satu sesi selesai, atau profil berubah material sejak program dibuat. Dievaluasi setelah workout `finished` dan sekali sehari. `is_stale` hanya flag; regenerasi tetap keputusan user (`FR-07-06`).
 
 ## Konsekuensi
 

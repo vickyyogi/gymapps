@@ -23,6 +23,15 @@ Drift dokumen yang harus dibereskan di Fase 0:
 - `PRD.md §8.2` belum memuat `/auth/token` dan `/health` yang ada di `openapi.yaml`.
 - `PRD.md §7.1` menyebut entitas `Account`; `data-model.md` tidak memilikinya.
 
+### Status implementasi per 2026-10-22
+
+| Fase | Status |
+|---|---|
+| Fase 0 | Selesai untuk kode/dokumen: ADR 001–004 `Accepted`, drift PRD diperbaiki, kontrak tunggal `openapi.yaml` → tipe + Zod, CI skeleton ada, branch `main`/`develop` ada. Redis, object storage, dan Sentry belum diprovisikan. |
+| Fase 1 | Selesai kecuali delivery Sentry: auth/master data/i18n/observability; lint, typecheck, test, build, migrasi, seed, dan auth E2E hijau. |
+| Fase 2 | Selesai: `packages/domain`, 27 test tanpa DB/API. |
+| Eksternal | Belum diverifikasi: pengiriman Sentry (DSN kosong), Docker (daemon tidak tersedia). |
+
 ---
 
 ## 2. Blocker sebelum kode

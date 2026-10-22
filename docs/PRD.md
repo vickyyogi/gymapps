@@ -1142,7 +1142,6 @@ Ringkasan; definisi kolom lengkap ada di [`data-model.md`](./data-model.md).
 
 ```mermaid
 erDiagram
-    User ||--o{ Account : "has"
     User ||--o{ Session : "has"
     User ||--o{ UserProfile : "has"
     User ||--o{ Entitlement : "has"
@@ -1232,6 +1231,7 @@ Kontrak penuh: [`api/openapi.yaml`](./api/openapi.yaml).
 | POST | `/auth/login` | ✗ | Login credentials |
 | POST | `/auth/logout` | ✓ | Hapus session |
 | POST | `/auth/logout-all` | ✓ | Revoke semua session |
+| POST | `/auth/token` | ✗ | Tukar refresh token menjadi access token (mobile) |
 | GET | `/auth/me` | ✓ | User + profil + entitlement |
 | POST | `/auth/password/forgot` | ✗ | Kirim email reset |
 | POST | `/auth/password/reset` | ✗ | Set password baru |
@@ -1305,6 +1305,7 @@ Kontrak penuh: [`api/openapi.yaml`](./api/openapi.yaml).
 | POST | `/reports/monthly` | ✓ | Buat job laporan PDF |
 | GET | `/reports/{id}` | ✓ | Status laporan + link download |
 | GET | `/summary/today` | ✓ | Ringkasan hari ini (untuk widget) |
+| GET | `/health` | ✗ | Health check publik (uptime monitoring) |
 
 ### 8.3 Contoh Payload Kunci
 

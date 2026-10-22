@@ -3,14 +3,8 @@ import "server-only";
 import { cache } from "react";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
-import type { NextResponse } from "next/server";
 import { prisma, type Entitlement, type Session, type User } from "@gymapps/db";
-import {
-  SESSION_COOKIE_NAME,
-  SESSION_TTL_MS,
-  SESSION_TTL_SECONDS,
-  type CurrentUser
-} from "@gymapps/shared";
+import { SESSION_COOKIE_NAME, SESSION_TTL_MS, type CurrentUser } from "@gymapps/shared";
 import { ApiError } from "@/lib/api/errors";
 import { newId } from "@/lib/id";
 
@@ -46,27 +40,7 @@ export async function createSession(
   return { session, rawToken };
 }
 
-export function attachSessionCookie(response: NextResponse, rawToken: string) {
-  response.cookies.set({
-    name: SESSION_COOKIE_NAME,
-    value: rawToken,
-    httpOnly: true,
-    // FR-01-03 says Secure always. Browsers refuse Secure cookies on http://localhost.
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS
-  });
-}
-
-export function clearSessionCookie(response: NextResponse) {
-  response.cookies.set({
-    name: SESSION_COOKIE_NAME,
-    value: "",
-    path: "/",
-    maxAge: 0
-  });
-}
+export { attachSessionCookie, clearSessionCookie } from "@/lib/auth/cookie";
 
 export const getSession = cache(async (): Promise<ActiveSession | null> => {
   const cookieStore = await cookies();
