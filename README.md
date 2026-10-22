@@ -90,3 +90,29 @@ Gate E2E memeriksa bodyweight-only + cedera lutut, konteks tanpa PII, biaya toke
 - The fallback generator is validated before persist. A structurally impossible request (for example bodyweight-only upper/lower with 2 days) fails the job instead of saving an invalid draft.
 - `OPENCODE_GO_BASE_URL` should include `/v1`; model IDs and prices come from env, never hardcoded. Seed prompt versions are append-only and do not overwrite an existing active row.
 - Sentry is intentionally not wired yet; errors go to structured logs (`apps/web/src/lib/log.ts`).
+
+### Phase 6 (coach chat + rekomendasi)
+
+UI/API: thread + pesan persisten, SSE (`meta`, `delta`, `tool`, `done`, `error`), tombol stop yang tetap menyimpan teks parsial, kartu exercise, sitasi sumber, feedback 👍/👎, kuota 30/jam + 200/hari. Enam tool read-only: `get_active_program`, `get_recent_workouts`, `get_personal_records`, `search_exercises`, `get_body_metrics`, `suggest_substitution`.
+
+Guardrail medis deterministik berjalan sebelum LLM: tidak mendiagnosis, tidak meresepkan obat/dosis, mengarahkan ke dokter/fisioterapis. Kill-switch dicek dari env `AI_CHAT_ENABLED` dan flag DB `ai_chat`.
+
+Rule engine berjalan setelah workout selesai (deload, adherence, imbalance, plateau, stale), menulis evidence + notifikasi. `PATCH /ai/recommendations/{id}` dengan `status: dismissed` memblokir rule yang sama selama 30 hari. Narasi memakai `OPENCODE_GO_MODEL_FAST`; template deterministik tetap tersimpan bila model gagal.
+
+```bash
+npm run test:phase6   # self-contained: mock chat SSE + Next dev
+```
+
+### Phase 7 (export, PDF, PWA, admin)
+
+- Export CSV/JSON lewat `after()` job; file lokal di `EXPORT_DIR` (default `<cwd>/.exports`), link HMAC 7 hari, wajib session + ownership. Link kedaluwarsa → 410 `EXPORT_EXPIRED`; akses user lain → 403.
+- PDF bulanan memakai `playwright-core` + Chrome sistem (`CHROME_PATH`, default `/usr/bin/google-chrome`). Isi: ringkasan, grafik volume mingguan, PR, daftar workout, body metrics.
+- PWA: `manifest.webmanifest`, icon 192/512 + maskable, service worker network-first untuk navigasi dan fallback `/offline.html`.
+- Admin CMS `/{locale}/admin/exercises`: edit instruksi + publish langsung ke DB, tercatat di `audit_logs`; tidak perlu deploy.
+- Notifikasi in-app untuk rekomendasi/export/report.
+
+```bash
+npm run test:phase7   # export, 410/403, PDF, admin publish, PWA
+```
+
+Catatan: PDF butuh Chrome terpasang. `OPENCODE_GO_PRICE_*` memakai USD per 1 juta token; isi `0` bila harga belum diketahui agar dashboard biaya tidak menyesatkan.

@@ -19,7 +19,9 @@
     "db:generate": "npm run db:generate -w @gymapps/db",
     "db:migrate": "npm run db:migrate -w @gymapps/db",
     "db:seed": "npm run db:seed -w @gymapps/db",
-    "setup": "npm install && npm run gen:api && npm run db:generate"
+    "setup": "npm install && npm run gen:api && npm run db:generate",
+    "test:phase6": "node scripts/phase6-e2e.mjs",
+    "test:phase7": "node scripts/phase7-e2e.mjs"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

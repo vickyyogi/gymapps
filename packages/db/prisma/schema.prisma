@@ -88,6 +88,13 @@ model User {
   bodyMetrics     BodyMetric[]
   notes           Note[]
   aiGenerations   AiGeneration[]
+  chatThreads     ChatThread[]
+  chatMessages    ChatMessage[]
+  recommendations AiRecommendation[]
+  exports         Export[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]         @relation("AuditUser")
+  auditActions    AuditLog[]         @relation("AuditActor")
 
   @@index([status], map: "idx_users_status")
   @@index([deletedAt], map: "idx_users_deleted_at")
@@ -177,11 +184,12 @@ model Exercise {
   updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt            DateTime?       @map("deleted_at") @db.Timestamptz(3)
 
-  owner            User?             @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  owner            User?              @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
   programExercises ProgramExercise[]
   workoutExercises WorkoutExercise[]
   workoutSets      WorkoutSet[]
   personalRecords  PersonalRecord[]
+  recommendations  AiRecommendation[]
 
   @@index([primaryMuscle], map: "idx_exercises_primary_muscle")
   @@index([status, source], map: "idx_exercises_status_source")
@@ -211,11 +219,13 @@ model Program {
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  weeks        ProgramWeek[]
-  sessions     ProgramSession[]
-  workouts     Workout[]
-  aiGeneration AiGeneration?
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeks           ProgramWeek[]
+  sessions        ProgramSession[]
+  workouts        Workout[]
+  aiGeneration    AiGeneration?
+  chatThreads     ChatThread[]
+  recommendations AiRecommendation[]
 
   @@index([userId, status], map: "idx_programs_user_status")
   @@index([userId, createdAt(sort: Desc)], map: "idx_programs_user_created")
@@ -453,6 +463,7 @@ model AiGeneration {
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   program       Program?       @relation(fields: [programId], references: [id], onDelete: SetNull)
   promptVersion PromptVersion? @relation(fields: [promptVersionId], references: [id], onDelete: SetNull)
+  chatMessage   ChatMessage?
 
   @@index([userId, createdAt(sort: Desc)], map: "idx_ai_gen_user_created")
   @@index([type, createdAt(sort: Desc)], map: "idx_ai_gen_type_created")
@@ -526,4 +537,142 @@ model Note {
   @@index([userId, createdAt(sort: Desc)], map: "idx_notes_user_created")
   @@index([userId, category], map: "idx_notes_user_category")
   @@map("notes")
+}
+
+model ChatThread {
+  id            String    @id
+  userId        String    @map("user_id")
+  title         String?
+  programId     String?   @map("program_id")
+  messageCount  Int       @default(0) @map("message_count")
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program  Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
+  messages ChatMessage[]
+
+  @@index([userId, lastMessageAt(sort: Desc)], map: "idx_threads_user_last")
+  @@map("chat_threads")
+}
+
+model ChatMessage {
+  id              String   @id
+  threadId        String   @map("thread_id")
+  userId          String   @map("user_id")
+  role            String
+  content         String
+  status          String   @default("complete")
+  citations       Json?
+  metadata        Json?
+  feedback        Int?     @db.SmallInt
+  feedbackComment String?  @map("feedback_comment")
+  idempotencyKey  String?  @map("idempotency_key")
+  aiGenerationId  String?  @unique @map("ai_generation_id")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  thread       ChatThread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiGeneration AiGeneration? @relation(fields: [aiGenerationId], references: [id], onDelete: SetNull)
+
+  @@unique([threadId, idempotencyKey], map: "uniq_chat_message_idempotency")
+  @@index([threadId, createdAt], map: "idx_messages_thread_created")
+  @@map("chat_messages")
+}
+
+model AiRecommendation {
+  id                String    @id
+  userId            String    @map("user_id")
+  rule              String
+  severity          String
+  title             String
+  body              String?
+  evidence          Json      @default("{}")
+  actionType        String?   @map("action_type")
+  actionPayload     Json?     @map("action_payload")
+  relatedProgramId  String?   @map("related_program_id")
+  relatedExerciseId String?   @map("related_exercise_id")
+  status            String    @default("new")
+  dismissedUntil    DateTime? @map("dismissed_until") @db.Timestamptz(3)
+  expiresAt         DateTime? @map("expires_at") @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program  Program?  @relation(fields: [relatedProgramId], references: [id], onDelete: SetNull)
+  exercise Exercise? @relation(fields: [relatedExerciseId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, createdAt(sort: Desc)], map: "idx_reco_user_status")
+  @@index([userId, rule], map: "idx_reco_user_rule")
+  @@map("ai_recommendations")
+}
+
+model Export {
+  id            String    @id
+  userId        String    @map("user_id")
+  type          String
+  status        String    @default("queued")
+  entities      String[]  @default([])
+  periodStart   DateTime? @map("period_start") @db.Date
+  periodEnd     DateTime? @map("period_end") @db.Date
+  filePath      String?   @map("file_path")
+  fileSizeBytes Int?      @map("file_size_bytes")
+  errorMessage  String?   @map("error_message")
+  metadata      Json      @default("{}")
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_exports_user_created")
+  @@map("exports")
+}
+
+model Notification {
+  id        String    @id
+  userId    String    @map("user_id")
+  type      String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt(sort: Desc)], map: "idx_notifications_user_read")
+  @@map("notifications")
+}
+
+model FeatureFlag {
+  key               String   @id
+  enabled           Boolean  @default(false)
+  rolloutPercentage Int      @default(0) @map("rollout_percentage") @db.SmallInt
+  description       String?
+  updatedBy         String?  @map("updated_by")
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("feature_flags")
+}
+
+model AuditLog {
+  id         String   @id
+  userId     String?  @map("user_id")
+  actorId    String?  @map("actor_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  before     Json?
+  after      Json?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user  User? @relation("AuditUser", fields: [userId], references: [id], onDelete: SetNull)
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_audit_user_created")
+  @@index([entityType, entityId], map: "idx_audit_entity")
+  @@map("audit_logs")
 }

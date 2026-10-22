@@ -7,6 +7,7 @@ import {
   serializeWorkoutDetail,
   workoutDetailInclude
 } from "@/lib/api/serializers";
+import { evaluateRecommendationsForUser } from "@/lib/ai/recommendations";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,7 @@ export const POST = withAuthApi(async ({ params, session }) => {
   if (workout.status === "abandoned") {
     throw new ApiError(409, "WORKOUT_ABANDONED", "Workout was abandoned");
   }
+  const wasActive = workout.status === "active";
 
   if (workout.status === "active") {
     await prisma.$transaction(async (tx) => {
@@ -61,9 +63,15 @@ export const POST = withAuthApi(async ({ params, session }) => {
   const prsCreated = await prisma.personalRecord.count({
     where: { workoutSet: { is: { workoutId } } }
   });
+  const recommendations = wasActive
+    ? await evaluateRecommendationsForUser({
+        userId: session.user.id,
+        triggerWorkoutId: workoutId
+      })
+    : [];
 
   return NextResponse.json({
     data: serializeWorkoutDetail(detail),
-    meta: { prs_created: prsCreated, recommendations_created: 0 }
+    meta: { prs_created: prsCreated, recommendations_created: recommendations.length }
   });
 });

@@ -9,7 +9,11 @@
     "programs": "Program",
     "exercises": "Pustaka",
     "progress": "Progres",
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "coach": "Coach",
+    "recommendations": "Rekomendasi",
+    "exports": "Export",
+    "admin": "Admin"
   },
   "theme": {
     "label": "Tema",
@@ -32,7 +36,8 @@
     "close": "Tutup",
     "retry": "Coba lagi",
     "remove": "Hapus",
-    "loadMore": "Muat lagi"
+    "loadMore": "Muat lagi",
+    "search": "Cari"
   },
   "auth": {
     "login": {
@@ -444,6 +449,90 @@
     "POSITION_TAKEN": "Posisi latihan sudah dipakai.",
     "AI_QUOTA_EXCEEDED": "Kuota generate AI harian habis. Coba lagi nanti.",
     "AI_UNAVAILABLE": "Fitur AI sedang tidak tersedia.",
-    "AI_GENERATION_FAILED": "Generate program AI gagal. Coba lagi."
+    "AI_GENERATION_FAILED": "Generate program AI gagal. Coba lagi.",
+    "AI_RATE_LIMITED": "Batas chat tercapai (30/jam atau 200/hari). Coba lagi nanti.",
+    "EXPORT_EXPIRED": "Link export sudah kedaluwarsa. Buat export baru.",
+    "EXPORT_NOT_READY": "Export belum selesai diproses."
+  },
+  "coach": {
+    "newThread": "Obrolan baru",
+    "quota": "Sisa kuota: {hour}/jam · {day}/hari",
+    "untitled": "Obrolan tanpa judul",
+    "delete": "Hapus obrolan",
+    "emptyTitle": "Tanya soal program, teknik, atau progresmu.",
+    "emptyHint": "Jawaban memakai data latihan dan selalu menyebut sumbernya.",
+    "stopped": "Dihentikan. Teks yang sudah ada tetap disimpan.",
+    "source": "Sumber",
+    "helpful": "Jawaban membantu",
+    "notHelpful": "Jawaban tidak membantu",
+    "placeholder": "Tulis pertanyaan…",
+    "stop": "Stop",
+    "send": "Kirim"
+  },
+  "recommendations": {
+    "title": "Rekomendasi",
+    "description": "Rule engine memeriksa data latihan dan memberi saran berbasis bukti.",
+    "empty": "Belum ada rekomendasi.",
+    "evidence": "Bukti",
+    "metric": "Metrik",
+    "value": "Nilai",
+    "delta": "Perubahan",
+    "openAction": "Buka",
+    "markRead": "Tandai dibaca",
+    "dismiss": "Abaikan 30 hari",
+    "rules": {
+      "plateau_detection": "Plateau",
+      "deload_suggestion": "Deload",
+      "volume_imbalance": "Volume tidak seimbang",
+      "adherence_drop": "Kepatuhan turun",
+      "overtraining_risk": "Risiko overtraining",
+      "pr_milestone": "Personal record",
+      "stale_program": "Program lama",
+      "missing_equipment_conflict": "Konflik equipment",
+      "frequency_low": "Frekuensi rendah"
+    }
+  },
+  "exports": {
+    "title": "Export data",
+    "description": "Unduh data latihan dalam CSV/JSON atau laporan PDF bulanan.",
+    "createTitle": "Buat export",
+    "json": "Download JSON",
+    "csv": "Download CSV",
+    "ttlHint": "Link download berlaku 7 hari dan hanya bisa dipakai oleh akun ini.",
+    "reportTitle": "Laporan PDF",
+    "month": "Bulan",
+    "pdf": "Buat PDF",
+    "history": "Riwayat",
+    "status": {
+      "queued": "Menunggu",
+      "running": "Diproses",
+      "ready": "Siap",
+      "failed": "Gagal"
+    },
+    "expires": "Kedaluwarsa {date}",
+    "expired": "Link kedaluwarsa. Buat export baru.",
+    "download": "Download",
+    "empty": "Belum ada export."
+  },
+  "notifications": {
+    "label": "Notifikasi",
+    "title": "Notifikasi",
+    "readAll": "Tandai semua dibaca",
+    "empty": "Belum ada notifikasi."
+  },
+  "admin": {
+    "title": "Admin exercise",
+    "description": "Edit konten exercise dan publish tanpa deploy. Perubahan langsung terlihat di aplikasi.",
+    "saved": "Perubahan tersimpan.",
+    "search": "Cari exercise…",
+    "nameId": "Nama (ID)",
+    "nameEn": "Nama (EN)",
+    "descriptionId": "Deskripsi (ID)",
+    "descriptionEn": "Deskripsi (EN)",
+    "instructionsId": "Instruksi (ID, satu baris per langkah)",
+    "instructionsEn": "Instructions (EN, one line per step)",
+    "status": "Status",
+    "publish": "Publish",
+    "unpublish": "Jadikan draft"
   }
 }

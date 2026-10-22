@@ -53,6 +53,10 @@ tags:
     description: Workout template
   - name: Exports
     description: Export data & laporan PDF
+  - name: Notifications
+    description: Notifikasi in-app
+  - name: Admin
+    description: Admin CMS (role admin)
   - name: Meta
     description: Health check & data master
 
@@ -1545,6 +1549,28 @@ paths:
 
   # ──────────────────────────────── EXPORTS ────────────────────────────────
   /exports:
+    get:
+      tags: [Exports]
+      summary: Daftar export terbaru
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        export_id: { type: string }
+                        status: { type: string, enum: [queued, running, ready, failed] }
+                        type: { type: string, enum: [csv, json, pdf_report] }
+                        download_url: { type: [string, 'null'] }
+                        expires_at: { type: [string, 'null'], format: date-time }
+                        expired: { type: boolean }
     post:
       tags: [Exports]
       summary: Buat job export data (CSV/JSON)
@@ -1598,6 +1624,28 @@ paths:
                       download_url: { type: [string, 'null'] }
                       expires_at: { type: [string, 'null'], format: date-time }
                       file_size_bytes: { type: [integer, 'null'] }
+                      expired: { type: boolean }
+                      error_message: { type: [string, 'null'] }
+    delete:
+      tags: [Exports]
+      summary: Hapus export dan file
+      parameters:
+        - { name: exportId, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Berhasil }
+        '403': { description: Bukan pemilik }
+
+  /exports/{exportId}/download:
+    parameters:
+      - { name: exportId, in: path, required: true, schema: { type: string } }
+      - { name: token, in: query, required: true, schema: { type: string } }
+    get:
+      tags: [Exports]
+      summary: Download export (session + signed token + ownership)
+      responses:
+        '200': { description: File biner }
+        '403': { description: Token salah atau bukan pemilik }
+        '410': { description: Link kedaluwarsa (EXPORT_EXPIRED) }
 
   /reports/monthly:
     post:
@@ -1648,6 +1696,134 @@ paths:
                       status: { type: string, enum: [queued, running, ready, failed] }
                       download_url: { type: [string, 'null'] }
                       expires_at: { type: [string, 'null'], format: date-time }
+                      file_size_bytes: { type: [integer, 'null'] }
+                      error_message: { type: [string, 'null'] }
+
+  /reports/{reportId}/download:
+    parameters:
+      - { name: reportId, in: path, required: true, schema: { type: string } }
+      - { name: token, in: query, required: true, schema: { type: string } }
+    get:
+      tags: [Exports]
+      summary: Download PDF laporan (session + signed token + ownership)
+      responses:
+        '200': { description: File PDF }
+        '403': { description: Token salah atau bukan pemilik }
+        '410': { description: Link kedaluwarsa (EXPORT_EXPIRED) }
+
+  # ──────────────────────────────── NOTIFICATIONS ────────────────────────────────
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Daftar notifikasi in-app
+      parameters:
+        - { name: unread_only, in: query, schema: { type: string, enum: ['true', 'false'] } }
+        - { name: limit, in: query, schema: { type: integer, default: 30 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Notification' }
+                  meta:
+                    type: object
+                    properties:
+                      unread_count: { type: integer }
+
+  /notifications/{notificationId}:
+    parameters:
+      - { name: notificationId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [Notifications]
+      summary: Tandai satu notifikasi dibaca
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Notification' }
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Tandai semua notifikasi dibaca
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      updated: { type: integer }
+
+  # ──────────────────────────────── ADMIN ────────────────────────────────
+  /admin/exercises:
+    get:
+      tags: [Admin]
+      summary: Daftar exercise termasuk draft (role admin)
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [published, draft, archived] } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Exercise' }
+        '403': { description: Role admin diperlukan }
+    post:
+      tags: [Admin]
+      summary: Buat exercise global sebagai draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AdminExerciseInput'
+              required: [name_id, primary_muscle, equipment]
+      responses:
+        '201': { description: Dibuat }
+
+  /admin/exercises/{exerciseId}:
+    parameters:
+      - { name: exerciseId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [Admin]
+      summary: Edit/publish exercise tanpa deploy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminExerciseInput' }
+      responses:
+        '200':
+          description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Exercise' }
+        '403': { description: Role admin diperlukan }
 
   # ──────────────────────────────── META ────────────────────────────────
   /summary/today:
@@ -2150,6 +2326,36 @@ components:
             delta_pct: { type: [number, 'null'] }
         action_type: { type: [string, 'null'] }
         status: { type: string, enum: [new, read, dismissed, acted] }
+        created_at: { type: string, format: date-time }
+
+    AdminExerciseInput:
+      type: object
+      properties:
+        name_id: { type: string, maxLength: 120 }
+        name_en: { type: string, maxLength: 120 }
+        description_id: { type: [string, 'null'], maxLength: 3000 }
+        description_en: { type: [string, 'null'], maxLength: 3000 }
+        instructions_id: { type: array, items: { type: string } }
+        instructions_en: { type: array, items: { type: string } }
+        primary_muscle: { type: string }
+        secondary_muscles: { type: array, items: { type: string } }
+        equipment: { type: array, items: { type: string } }
+        difficulty: { type: string, enum: [beginner, intermediate, advanced] }
+        impact_level: { type: string, enum: [low, medium, high] }
+        contraindicated_areas: { type: array, items: { type: string } }
+        is_compound: { type: boolean }
+        status: { type: string, enum: [published, draft, archived] }
+        review_notes: { type: [string, 'null'] }
+
+    Notification:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        title: { type: string }
+        body: { type: [string, 'null'] }
+        link: { type: [string, 'null'] }
+        read_at: { type: [string, 'null'], format: date-time }
         created_at: { type: string, format: date-time }
 
     ChatThread:

@@ -19,6 +19,32 @@ export function programAiConfig() {
   };
 }
 
+export function chatAiConfig() {
+  const program = programAiConfig();
+  return {
+    ...program,
+    enabled:
+      Boolean(program.apiKey && program.baseUrl && program.mainModel) &&
+      process.env.AI_ENABLED !== "false" &&
+      process.env.AI_CHAT_ENABLED !== "false",
+    fastModel: program.fastModel || program.mainModel,
+    maxContextTokens: 3_500,
+    maxOutputTokens: 1_500
+  };
+}
+
+export function narratorAiConfig() {
+  const program = programAiConfig();
+  return {
+    ...program,
+    enabled:
+      Boolean(program.apiKey && program.baseUrl && program.fastModel) &&
+      process.env.AI_ENABLED !== "false" &&
+      process.env.AI_RECOMMENDATIONS_ENABLED !== "false",
+    fastModel: program.fastModel
+  };
+}
+
 export function modelPrices() {
   return {
     mainIn: Number(process.env.OPENCODE_GO_PRICE_MAIN_IN) || 0,

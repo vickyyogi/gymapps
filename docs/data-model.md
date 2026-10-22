@@ -560,13 +560,21 @@ erDiagram
 
 `id`, `user_id`, `actor_id` (admin/system), `action` (mis. `workout.deleted`), `entity_type`, `entity_id`, `before` JSONB, `after` JSONB, `ip_address`, `created_at`
 
-### 6.6 `feature_flags`
+### 6.6 `notifications` (in-app)
+
+`id`, `user_id` (FK → users, cascade), `type` (`recommendation` | `export` | `report` | `system`), `title`, `body`, `link`, `read_at`, `created_at`
+
+**Index:** `idx_notifications_user_read(user_id, read_at, created_at DESC)`
+
+Notifikasi dibuat saat rekomendasi baru, export siap, atau laporan PDF siap. Tidak ada push/email pada fase ini; `device_tokens` tetap stub.
+
+### 6.7 `feature_flags`
 
 `key` (PK), `enabled` BOOLEAN, `rollout_percentage` SMALLINT, `description`, `updated_by`, `updated_at`
 
-### 6.7 `exports`
+### 6.8 `exports`
 
-`id`, `user_id`, `type` (`csv` \| `json` \| `pdf_report`), `status` (`queued` \| `running` \| `ready` \| `failed`), `period_start`, `period_end`, `file_url`, `file_size_bytes`, `error_message`, `expires_at` (created_at + 7 hari), `created_at`
+`id`, `user_id`, `type` (`csv` \| `json` \| `pdf_report`), `status` (`queued` \| `running` \| `ready` \| `failed`), `entities` TEXT[], `period_start`, `period_end`, `file_path` (lokal, tidak diekspos), `file_size_bytes`, `error_message`, `metadata` JSONB, `expires_at` (created_at + 7 hari), `created_at`
 
 ---
 

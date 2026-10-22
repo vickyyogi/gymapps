@@ -31,7 +31,14 @@ export type {
   BodyMetric,
   Note,
   PromptVersion,
-  AiGeneration
+  AiGeneration,
+  ChatThread,
+  ChatMessage,
+  AiRecommendation,
+  Export,
+  Notification,
+  FeatureFlag,
+  AuditLog
 } from "@prisma/client";
 
 declare global {

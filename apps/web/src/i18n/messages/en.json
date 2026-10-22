@@ -9,7 +9,11 @@
     "programs": "Programs",
     "exercises": "Exercises",
     "progress": "Progress",
-    "logout": "Log out"
+    "logout": "Log out",
+    "coach": "Coach",
+    "recommendations": "Recommendations",
+    "exports": "Exports",
+    "admin": "Admin"
   },
   "theme": {
     "label": "Theme",
@@ -32,7 +36,8 @@
     "close": "Close",
     "retry": "Try again",
     "remove": "Remove",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "search": "Search"
   },
   "auth": {
     "login": {
@@ -444,6 +449,90 @@
     "POSITION_TAKEN": "That exercise position is already used.",
     "AI_QUOTA_EXCEEDED": "Daily AI generation quota is used up. Try again later.",
     "AI_UNAVAILABLE": "AI features are currently unavailable.",
-    "AI_GENERATION_FAILED": "AI program generation failed. Try again."
+    "AI_GENERATION_FAILED": "AI program generation failed. Try again.",
+    "AI_RATE_LIMITED": "Chat limit reached (30/hour or 200/day). Try again later.",
+    "EXPORT_EXPIRED": "Export link expired. Create a new export.",
+    "EXPORT_NOT_READY": "Export is still processing."
+  },
+  "coach": {
+    "newThread": "New chat",
+    "quota": "Quota left: {hour}/hour · {day}/day",
+    "untitled": "Untitled chat",
+    "delete": "Delete chat",
+    "emptyTitle": "Ask about your program, technique, or progress.",
+    "emptyHint": "Answers use your training data and always cite the source.",
+    "stopped": "Stopped. Text already generated is saved.",
+    "source": "Source",
+    "helpful": "Helpful",
+    "notHelpful": "Not helpful",
+    "placeholder": "Write a question…",
+    "stop": "Stop",
+    "send": "Send"
+  },
+  "recommendations": {
+    "title": "Recommendations",
+    "description": "The rule engine checks your training data and gives evidence-based suggestions.",
+    "empty": "No recommendations yet.",
+    "evidence": "Evidence",
+    "metric": "Metric",
+    "value": "Value",
+    "delta": "Change",
+    "openAction": "Open",
+    "markRead": "Mark read",
+    "dismiss": "Dismiss 30 days",
+    "rules": {
+      "plateau_detection": "Plateau",
+      "deload_suggestion": "Deload",
+      "volume_imbalance": "Volume imbalance",
+      "adherence_drop": "Adherence drop",
+      "overtraining_risk": "Overtraining risk",
+      "pr_milestone": "Personal record",
+      "stale_program": "Stale program",
+      "missing_equipment_conflict": "Equipment conflict",
+      "frequency_low": "Low frequency"
+    }
+  },
+  "exports": {
+    "title": "Export data",
+    "description": "Download training data as CSV/JSON or a monthly PDF report.",
+    "createTitle": "Create export",
+    "json": "Download JSON",
+    "csv": "Download CSV",
+    "ttlHint": "Download links last 7 days and only work for this account.",
+    "reportTitle": "PDF report",
+    "month": "Month",
+    "pdf": "Create PDF",
+    "history": "History",
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "ready": "Ready",
+      "failed": "Failed"
+    },
+    "expires": "Expires {date}",
+    "expired": "Link expired. Create a new export.",
+    "download": "Download",
+    "empty": "No exports yet."
+  },
+  "notifications": {
+    "label": "Notifications",
+    "title": "Notifications",
+    "readAll": "Mark all read",
+    "empty": "No notifications yet."
+  },
+  "admin": {
+    "title": "Exercise admin",
+    "description": "Edit exercise content and publish without a deploy. Changes appear immediately.",
+    "saved": "Changes saved.",
+    "search": "Search exercises…",
+    "nameId": "Name (ID)",
+    "nameEn": "Name (EN)",
+    "descriptionId": "Description (ID)",
+    "descriptionEn": "Description (EN)",
+    "instructionsId": "Instructions (ID, one line per step)",
+    "instructionsEn": "Instructions (EN, one line per step)",
+    "status": "Status",
+    "publish": "Publish",
+    "unpublish": "Set draft"
   }
 }

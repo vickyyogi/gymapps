@@ -16,6 +16,9 @@ const APP_SEGMENTS = new Set([
   "progress",
   "analytics",
   "coach",
+  "recommendations",
+  "exports",
+  "admin",
   "settings"
 ]);
 

@@ -1,0 +1,22 @@
+{
+  "name": "GymApps",
+  "short_name": "GymApps",
+  "description": "Catat latihan, lihat progres.",
+  "start_url": "/id/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Latihan", "url": "/id/workouts" },
+    { "name": "Coach", "url": "/id/coach" },
+    { "name": "Progres", "url": "/id/progress" }
+  ]
+}

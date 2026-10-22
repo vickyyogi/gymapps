@@ -6,6 +6,8 @@ import { getSession } from "@/lib/auth/session";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
+import { PwaRegister } from "@/components/pwa-register";
 
 export const dynamic = "force-dynamic";
 
@@ -56,8 +58,23 @@ export default async function AppLayout({
             <Link href="/progress" className="text-sm text-muted-foreground hover:text-foreground">
               {tNav("progress")}
             </Link>
+            <Link href="/coach" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("coach")}
+            </Link>
+            <Link href="/recommendations" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("recommendations")}
+            </Link>
+            <Link href="/exports" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("exports")}
+            </Link>
+            {session.user.role === "admin" ? (
+              <Link href="/admin/exercises" className="text-sm text-muted-foreground hover:text-foreground">
+                {tNav("admin")}
+              </Link>
+            ) : null}
           </nav>
           <div className="flex shrink-0 items-center gap-2">
+            <NotificationBell locale={locale} />
             <LocaleSwitcher />
             <ThemeToggle />
             <LogoutButton />
@@ -65,6 +82,7 @@ export default async function AppLayout({
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <PwaRegister />
     </div>
   );
 }

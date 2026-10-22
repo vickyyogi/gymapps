@@ -33,6 +33,8 @@ Drift dokumen yang harus dibereskan di Fase 0:
 | Fase 3 | Selesai: exercise seed 200 + filter/pagination + custom owner; program manual/activate/duplicate/archive; workout quick/program, set + PR + agregat, finish, auto-abandoned >24 jam, `Idempotency-Key`, cursor + Zod. Search masih `ILIKE`; FTS ditunda. |
 | Fase 4 | Selesai: profil/onboarding, `available_only`, logger dengan prefill + delta + rest timer + ringkasan, program builder, dashboard analytics, body metrics, notes. Gate E2E `scripts/phase4-e2e.mjs` hijau. |
 | Fase 5 | Selesai: `prompt_versions` + `ai_generations`, context builder ≤5.000 token + redaksi PII, OpenCode Go client dengan retry/timeout, orchestrator quota → tool-use → validator → repair 1× → fallback, API job/status/regenerate, UI generate/regenerate + badge/rationale/banner. Gate E2E `scripts/phase5-e2e.mjs` hijau. |
+| Fase 6 | Selesai: chat thread/message persist, SSE streaming + abort partial, 6 tools + sitasi, guardrail medis deterministik, deteksi bahasa, feedback, kuota 30/jam + 200/hari, kill-switch env + DB `ai_chat`, rule engine setelah finish workout, dismiss 30 hari, evidence + notifikasi. Gate E2E `scripts/phase6-e2e.mjs` hijau. |
+| Fase 7 | Selesai: export CSV/JSON background + signed link 7 hari, PDF Playwright via Chrome sistem, PWA manifest/SW/offline, admin CMS exercise + audit log, notifikasi in-app. Gate E2E `scripts/phase7-e2e.mjs` hijau. |
 | Eksternal | Belum diverifikasi: Docker (daemon tidak tersedia). Sentry tidak dipakai sementara. |
 
 ---
