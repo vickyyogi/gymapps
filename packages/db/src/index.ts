@@ -11,7 +11,26 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export { Prisma } from "@prisma/client";
-export type { User, Session, Entitlement, Muscle, Equipment } from "@prisma/client";
+export type {
+  User,
+  Session,
+  Entitlement,
+  Muscle,
+  MuscleGroup,
+  Equipment,
+  Exercise,
+  Program,
+  ProgramWeek,
+  ProgramSession,
+  ProgramExercise,
+  Workout,
+  WorkoutExercise,
+  WorkoutSet,
+  PersonalRecord,
+  UserProfile,
+  BodyMetric,
+  Note
+} from "@prisma/client";
 
 declare global {
   var prisma: PrismaClient | undefined;

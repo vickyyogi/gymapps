@@ -44,7 +44,7 @@ export function RegisterForm() {
         return;
       }
 
-      router.replace(`/${locale}/dashboard`);
+      router.replace(`/${locale}/onboarding`);
       router.refresh();
     } catch {
       setError(tErrors("NETWORK_ERROR"));

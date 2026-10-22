@@ -9,8 +9,11 @@ const intlMiddleware = createMiddleware(routing);
 const APP_SEGMENTS = new Set([
   "",
   "dashboard",
+  "onboarding",
   "workouts",
   "programs",
+  "exercises",
+  "progress",
   "analytics",
   "coach",
   "settings"

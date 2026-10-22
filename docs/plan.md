@@ -27,10 +27,12 @@ Drift dokumen yang harus dibereskan di Fase 0:
 
 | Fase | Status |
 |---|---|
-| Fase 0 | Selesai untuk kode/dokumen: ADR 001–004 `Accepted`, drift PRD diperbaiki, kontrak tunggal `openapi.yaml` → tipe + Zod, CI skeleton ada, branch `main`/`develop` ada. Redis, object storage, dan Sentry belum diprovisikan. |
-| Fase 1 | Selesai kecuali delivery Sentry: auth/master data/i18n/observability; lint, typecheck, test, build, migrasi, seed, dan auth E2E hijau. |
+| Fase 0 | Selesai untuk kode/dokumen: ADR 001–004 `Accepted`, drift PRD diperbaiki, kontrak tunggal `openapi.yaml` → tipe + Zod, CI skeleton ada, branch `main`/`develop` ada. Redis dan object storage belum diprovisikan; Sentry ditunda. |
+| Fase 1 | Selesai: auth/master data/i18n/observability (structured log); lint, typecheck, test, build, migrasi, seed, dan auth E2E hijau. |
 | Fase 2 | Selesai: `packages/domain`, 27 test tanpa DB/API. |
-| Eksternal | Belum diverifikasi: pengiriman Sentry (DSN kosong), Docker (daemon tidak tersedia). |
+| Fase 3 | Selesai: exercise seed 200 + filter/pagination + custom owner; program manual/activate/duplicate/archive; workout quick/program, set + PR + agregat, finish, auto-abandoned >24 jam, `Idempotency-Key`, cursor + Zod. Search masih `ILIKE`; FTS ditunda. |
+| Fase 4 | Selesai: profil/onboarding, `available_only`, logger dengan prefill + delta + rest timer + ringkasan, program builder, dashboard analytics, body metrics, notes. Gate E2E `scripts/phase4-e2e.mjs` hijau. |
+| Eksternal | Belum diverifikasi: Docker (daemon tidak tersedia). Sentry tidak dipakai sementara. |
 
 ---
 
@@ -56,7 +58,7 @@ Setiap fase punya gate. Fase berikutnya tidak dimulai sebelum gate fase sebelumn
 1. Pindahkan `gymapps` ke repo sendiri; branch `main` + `develop`.
 2. Putuskan Q-02, Q-06, Q-08, Q-10; isi ADR.
 3. Tetapkan satu sumber kontrak: `openapi.yaml` → generator tipe/Zod. Tidak ada definisi kedua.
-4. Siapkan environment: Postgres (hosted atau Docker), Redis, object storage, Opencode API, email, Sentry, PostHog.
+4. Siapkan environment: Postgres (hosted atau Docker), Redis, object storage, Opencode API, email, PostHog. Sentry ditunda.
 5. Tulis CI skeleton: lint, typecheck, test, build.
 
 **Gate:** semua ADR berstatus `Accepted`; CI jalan walau belum ada test; environment dev bisa connect DB.
@@ -71,7 +73,7 @@ Setiap fase punya gate. Fase berikutnya tidak dimulai sebelum gate fase sebelumn
 | 1.4 | Auth credentials: register, login, logout, logout-all, me, Argon2id, cookie session, sliding expiry | Login → `/auth/me` 200; session expired → 401; logout-all revoke 2 device |
 | 1.5 | Middleware auth gate, error envelope, request ID, rate limit login | 5 login gagal → 429; route `(app)` redirect `?next=` |
 | 1.6 | Shell i18n `/id` `/en`, layout, theme, empty state | Nol string user-facing hardcoded |
-| 1.7 | Sentry, structured log, `/health` | Error buatan muncul di Sentry |
+| 1.7 | Structured log + request ID, `/health` | Error buatan tercatat di log; health 200/503 |
 
 ### Fase 2 — Domain murni (paralel Sprint 2–3)
 
@@ -90,7 +92,9 @@ Bangun `domain/` dengan fixture; tanpa React, Next.js, Prisma, atau DB.
 
 **Gate:** seluruh test domain lulus tanpa DB/API.
 
-### Fase 3 — Data & API inti (Sprint 3–4)
+### Fase 3 — Data & API inti (Sprint 3–4) — selesai
+
+Status: route exercise/program/workout/set, migrasi `20261022113721_phase3`, seed 200 exercise, dan gate integration test di `scripts/phase3-e2e.mjs`.
 
 Urutan dependensi: exercise → program → workout → set.
 
@@ -108,7 +112,11 @@ Urutan dependensi: exercise → program → workout → set.
 - Dua program aktif → ditolak DB.
 - Resource user lain → 403.
 
-### Fase 4 — UI loop utama (Sprint 4–5)
+Diverifikasi dengan server lokal: `BASE_URL=http://localhost:3100/api/v1 npm run test:phase3`.
+
+### Fase 4 — UI loop utama (Sprint 4–5) — selesai
+
+Status: UI `/onboarding`, `/dashboard`, `/workouts`, `/workouts/[id]`, `/programs`, `/programs/[id]`, `/exercises`, `/progress`; API `/profile`, `/analytics/*`, `/body-metrics`, `/notes`; migrasi `20261022115505_phase4`; gate `scripts/phase4-e2e.mjs`.
 
 1. Onboarding 5 langkah + skip + banner perubahan goal.
 2. Exercise picker + filter "hanya equipment saya".
@@ -118,6 +126,8 @@ Urutan dependensi: exercise → program → workout → set.
 6. Body metrics + notes.
 
 **Gate:** logging ≤ 2 interaksi (`G-02`); E2E signup → onboarding → sesi → 3 set → finish → dashboard.
+
+Diverifikasi dengan server lokal: `BASE_URL=http://localhost:3100/api/v1 npm run test:phase4`.
 
 ### Fase 5 — AI program generator (Sprint 7–8)
 

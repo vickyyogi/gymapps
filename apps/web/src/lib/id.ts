@@ -2,6 +2,23 @@ import { monotonicFactory } from "ulid";
 
 const ulid = monotonicFactory();
 
-export function newId(prefix: "usr" | "ses" | "ent") {
+export type IdPrefix =
+  | "usr"
+  | "ses"
+  | "ent"
+  | "ex"
+  | "prg"
+  | "pwk"
+  | "pss"
+  | "pex"
+  | "wkt"
+  | "wex"
+  | "wst"
+  | "pr"
+  | "idm"
+  | "bmt"
+  | "note";
+
+export function newId(prefix: IdPrefix) {
   return `${prefix}_${ulid()}`;
 }

@@ -53,6 +53,131 @@ const equipment = [
   { code: "other", nameId: "Lainnya", nameEn: "Other", icon: "other" }
 ] as const;
 
+type EquipmentCode = (typeof equipment)[number]["code"];
+
+const equipmentLabel = Object.fromEntries(
+  equipment.map((item) => [item.code, { id: item.nameId, en: item.nameEn }])
+) as Record<EquipmentCode, { id: string; en: string }>;
+
+type Movement = {
+  slug: string;
+  nameId: string;
+  nameEn: string;
+  primaryMuscle: (typeof muscles)[number]["code"];
+  secondaryMuscles: (typeof muscles)[number]["code"][];
+  equipment: [EquipmentCode, EquipmentCode, EquipmentCode, EquipmentCode];
+  difficulty: "beginner" | "intermediate" | "advanced";
+  pattern: string;
+  compound: boolean;
+  contraindications: string[];
+};
+
+// 50 movements × 4 equipment variants = 200 deterministic seed exercises.
+const movements: Movement[] = [
+  { slug: "bench-press", nameId: "Bench Press", nameEn: "Bench Press", primaryMuscle: "chest", secondaryMuscles: ["triceps", "shoulders"], equipment: ["barbell", "dumbbell", "smith_machine", "machine"], difficulty: "intermediate", pattern: "push", compound: true, contraindications: ["shoulder"] },
+  { slug: "incline-press", nameId: "Incline Press", nameEn: "Incline Press", primaryMuscle: "chest", secondaryMuscles: ["shoulders", "triceps"], equipment: ["barbell", "dumbbell", "smith_machine", "machine"], difficulty: "intermediate", pattern: "push", compound: true, contraindications: ["shoulder"] },
+  { slug: "chest-fly", nameId: "Chest Fly", nameEn: "Chest Fly", primaryMuscle: "chest", secondaryMuscles: ["shoulders"], equipment: ["dumbbell", "cable", "machine", "resistance_band"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["shoulder"] },
+  { slug: "push-up", nameId: "Push-up", nameEn: "Push-up", primaryMuscle: "chest", secondaryMuscles: ["triceps", "core"], equipment: ["bodyweight", "dumbbell", "bench", "resistance_band"], difficulty: "beginner", pattern: "push", compound: true, contraindications: ["wrist", "shoulder"] },
+  { slug: "row", nameId: "Row", nameEn: "Row", primaryMuscle: "back", secondaryMuscles: ["lats", "biceps"], equipment: ["barbell", "dumbbell", "cable", "machine"], difficulty: "intermediate", pattern: "pull", compound: true, contraindications: ["lower_back"] },
+  { slug: "pulldown", nameId: "Pulldown", nameEn: "Pulldown", primaryMuscle: "lats", secondaryMuscles: ["back", "biceps"], equipment: ["cable", "machine", "resistance_band", "bodyweight"], difficulty: "beginner", pattern: "pull", compound: true, contraindications: ["shoulder"] },
+  { slug: "pull-up", nameId: "Pull-up", nameEn: "Pull-up", primaryMuscle: "lats", secondaryMuscles: ["back", "biceps"], equipment: ["pullup_bar", "bodyweight", "resistance_band", "machine"], difficulty: "advanced", pattern: "pull", compound: true, contraindications: ["shoulder", "elbow"] },
+  { slug: "straight-arm-pulldown", nameId: "Straight-arm Pulldown", nameEn: "Straight-arm Pulldown", primaryMuscle: "lats", secondaryMuscles: ["back", "core"], equipment: ["cable", "machine", "resistance_band", "dumbbell"], difficulty: "intermediate", pattern: "pull", compound: false, contraindications: ["shoulder"] },
+  { slug: "overhead-press", nameId: "Overhead Press", nameEn: "Overhead Press", primaryMuscle: "shoulders", secondaryMuscles: ["triceps", "core"], equipment: ["barbell", "dumbbell", "machine", "smith_machine"], difficulty: "intermediate", pattern: "push", compound: true, contraindications: ["shoulder", "lower_back"] },
+  { slug: "lateral-raise", nameId: "Lateral Raise", nameEn: "Lateral Raise", primaryMuscle: "shoulders", secondaryMuscles: ["traps"], equipment: ["dumbbell", "cable", "machine", "resistance_band"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["shoulder"] },
+  { slug: "rear-delt-fly", nameId: "Rear Delt Fly", nameEn: "Rear Delt Fly", primaryMuscle: "shoulders", secondaryMuscles: ["back", "traps"], equipment: ["dumbbell", "cable", "machine", "resistance_band"], difficulty: "beginner", pattern: "pull", compound: false, contraindications: ["shoulder"] },
+  { slug: "face-pull", nameId: "Face Pull", nameEn: "Face Pull", primaryMuscle: "shoulders", secondaryMuscles: ["traps", "back"], equipment: ["cable", "resistance_band", "machine", "dumbbell"], difficulty: "beginner", pattern: "pull", compound: false, contraindications: ["shoulder"] },
+  { slug: "curl", nameId: "Curl", nameEn: "Curl", primaryMuscle: "biceps", secondaryMuscles: ["forearms"], equipment: ["barbell", "dumbbell", "cable", "machine"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["elbow", "wrist"] },
+  { slug: "hammer-curl", nameId: "Hammer Curl", nameEn: "Hammer Curl", primaryMuscle: "biceps", secondaryMuscles: ["forearms"], equipment: ["dumbbell", "cable", "machine", "resistance_band"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["elbow", "wrist"] },
+  { slug: "preacher-curl", nameId: "Preacher Curl", nameEn: "Preacher Curl", primaryMuscle: "biceps", secondaryMuscles: ["forearms"], equipment: ["barbell", "dumbbell", "machine", "cable"], difficulty: "intermediate", pattern: "isolation", compound: false, contraindications: ["elbow"] },
+  { slug: "triceps-extension", nameId: "Triceps Extension", nameEn: "Triceps Extension", primaryMuscle: "triceps", secondaryMuscles: ["shoulders"], equipment: ["cable", "dumbbell", "machine", "resistance_band"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["elbow"] },
+  { slug: "skull-crusher", nameId: "Skull Crusher", nameEn: "Skull Crusher", primaryMuscle: "triceps", secondaryMuscles: ["shoulders"], equipment: ["barbell", "dumbbell", "machine", "cable"], difficulty: "intermediate", pattern: "isolation", compound: false, contraindications: ["elbow"] },
+  { slug: "dip", nameId: "Dip", nameEn: "Dip", primaryMuscle: "triceps", secondaryMuscles: ["chest", "shoulders"], equipment: ["dip_bar", "bodyweight", "machine", "bench"], difficulty: "advanced", pattern: "push", compound: true, contraindications: ["shoulder"] },
+  { slug: "squat", nameId: "Squat", nameEn: "Squat", primaryMuscle: "quads", secondaryMuscles: ["glutes", "hamstrings", "core"], equipment: ["barbell", "dumbbell", "smith_machine", "bodyweight"], difficulty: "intermediate", pattern: "squat", compound: true, contraindications: ["knee", "lower_back"] },
+  { slug: "front-squat", nameId: "Front Squat", nameEn: "Front Squat", primaryMuscle: "quads", secondaryMuscles: ["glutes", "core"], equipment: ["barbell", "dumbbell", "smith_machine", "kettlebell"], difficulty: "advanced", pattern: "squat", compound: true, contraindications: ["knee", "wrist"] },
+  { slug: "leg-press", nameId: "Leg Press", nameEn: "Leg Press", primaryMuscle: "quads", secondaryMuscles: ["glutes", "hamstrings"], equipment: ["machine", "smith_machine", "bodyweight", "resistance_band"], difficulty: "beginner", pattern: "squat", compound: true, contraindications: ["knee"] },
+  { slug: "lunge", nameId: "Lunge", nameEn: "Lunge", primaryMuscle: "quads", secondaryMuscles: ["glutes", "hamstrings"], equipment: ["dumbbell", "barbell", "bodyweight", "kettlebell"], difficulty: "intermediate", pattern: "squat", compound: true, contraindications: ["knee"] },
+  { slug: "leg-extension", nameId: "Leg Extension", nameEn: "Leg Extension", primaryMuscle: "quads", secondaryMuscles: [], equipment: ["machine", "cable", "resistance_band", "bodyweight"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["knee"] },
+  { slug: "deadlift", nameId: "Deadlift", nameEn: "Deadlift", primaryMuscle: "hamstrings", secondaryMuscles: ["glutes", "back", "lower_back"], equipment: ["barbell", "dumbbell", "kettlebell", "smith_machine"], difficulty: "advanced", pattern: "hinge", compound: true, contraindications: ["lower_back"] },
+  { slug: "romanian-deadlift", nameId: "Romanian Deadlift", nameEn: "Romanian Deadlift", primaryMuscle: "hamstrings", secondaryMuscles: ["glutes", "lower_back"], equipment: ["barbell", "dumbbell", "kettlebell", "cable"], difficulty: "intermediate", pattern: "hinge", compound: true, contraindications: ["lower_back"] },
+  { slug: "leg-curl", nameId: "Leg Curl", nameEn: "Leg Curl", primaryMuscle: "hamstrings", secondaryMuscles: ["calves"], equipment: ["machine", "cable", "resistance_band", "bodyweight"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["knee"] },
+  { slug: "good-morning", nameId: "Good Morning", nameEn: "Good Morning", primaryMuscle: "hamstrings", secondaryMuscles: ["lower_back", "glutes"], equipment: ["barbell", "dumbbell", "resistance_band", "machine"], difficulty: "intermediate", pattern: "hinge", compound: true, contraindications: ["lower_back"] },
+  { slug: "hip-thrust", nameId: "Hip Thrust", nameEn: "Hip Thrust", primaryMuscle: "glutes", secondaryMuscles: ["hamstrings", "core"], equipment: ["barbell", "dumbbell", "machine", "bodyweight"], difficulty: "intermediate", pattern: "hinge", compound: true, contraindications: ["hip"] },
+  { slug: "glute-bridge", nameId: "Glute Bridge", nameEn: "Glute Bridge", primaryMuscle: "glutes", secondaryMuscles: ["hamstrings", "core"], equipment: ["bodyweight", "barbell", "dumbbell", "resistance_band"], difficulty: "beginner", pattern: "hinge", compound: false, contraindications: ["hip"] },
+  { slug: "kickback", nameId: "Kickback", nameEn: "Kickback", primaryMuscle: "glutes", secondaryMuscles: ["hamstrings"], equipment: ["cable", "machine", "resistance_band", "bodyweight"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["hip"] },
+  { slug: "calf-raise", nameId: "Calf Raise", nameEn: "Calf Raise", primaryMuscle: "calves", secondaryMuscles: [], equipment: ["machine", "smith_machine", "dumbbell", "bodyweight"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["ankle"] },
+  { slug: "crunch", nameId: "Crunch", nameEn: "Crunch", primaryMuscle: "abs", secondaryMuscles: ["core"], equipment: ["bodyweight", "cable", "machine", "resistance_band"], difficulty: "beginner", pattern: "core", compound: false, contraindications: ["lower_back"] },
+  { slug: "plank", nameId: "Plank", nameEn: "Plank", primaryMuscle: "core", secondaryMuscles: ["abs", "shoulders"], equipment: ["bodyweight", "resistance_band", "dumbbell", "machine"], difficulty: "beginner", pattern: "core", compound: false, contraindications: ["lower_back", "shoulder"] },
+  { slug: "leg-raise", nameId: "Leg Raise", nameEn: "Leg Raise", primaryMuscle: "abs", secondaryMuscles: ["core"], equipment: ["bodyweight", "cable", "machine", "resistance_band"], difficulty: "intermediate", pattern: "core", compound: false, contraindications: ["lower_back"] },
+  { slug: "ab-wheel", nameId: "Ab Wheel", nameEn: "Ab Wheel", primaryMuscle: "abs", secondaryMuscles: ["core", "lats"], equipment: ["other", "bodyweight", "machine", "resistance_band"], difficulty: "advanced", pattern: "core", compound: false, contraindications: ["lower_back", "shoulder"] },
+  { slug: "russian-twist", nameId: "Russian Twist", nameEn: "Russian Twist", primaryMuscle: "obliques", secondaryMuscles: ["abs", "core"], equipment: ["bodyweight", "dumbbell", "kettlebell", "cable"], difficulty: "intermediate", pattern: "core", compound: false, contraindications: ["lower_back"] },
+  { slug: "side-bend", nameId: "Side Bend", nameEn: "Side Bend", primaryMuscle: "obliques", secondaryMuscles: ["core"], equipment: ["dumbbell", "cable", "kettlebell", "machine"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["lower_back"] },
+  { slug: "shrug", nameId: "Shrug", nameEn: "Shrug", primaryMuscle: "traps", secondaryMuscles: ["shoulders"], equipment: ["barbell", "dumbbell", "machine", "cable"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["neck"] },
+  { slug: "upright-row", nameId: "Upright Row", nameEn: "Upright Row", primaryMuscle: "traps", secondaryMuscles: ["shoulders", "back"], equipment: ["barbell", "dumbbell", "cable", "machine"], difficulty: "intermediate", pattern: "pull", compound: false, contraindications: ["shoulder", "wrist"] },
+  { slug: "wrist-curl", nameId: "Wrist Curl", nameEn: "Wrist Curl", primaryMuscle: "forearms", secondaryMuscles: [], equipment: ["barbell", "dumbbell", "cable", "machine"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["wrist"] },
+  { slug: "reverse-curl", nameId: "Reverse Curl", nameEn: "Reverse Curl", primaryMuscle: "forearms", secondaryMuscles: ["biceps"], equipment: ["barbell", "dumbbell", "cable", "machine"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["wrist", "elbow"] },
+  { slug: "adduction", nameId: "Adduction", nameEn: "Adduction", primaryMuscle: "adductors", secondaryMuscles: ["glutes"], equipment: ["machine", "cable", "resistance_band", "bodyweight"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["groin"] },
+  { slug: "abduction", nameId: "Abduction", nameEn: "Abduction", primaryMuscle: "abductors", secondaryMuscles: ["glutes"], equipment: ["machine", "cable", "resistance_band", "bodyweight"], difficulty: "beginner", pattern: "isolation", compound: false, contraindications: ["hip"] },
+  { slug: "back-extension", nameId: "Back Extension", nameEn: "Back Extension", primaryMuscle: "lower_back", secondaryMuscles: ["glutes", "hamstrings"], equipment: ["machine", "bodyweight", "barbell", "resistance_band"], difficulty: "beginner", pattern: "hinge", compound: false, contraindications: ["lower_back"] },
+  { slug: "clean", nameId: "Clean", nameEn: "Clean", primaryMuscle: "full_body", secondaryMuscles: ["quads", "glutes", "traps"], equipment: ["barbell", "dumbbell", "kettlebell", "smith_machine"], difficulty: "advanced", pattern: "hinge", compound: true, contraindications: ["lower_back", "wrist"] },
+  { slug: "thruster", nameId: "Thruster", nameEn: "Thruster", primaryMuscle: "full_body", secondaryMuscles: ["quads", "shoulders", "core"], equipment: ["barbell", "dumbbell", "kettlebell", "bodyweight"], difficulty: "advanced", pattern: "squat", compound: true, contraindications: ["knee", "shoulder"] },
+  { slug: "burpee", nameId: "Burpee", nameEn: "Burpee", primaryMuscle: "full_body", secondaryMuscles: ["chest", "quads", "core"], equipment: ["bodyweight", "dumbbell", "kettlebell", "resistance_band"], difficulty: "intermediate", pattern: "conditioning", compound: true, contraindications: ["knee", "wrist"] },
+  { slug: "cardio-row", nameId: "Row Kardio", nameEn: "Cardio Row", primaryMuscle: "cardio", secondaryMuscles: ["back", "quads"], equipment: ["cardio_machine", "bodyweight", "machine", "resistance_band"], difficulty: "beginner", pattern: "conditioning", compound: true, contraindications: ["lower_back"] },
+  { slug: "cycling", nameId: "Bersepeda", nameEn: "Cycling", primaryMuscle: "cardio", secondaryMuscles: ["quads", "calves"], equipment: ["cardio_machine", "bodyweight", "machine", "other"], difficulty: "beginner", pattern: "conditioning", compound: true, contraindications: ["knee"] },
+  { slug: "jump-rope", nameId: "Lompat Tali", nameEn: "Jump Rope", primaryMuscle: "cardio", secondaryMuscles: ["calves", "core"], equipment: ["bodyweight", "other", "resistance_band", "machine"], difficulty: "intermediate", pattern: "conditioning", compound: true, contraindications: ["ankle", "knee"] }
+];
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function buildExercises() {
+  return movements.flatMap((movement) =>
+    movement.equipment.map((equipmentCode) => {
+      const label = equipmentLabel[equipmentCode];
+      const nameId = `${label.id} ${movement.nameId}`;
+      const nameEn = `${label.en} ${movement.nameEn}`;
+      const slug = `${movement.slug}-${equipmentCode}`;
+
+      return {
+        id: `ex_${slugify(slug)}`,
+        slug,
+        nameId,
+        nameEn,
+        descriptionId: `${nameId} melatih ${movement.nameId.toLowerCase()} dengan pola gerak ${movement.pattern}.`,
+        descriptionEn: `${nameEn} trains ${movement.nameEn.toLowerCase()} with a ${movement.pattern} movement pattern.`,
+        instructionsId: [
+          "Atur posisi dan beban sesuai kemampuan.",
+          "Jaga postur netral serta kontrol gerakan saat turun.",
+          "Dorong atau tarik dengan tempo stabil, lalu kembali ke posisi awal."
+        ],
+        instructionsEn: [
+          "Set your position and load to a controllable level.",
+          "Keep a neutral posture and control the lowering phase.",
+          "Drive or pull with a steady tempo, then return to the start."
+        ],
+        primaryMuscle: movement.primaryMuscle,
+        secondaryMuscles: movement.secondaryMuscles,
+        equipment: [equipmentCode],
+        difficulty: movement.difficulty,
+        movementPattern: movement.pattern,
+        impactLevel: movement.pattern === "conditioning" ? "medium" : "low",
+        contraindicatedAreas: movement.contraindications,
+        isCompound: movement.compound,
+        status: "published",
+        source: "seed"
+      };
+    })
+  );
+}
+
+const seedExercises = buildExercises();
+if (seedExercises.length !== 200) {
+  throw new Error(`exercise seed must contain 200 rows, got ${seedExercises.length}`);
+}
+
 async function main() {
   for (const [index, m] of muscles.entries()) {
     await prisma.muscle.upsert({
@@ -70,11 +195,23 @@ async function main() {
     });
   }
 
-  const [muscleCount, equipmentCount] = await Promise.all([
+  for (const exercise of seedExercises) {
+    const { id, ...data } = exercise;
+    await prisma.exercise.upsert({
+      where: { slug: exercise.slug },
+      update: data,
+      create: { id, ...data }
+    });
+  }
+
+  const [muscleCount, equipmentCount, exerciseCount] = await Promise.all([
     prisma.muscle.count(),
-    prisma.equipment.count()
+    prisma.equipment.count(),
+    prisma.exercise.count({ where: { source: "seed", deletedAt: null } })
   ]);
-  console.log(`seed ok: ${muscleCount} muscles, ${equipmentCount} equipment`);
+  console.log(
+    `seed ok: ${muscleCount} muscles, ${equipmentCount} equipment, ${exerciseCount} exercises`
+  );
 }
 
 main()

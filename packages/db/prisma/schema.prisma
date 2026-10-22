@@ -1,5 +1,6 @@
 // GymApps v1 schema. Source of truth: docs/data-model.md.
-// Phase 1 scope: users, sessions, entitlements, muscles, equipment.
+// Phase 1: users, sessions, entitlements, muscles, equipment.
+// Phase 3: exercises, programs, workouts, sets, personal records, idempotency.
 // email uses TEXT (lowercased in app) instead of CITEXT so Prisma migrate stays drift-free.
 
 generator client {
@@ -75,8 +76,17 @@ model User {
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions     Session[]
-  entitlements Entitlement[]
+  sessions        Session[]
+  entitlements    Entitlement[]
+  customExercises Exercise[]
+  programs        Program[]
+  workouts        Workout[]
+  workoutSets     WorkoutSet[]
+  personalRecords PersonalRecord[]
+  idempotencyKeys IdempotencyKey[]
+  profile         UserProfile?
+  bodyMetrics     BodyMetric[]
+  notes           Note[]
 
   @@index([status], map: "idx_users_status")
   @@index([deletedAt], map: "idx_users_deleted_at")
@@ -139,4 +149,330 @@ model Equipment {
   createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("equipment")
+}
+
+model Exercise {
+  id                   String          @id
+  slug                 String          @unique
+  nameId               String          @map("name_id")
+  nameEn               String          @map("name_en")
+  descriptionId        String?         @map("description_id")
+  descriptionEn        String?         @map("description_en")
+  instructionsId       String[]        @default([]) @map("instructions_id")
+  instructionsEn       String[]        @default([]) @map("instructions_en")
+  primaryMuscle        MuscleGroup     @map("primary_muscle")
+  secondaryMuscles     MuscleGroup[]   @default([]) @map("secondary_muscles")
+  equipment            EquipmentType[] @default([])
+  difficulty           String          @default("intermediate")
+  movementPattern      String?         @map("movement_pattern")
+  impactLevel          String          @default("low") @map("impact_level")
+  contraindicatedAreas String[]        @default([]) @map("contraindicated_areas")
+  isCompound           Boolean         @default(false) @map("is_compound")
+  status               String          @default("published")
+  source               String          @default("seed")
+  ownerUserId          String?         @map("owner_user_id")
+  reviewNotes          String?         @map("review_notes")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt            DateTime?       @map("deleted_at") @db.Timestamptz(3)
+
+  owner            User?             @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  programExercises ProgramExercise[]
+  workoutExercises WorkoutExercise[]
+  workoutSets      WorkoutSet[]
+  personalRecords  PersonalRecord[]
+
+  @@index([primaryMuscle], map: "idx_exercises_primary_muscle")
+  @@index([status, source], map: "idx_exercises_status_source")
+  @@index([ownerUserId], map: "idx_exercises_owner")
+  @@map("exercises")
+}
+
+model Program {
+  id              String    @id
+  userId          String    @map("user_id")
+  name            String
+  description     String?
+  status          String    @default("draft")
+  source          String    @default("manual")
+  goal            String?
+  splitType       String    @map("split_type")
+  durationWeeks   Int       @map("duration_weeks")
+  daysPerWeek     Int       @map("days_per_week")
+  sessionMinutes  Int       @default(60) @map("session_minutes")
+  startDate       DateTime? @map("start_date") @db.Date
+  progressionType String    @default("double_progression") @map("progression_type")
+  aiGenerated     Boolean   @default(false) @map("ai_generated")
+  aiRationale     Json?     @map("ai_rationale")
+  isStale         Boolean   @default(false) @map("is_stale")
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeks    ProgramWeek[]
+  sessions ProgramSession[]
+  workouts Workout[]
+
+  @@index([userId, status], map: "idx_programs_user_status")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_programs_user_created")
+  @@map("programs")
+}
+
+model ProgramWeek {
+  id               String  @id
+  programId        String  @map("program_id")
+  weekNumber       Int     @map("week_number")
+  focusNote        String? @map("focus_note")
+  isDeload         Boolean @default(false) @map("is_deload")
+  volumeMultiplier Decimal @default(1) @map("volume_multiplier") @db.Decimal(4, 2)
+
+  program  Program          @relation(fields: [programId], references: [id], onDelete: Cascade)
+  sessions ProgramSession[]
+
+  @@unique([programId, weekNumber], map: "uniq_program_week")
+  @@map("program_weeks")
+}
+
+model ProgramSession {
+  id               String    @id
+  programId        String    @map("program_id")
+  programWeekId    String    @map("program_week_id")
+  dayIndex         Int       @map("day_index")
+  name             String
+  notes            String?
+  estimatedMinutes Int?      @map("estimated_minutes")
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  program   Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  week      ProgramWeek       @relation(fields: [programWeekId], references: [id], onDelete: Cascade)
+  exercises ProgramExercise[]
+  workouts  Workout[]
+
+  @@unique([programId, programWeekId, dayIndex], map: "uniq_program_session_day")
+  @@index([programId], map: "idx_program_sessions_program")
+  @@map("program_sessions")
+}
+
+model ProgramExercise {
+  id               String   @id
+  programSessionId String   @map("program_session_id")
+  exerciseId       String   @map("exercise_id")
+  position         Int
+  targetSets       Int      @default(3) @map("target_sets")
+  targetRepsMin    Int      @default(8) @map("target_reps_min")
+  targetRepsMax    Int      @default(12) @map("target_reps_max")
+  targetRpe        Decimal? @map("target_rpe") @db.Decimal(2, 1)
+  restSeconds      Int      @default(90) @map("rest_seconds")
+  tempo            String?
+  isWarmup         Boolean  @default(false) @map("is_warmup")
+  supersetGroup    Int?     @map("superset_group")
+  notes            String?
+  progression      Json?
+  aiGenerated      Boolean  @default(false) @map("ai_generated")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  session  ProgramSession @relation(fields: [programSessionId], references: [id], onDelete: Cascade)
+  exercise Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@unique([programSessionId, position], map: "uniq_program_exercise_position")
+  @@index([exerciseId], map: "idx_program_exercises_exercise")
+  @@map("program_exercises")
+}
+
+model Workout {
+  id               String    @id
+  userId           String    @map("user_id")
+  programId        String?   @map("program_id")
+  programSessionId String?   @map("program_session_id")
+  templateId       String?   @map("template_id")
+  title            String?
+  status           String    @default("active")
+  startedAt        DateTime  @map("started_at") @db.Timestamptz(3)
+  endedAt          DateTime? @map("ended_at") @db.Timestamptz(3)
+  durationSeconds  Int?      @map("duration_seconds")
+  notes            String?
+  bodyweightKg     Decimal?  @map("bodyweight_kg") @db.Decimal(5, 1)
+  sessionRpe       Decimal?  @map("session_rpe") @db.Decimal(2, 1)
+  totalVolumeKg    Decimal   @default(0) @map("total_volume_kg") @db.Decimal(12, 2)
+  totalSets        Int       @default(0) @map("total_sets")
+  totalReps        Int       @default(0) @map("total_reps")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program        Program?          @relation(fields: [programId], references: [id], onDelete: SetNull)
+  programSession ProgramSession?   @relation(fields: [programSessionId], references: [id], onDelete: SetNull)
+  exercises      WorkoutExercise[]
+  sets           WorkoutSet[]
+  journalNotes   Note[]
+
+  @@index([userId, startedAt(sort: Desc)], map: "idx_workouts_user_started")
+  @@index([userId, status], map: "idx_workouts_user_status")
+  @@index([programSessionId], map: "idx_workouts_program_session")
+  @@map("workouts")
+}
+
+model WorkoutExercise {
+  id            String   @id
+  workoutId     String   @map("workout_id")
+  exerciseId    String   @map("exercise_id")
+  position      Int
+  notes         String?
+  supersetGroup Int?     @map("superset_group")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  workout  Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise Exercise     @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  sets     WorkoutSet[]
+
+  @@unique([workoutId, position], map: "uniq_workout_exercise_position")
+  @@index([exerciseId], map: "idx_workout_exercises_exercise")
+  @@map("workout_exercises")
+}
+
+model WorkoutSet {
+  id                String    @id
+  workoutExerciseId String    @map("workout_exercise_id")
+  workoutId         String    @map("workout_id")
+  userId            String    @map("user_id")
+  exerciseId        String    @map("exercise_id")
+  setNumber         Int       @map("set_number")
+  weightKg          Decimal   @default(0) @map("weight_kg") @db.Decimal(6, 2)
+  reps              Int       @default(0)
+  rpe               Decimal?  @db.Decimal(2, 1)
+  isWarmup          Boolean   @default(false) @map("is_warmup")
+  isCompleted       Boolean   @default(true) @map("is_completed")
+  isPr              Boolean   @default(false) @map("is_pr")
+  est1rmKg          Decimal?  @map("est_1rm_kg") @db.Decimal(6, 2)
+  volumeKg          Decimal   @default(0) @map("volume_kg") @db.Decimal(10, 2)
+  durationSeconds   Int?      @map("duration_seconds")
+  distanceKm        Decimal?  @map("distance_km") @db.Decimal(8, 3)
+  avgHeartRate      Int?      @map("avg_heart_rate")
+  calories          Int?
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  workoutExercise WorkoutExercise  @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+  workout         Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise        Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  personalRecords PersonalRecord[]
+
+  @@unique([workoutExerciseId, setNumber], map: "uniq_workout_set_number")
+  @@index([workoutId], map: "idx_sets_workout")
+  @@index([userId, exerciseId, createdAt(sort: Desc)], map: "idx_sets_user_exercise_date")
+  @@index([userId, createdAt(sort: Desc)], map: "idx_sets_user_created")
+  @@index([isPr], map: "idx_sets_pr")
+  @@map("workout_sets")
+}
+
+model PersonalRecord {
+  id           String   @id
+  userId       String   @map("user_id")
+  exerciseId   String   @map("exercise_id")
+  recordType   String   @map("record_type")
+  value        Decimal  @db.Decimal(8, 2)
+  reps         Int?
+  weightKg     Decimal? @map("weight_kg") @db.Decimal(6, 2)
+  achievedAt   DateTime @map("achieved_at") @db.Timestamptz(3)
+  workoutSetId String?  @map("workout_set_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise   Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  workoutSet WorkoutSet? @relation(fields: [workoutSetId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, exerciseId, recordType, achievedAt], map: "uniq_pr_user_exercise_type_time")
+  @@index([userId, exerciseId], map: "idx_pr_user_exercise")
+  @@map("personal_records")
+}
+
+model IdempotencyKey {
+  id         String   @id
+  userId     String   @map("user_id")
+  key        String
+  method     String
+  path       String
+  statusCode Int      @map("status_code")
+  response   Json
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key], map: "uniq_idempotency_user_key")
+  @@index([createdAt], map: "idx_idempotency_created")
+  @@map("idempotency_keys")
+}
+
+model UserProfile {
+  userId            String          @id @map("user_id")
+  goals             String[]        @default([])
+  experienceLevel   String?         @map("experience_level")
+  daysPerWeek       Int?            @map("days_per_week")
+  sessionMinutes    Int?            @map("session_minutes")
+  equipment         EquipmentType[] @default([])
+  injuryAreas       String[]        @default([]) @map("injury_areas")
+  injuryNotes       String?         @map("injury_notes")
+  preferredSplit    String?         @map("preferred_split")
+  preferredCardio   String[]        @default([]) @map("preferred_cardio")
+  heightCm          Decimal?        @map("height_cm") @db.Decimal(5, 1)
+  birthDate         DateTime?       @map("birth_date") @db.Date
+  sex               String?
+  programStyleNotes String?         @map("program_style_notes")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model BodyMetric {
+  id         String    @id
+  userId     String    @map("user_id")
+  recordedOn DateTime  @map("recorded_on") @db.Date
+  weightKg   Decimal?  @map("weight_kg") @db.Decimal(5, 1)
+  bodyFatPct Decimal?  @map("body_fat_pct") @db.Decimal(4, 1)
+  chestCm    Decimal?  @map("chest_cm") @db.Decimal(5, 1)
+  waistCm    Decimal?  @map("waist_cm") @db.Decimal(5, 1)
+  hipCm      Decimal?  @map("hip_cm") @db.Decimal(5, 1)
+  armCm      Decimal?  @map("arm_cm") @db.Decimal(5, 1)
+  thighCm    Decimal?  @map("thigh_cm") @db.Decimal(5, 1)
+  calfCm     Decimal?  @map("calf_cm") @db.Decimal(5, 1)
+  shoulderCm Decimal?  @map("shoulder_cm") @db.Decimal(5, 1)
+  photoUrls  String[]  @default([]) @map("photo_urls")
+  notes      String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recordedOn], map: "uniq_body_metric_user_date")
+  @@index([userId, recordedOn(sort: Desc)], map: "idx_body_metrics_user_date")
+  @@map("body_metrics")
+}
+
+model Note {
+  id        String    @id
+  userId    String    @map("user_id")
+  workoutId String?   @map("workout_id")
+  category  String    @default("general")
+  body      String
+  isPinned  Boolean   @default(false) @map("is_pinned")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout Workout? @relation(fields: [workoutId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_notes_user_created")
+  @@index([userId, category], map: "idx_notes_user_category")
+  @@map("notes")
 }

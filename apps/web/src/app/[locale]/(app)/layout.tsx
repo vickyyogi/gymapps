@@ -24,6 +24,9 @@ export default async function AppLayout({
     const pathname = (await headers()).get("x-pathname") ?? `/${locale}/dashboard`;
     redirect(`/${locale}/login?next=${encodeURIComponent(pathname)}`);
   }
+  if (!session.user.onboardingCompletedAt) {
+    redirect(`/${locale}/onboarding`);
+  }
 
   const [tNav, tApp] = await Promise.all([
     getTranslations("nav"),
@@ -37,13 +40,24 @@ export default async function AppLayout({
           <Link href="/dashboard" className="text-sm font-semibold tracking-tight">
             {tApp("name")}
           </Link>
-          <Link
-            href="/dashboard"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            {tNav("dashboard")}
-          </Link>
-          <div className="ml-auto flex items-center gap-2">
+          <nav className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto whitespace-nowrap">
+            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("dashboard")}
+            </Link>
+            <Link href="/workouts" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("workouts")}
+            </Link>
+            <Link href="/programs" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("programs")}
+            </Link>
+            <Link href="/exercises" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("exercises")}
+            </Link>
+            <Link href="/progress" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("progress")}
+            </Link>
+          </nav>
+          <div className="flex shrink-0 items-center gap-2">
             <LocaleSwitcher />
             <ThemeToggle />
             <LogoutButton />

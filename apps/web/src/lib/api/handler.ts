@@ -1,19 +1,23 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import * as Sentry from "@sentry/nextjs";
 import type { z, ZodTypeAny } from "zod";
 import type { ActiveSession } from "@/lib/auth/session";
 import { attachSessionCookie, requireSession } from "@/lib/auth/session";
 import { ApiError, ValidationError } from "@/lib/api/errors";
 import { log } from "@/lib/log";
 
+type RouteParams = Record<string, string | string[]>;
+
 type ApiContext = {
   request: NextRequest;
   requestId: string;
   session: ActiveSession | null;
+  params: RouteParams;
 };
 
 type RouteHandler = (context: ApiContext) => Promise<NextResponse>;
+
+type NextRouteContext = { params: Promise<RouteParams> };
 
 const REQUEST_ID_PATTERN = /^[\w.-]{8,100}$/;
 
@@ -37,7 +41,6 @@ function failure(error: unknown, requestId: string) {
     );
   }
 
-  Sentry.captureException(error);
   log("error", "unhandled_api_error", { request_id: requestId, error });
   return NextResponse.json(
     {
@@ -55,13 +58,14 @@ export function withApi(
   handler: RouteHandler,
   options: { auth?: boolean; refreshSession?: boolean } = {}
 ) {
-  return async function route(request: NextRequest) {
+  return async function route(request: NextRequest, routeContext: NextRouteContext) {
     const startedAt = Date.now();
     const requestId = requestIdFor(request);
 
     try {
       const session = options.auth ? await requireSession() : null;
-      const response = await handler({ request, requestId, session });
+      const params = (await routeContext.params) ?? {};
+      const response = await handler({ request, requestId, session, params });
 
       if (options.auth && session && options.refreshSession !== false) {
         attachSessionCookie(response, session.rawToken);
@@ -115,7 +119,15 @@ export async function parseJson<T extends ZodTypeAny>(
     throw new ValidationError([{ path: "body", message: "Invalid JSON" }]);
   }
 
-  const parsed = schema.safeParse(body);
+  return parseWith(schema, body);
+}
+
+export function parseQuery<T extends ZodTypeAny>(request: NextRequest, schema: T): z.infer<T> {
+  return parseWith(schema, Object.fromEntries(request.nextUrl.searchParams));
+}
+
+function parseWith<T extends ZodTypeAny>(schema: T, value: unknown): z.infer<T> {
+  const parsed = schema.safeParse(value);
   if (!parsed.success) {
     throw new ValidationError(
       parsed.error.issues.map((issue) => ({
