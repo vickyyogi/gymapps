@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { ExercisePicker, type PickedExercise } from "@/components/phase4/exercise-picker";
+import { AiProgramGenerator } from "@/components/phase5/ai-program-generator";
 
 type ProgramExercise = {
   id: string;
@@ -38,7 +39,16 @@ type Program = {
   split_type: string;
   duration_weeks: number;
   days_per_week: number;
+  session_minutes: number;
   completion_pct: number;
+  ai_generated: boolean;
+  ai_rationale: {
+    summary?: string;
+    assumptions?: string[];
+    safety_notes?: string[];
+    fallback_used?: boolean;
+    repair_attempts?: number;
+  } | null;
   weeks: ProgramWeek[];
 };
 
@@ -224,6 +234,68 @@ export function ProgramBuilder({ programId }: { programId: string }) {
       </div>
 
       {error ? <p className="text-sm text-danger">{error}</p> : null}
+
+      {program.ai_generated ? (
+        <section className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+              {t("aiBadge")}
+            </span>
+            {program.ai_rationale?.fallback_used ? (
+              <span className="rounded bg-amber-500/15 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-400">
+                {t("fallbackBadge")}
+              </span>
+            ) : null}
+          </div>
+          {program.ai_rationale?.fallback_used ? (
+            <p className="text-sm text-amber-700 dark:text-amber-400">{t("fallbackBanner")}</p>
+          ) : null}
+          {program.ai_rationale?.summary ? (
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("rationale")}
+              </p>
+              <p className="mt-1 text-sm">{program.ai_rationale.summary}</p>
+            </div>
+          ) : null}
+          {program.ai_rationale?.assumptions?.length ? (
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("assumptions")}
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+                {program.ai_rationale.assumptions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {program.ai_rationale?.safety_notes?.length ? (
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("safetyNotes")}
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+                {program.ai_rationale.safety_notes.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      <AiProgramGenerator
+        mode="regenerate"
+        programId={program.id}
+        defaults={{
+          goal: program.goal ?? undefined,
+          split_type: program.split_type,
+          duration_weeks: program.duration_weeks,
+          days_per_week: program.days_per_week,
+          session_minutes: program.session_minutes
+        }}
+      />
 
       <form
         onSubmit={addSession}

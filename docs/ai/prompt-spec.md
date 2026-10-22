@@ -1,6 +1,6 @@
 # AI Prompt Specification — GymApps v1
 
-Dokumen ini mendefinisikan perilaku AI GymApps: system prompt, skema output, tool, guardrail, dan evaluasi. Implementasi: `packages/shared/src/ai/` dan `apps/web/src/domain/ai/`.
+Dokumen ini mendefinisikan perilaku AI GymApps: system prompt, skema output, tool, guardrail, dan evaluasi. Implementasi Fase 5: `apps/web/src/lib/ai/`, validator + fallback di `packages/domain/src/program/`, dan seed prompt di `packages/db/prisma/seed.ts`.
 
 PRD: [`PRD.md`](./PRD.md) · Model data: [`data-model.md`](./data-model.md)
 

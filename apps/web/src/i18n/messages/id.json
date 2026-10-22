@@ -335,6 +335,12 @@
     "sessionsDone": "sesi selesai",
     "activate": "Aktifkan program",
     "allPrograms": "Semua program",
+    "aiBadge": "AI-generated",
+    "fallbackBadge": "Fallback rule-based",
+    "fallbackBanner": "AI tidak menghasilkan program yang lolos validasi. Program ini dibuat oleh generator rule-based yang aman dan tetap perlu Anda review.",
+    "rationale": "Alasan program",
+    "assumptions": "Asumsi",
+    "safetyNotes": "Catatan keamanan",
     "week": "Minggu",
     "day": "Hari",
     "sessionName": "Nama sesi",
@@ -385,6 +391,41 @@
       "equipment": "Peralatan"
     }
   },
+  "ai": {
+    "generate": "Buat program dengan AI",
+    "regenerate": "Regenerate program dengan AI",
+    "description": "AI menyusun draf program berdasarkan profil, equipment, dan riwayat latihan. Hasil selalu berupa draf dan wajib direview sebelum diaktifkan.",
+    "generateAction": "Mulai generate",
+    "regenerateAction": "Mulai regenerate",
+    "goal": "Tujuan",
+    "split": "Pembagian",
+    "durationWeeks": "Durasi (minggu)",
+    "daysPerWeek": "Hari per minggu",
+    "sessionMinutes": "Durasi sesi (menit)",
+    "notes": "Catatan tambahan",
+    "notesPlaceholder": "Contoh: utamakan compound, hindari latihan berdampak tinggi.",
+    "steps": {
+      "analyzing_profile": "Menganalisis profil",
+      "drafting_program": "Menyusun program",
+      "validating": "Memvalidasi program",
+      "finalizing": "Menyelesaikan"
+    },
+    "goals": {
+      "lose_weight": "Turun berat badan",
+      "gain_muscle": "Tambah otot",
+      "strength": "Kekuatan",
+      "endurance": "Daya tahan",
+      "general_fitness": "Kebugaran umum",
+      "body_recomposition": "Rekomposisi tubuh"
+    },
+    "splits": {
+      "full_body": "Full body",
+      "upper_lower": "Upper / lower",
+      "push_pull_legs": "Push / pull / legs",
+      "bro_split": "Bro split",
+      "custom": "Kustom"
+    }
+  },
   "errors": {
     "EMAIL_TAKEN": "Email sudah terdaftar.",
     "INVALID_CREDENTIALS": "Email atau kata sandi salah.",
@@ -400,6 +441,9 @@
     "ACTIVE_PROGRAM_CONFLICT": "Program lain sedang aktif.",
     "PROGRAM_HAS_SESSIONS": "Hapus sesi sebelum mengurangi durasi program.",
     "SESSION_EXISTS": "Sesi untuk hari itu sudah ada.",
-    "POSITION_TAKEN": "Posisi latihan sudah dipakai."
+    "POSITION_TAKEN": "Posisi latihan sudah dipakai.",
+    "AI_QUOTA_EXCEEDED": "Kuota generate AI harian habis. Coba lagi nanti.",
+    "AI_UNAVAILABLE": "Fitur AI sedang tidak tersedia.",
+    "AI_GENERATION_FAILED": "Generate program AI gagal. Coba lagi."
   }
 }

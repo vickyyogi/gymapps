@@ -17,7 +17,9 @@ export type IdPrefix =
   | "pr"
   | "idm"
   | "bmt"
-  | "note";
+  | "note"
+  | "pvr"
+  | "aig";
 
 export function newId(prefix: IdPrefix) {
   return `${prefix}_${ulid()}`;

@@ -29,7 +29,9 @@ export type {
   PersonalRecord,
   UserProfile,
   BodyMetric,
-  Note
+  Note,
+  PromptVersion,
+  AiGeneration
 } from "@prisma/client";
 
 declare global {

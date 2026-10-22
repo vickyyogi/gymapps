@@ -87,6 +87,7 @@ model User {
   profile         UserProfile?
   bodyMetrics     BodyMetric[]
   notes           Note[]
+  aiGenerations   AiGeneration[]
 
   @@index([status], map: "idx_users_status")
   @@index([deletedAt], map: "idx_users_deleted_at")
@@ -210,10 +211,11 @@ model Program {
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  weeks    ProgramWeek[]
-  sessions ProgramSession[]
-  workouts Workout[]
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeks        ProgramWeek[]
+  sessions     ProgramSession[]
+  workouts     Workout[]
+  aiGeneration AiGeneration?
 
   @@index([userId, status], map: "idx_programs_user_status")
   @@index([userId, createdAt(sort: Desc)], map: "idx_programs_user_created")
@@ -407,6 +409,55 @@ model IdempotencyKey {
   @@unique([userId, key], map: "uniq_idempotency_user_key")
   @@index([createdAt], map: "idx_idempotency_created")
   @@map("idempotency_keys")
+}
+
+model PromptVersion {
+  id         String   @id
+  name       String
+  version    Int
+  template   String
+  parameters Json     @default("{}")
+  model      String
+  isActive   Boolean  @default(false) @map("is_active")
+  notes      String?
+  createdBy  String?  @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  aiGenerations AiGeneration[]
+
+  @@unique([name, version], map: "uniq_prompt_name_version")
+  @@index([name, isActive], map: "idx_prompt_active")
+  @@map("prompt_versions")
+}
+
+model AiGeneration {
+  id              String    @id
+  userId          String    @map("user_id")
+  programId       String?   @unique @map("program_id")
+  type            String
+  model           String
+  promptVersionId String?   @map("prompt_version_id")
+  status          String    @default("pending")
+  inputHash       String?   @map("input_hash")
+  inputTokens     Int       @default(0) @map("input_tokens")
+  outputTokens    Int       @default(0) @map("output_tokens")
+  costUsd         Decimal   @default(0) @map("cost_usd") @db.Decimal(10, 6)
+  latencyMs       Int?      @map("latency_ms")
+  errorCode       String?   @map("error_code")
+  retryCount      Int       @default(0) @map("retry_count")
+  fallbackUsed    Boolean   @default(false) @map("fallback_used")
+  metadata        Json      @default("{}")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz(3)
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program       Program?       @relation(fields: [programId], references: [id], onDelete: SetNull)
+  promptVersion PromptVersion? @relation(fields: [promptVersionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)], map: "idx_ai_gen_user_created")
+  @@index([type, createdAt(sort: Desc)], map: "idx_ai_gen_type_created")
+  @@index([status], map: "idx_ai_gen_status")
+  @@map("ai_generations")
 }
 
 model UserProfile {

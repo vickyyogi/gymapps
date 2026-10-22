@@ -28,7 +28,7 @@ Open http://localhost:3000 — redirects to `/id`.
 |---|---|
 | Install clean | `npm ci` |
 | Lint + typecheck | `npm run lint && npm run typecheck` |
-| Unit checks | `npm test` (web 6, domain 27) |
+| Unit checks | `npm test` (web 10, domain 27) |
 | Build | `npm run build` |
 | Migration from empty DB | `npm run db:migrate` |
 | Seed idempotent | `npm run db:seed` twice, counts stay 20 muscles / 15 equipment / 200 exercises |
@@ -62,6 +62,19 @@ BASE_URL=http://localhost:3100/api/v1 npm run test:phase4
 
 Gate E2E memeriksa onboarding, `available_only`, program aktif, 3 set → finish, previous performance + delta, summary/volume/PR/muscle/adherence/one-RM/calendar, body metric upsert per tanggal, notes CRUD, akses lintas user 403, dan dashboard 200.
 
+### Phase 5 (AI program generator)
+
+UI/API: generate + regenerate program, polling job, preview `draft`, badge AI, rationale, assumptions, safety notes, dan banner fallback. AI memakai OpenCode Go (OpenAI-compatible) lewat env; tanpa `OPENCODE_GO_API_KEY`/model fitur AI mengembalikan 503 `AI_UNAVAILABLE`.
+
+```bash
+cp apps/web/.env.example apps/web/.env.local   # isi env AI
+npm run db:migrate
+npm run db:seed
+npm run test:phase5                            # self-contained: mock AI + Next dev
+```
+
+Gate E2E memeriksa bodyweight-only + cedera lutut, konteks tanpa PII, biaya token tercatat, retry 429, timeout, JSON invalid + repair 1×, fallback valid, regenerate 3 sesi/minggu, kuota 429, dan akses lintas user.
+
 ### Notes
 
 - Phase 1 ships auth + master data; Phase 3 adds exercises, programs, workouts, sets, and PRs.
@@ -73,4 +86,7 @@ Gate E2E memeriksa onboarding, `available_only`, program aktif, 3 set → finish
 - Phase 2 domain modules live in `packages/domain` (no React, Next.js, Prisma, or DB).
 - Phase 3 exercise search uses `ILIKE`; migrate to Postgres full-text when the catalog grows. Phase 4 implements `available_only` from the equipment profile.
 - Resume an in-progress workout through `GET /workouts/active`; there is no separate resume mutation.
+- AI program generation is asynchronous through Next.js `after()` and the `ai_generations` audit row; swap it for the queue in `packages/jobs` when a durable worker is available.
+- The fallback generator is validated before persist. A structurally impossible request (for example bodyweight-only upper/lower with 2 days) fails the job instead of saving an invalid draft.
+- `OPENCODE_GO_BASE_URL` should include `/v1`; model IDs and prices come from env, never hardcoded. Seed prompt versions are append-only and do not overwrite an existing active row.
 - Sentry is intentionally not wired yet; errors go to structured logs (`apps/web/src/lib/log.ts`).

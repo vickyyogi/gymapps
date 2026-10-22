@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Link } from "@/i18n/navigation";
+import { AiProgramGenerator } from "@/components/phase5/ai-program-generator";
 
 type Program = {
   id: string;
@@ -14,6 +15,7 @@ type Program = {
   duration_weeks: number;
   days_per_week: number;
   completion_pct: number;
+  ai_generated: boolean;
 };
 
 const SPLITS = ["full_body", "upper_lower", "push_pull_legs", "bro_split", "custom"];
@@ -112,6 +114,8 @@ export function ProgramsList() {
       </div>
 
       {error ? <p className="text-sm text-danger">{error}</p> : null}
+
+      <AiProgramGenerator />
 
       <details className="rounded-xl border border-border bg-card p-4">
         <summary className="cursor-pointer text-sm font-medium">{t("create")}</summary>
@@ -218,6 +222,11 @@ export function ProgramsList() {
                   <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
                     {t(`status.${program.status}`)}
                   </span>
+                  {program.ai_generated ? (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
+                      AI
+                    </span>
+                  ) : null}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t(`splits.${program.split_type}`)} · {program.duration_weeks} {t("weeks")} ·{" "}

@@ -335,6 +335,12 @@
     "sessionsDone": "sessions done",
     "activate": "Activate program",
     "allPrograms": "All programs",
+    "aiBadge": "AI-generated",
+    "fallbackBadge": "Rule-based fallback",
+    "fallbackBanner": "AI did not produce a valid program. This program comes from the safe rule-based generator and still needs your review.",
+    "rationale": "Program rationale",
+    "assumptions": "Assumptions",
+    "safetyNotes": "Safety notes",
     "week": "Week",
     "day": "Day",
     "sessionName": "Session name",
@@ -385,6 +391,41 @@
       "equipment": "Equipment"
     }
   },
+  "ai": {
+    "generate": "Generate a program with AI",
+    "regenerate": "Regenerate program with AI",
+    "description": "AI drafts a program from your profile, equipment, and training history. The result is always a draft and must be reviewed before activation.",
+    "generateAction": "Start generation",
+    "regenerateAction": "Start regeneration",
+    "goal": "Goal",
+    "split": "Split",
+    "durationWeeks": "Duration (weeks)",
+    "daysPerWeek": "Days per week",
+    "sessionMinutes": "Session length (min)",
+    "notes": "Extra notes",
+    "notesPlaceholder": "Example: compound first, avoid high-impact exercises.",
+    "steps": {
+      "analyzing_profile": "Analyzing profile",
+      "drafting_program": "Drafting program",
+      "validating": "Validating program",
+      "finalizing": "Finalizing"
+    },
+    "goals": {
+      "lose_weight": "Lose weight",
+      "gain_muscle": "Gain muscle",
+      "strength": "Strength",
+      "endurance": "Endurance",
+      "general_fitness": "General fitness",
+      "body_recomposition": "Body recomposition"
+    },
+    "splits": {
+      "full_body": "Full body",
+      "upper_lower": "Upper / lower",
+      "push_pull_legs": "Push / pull / legs",
+      "bro_split": "Bro split",
+      "custom": "Custom"
+    }
+  },
   "errors": {
     "EMAIL_TAKEN": "Email is already registered.",
     "INVALID_CREDENTIALS": "Wrong email or password.",
@@ -400,6 +441,9 @@
     "ACTIVE_PROGRAM_CONFLICT": "Another program is already active.",
     "PROGRAM_HAS_SESSIONS": "Remove sessions before reducing the program duration.",
     "SESSION_EXISTS": "A session already exists for that day.",
-    "POSITION_TAKEN": "That exercise position is already used."
+    "POSITION_TAKEN": "That exercise position is already used.",
+    "AI_QUOTA_EXCEEDED": "Daily AI generation quota is used up. Try again later.",
+    "AI_UNAVAILABLE": "AI features are currently unavailable.",
+    "AI_GENERATION_FAILED": "AI program generation failed. Try again."
   }
 }

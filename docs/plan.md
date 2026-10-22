@@ -32,6 +32,7 @@ Drift dokumen yang harus dibereskan di Fase 0:
 | Fase 2 | Selesai: `packages/domain`, 27 test tanpa DB/API. |
 | Fase 3 | Selesai: exercise seed 200 + filter/pagination + custom owner; program manual/activate/duplicate/archive; workout quick/program, set + PR + agregat, finish, auto-abandoned >24 jam, `Idempotency-Key`, cursor + Zod. Search masih `ILIKE`; FTS ditunda. |
 | Fase 4 | Selesai: profil/onboarding, `available_only`, logger dengan prefill + delta + rest timer + ringkasan, program builder, dashboard analytics, body metrics, notes. Gate E2E `scripts/phase4-e2e.mjs` hijau. |
+| Fase 5 | Selesai: `prompt_versions` + `ai_generations`, context builder ≤5.000 token + redaksi PII, OpenCode Go client dengan retry/timeout, orchestrator quota → tool-use → validator → repair 1× → fallback, API job/status/regenerate, UI generate/regenerate + badge/rationale/banner. Gate E2E `scripts/phase5-e2e.mjs` hijau. |
 | Eksternal | Belum diverifikasi: Docker (daemon tidak tersedia). Sentry tidak dipakai sementara. |
 
 ---
@@ -129,16 +130,20 @@ Status: UI `/onboarding`, `/dashboard`, `/workouts`, `/workouts/[id]`, `/program
 
 Diverifikasi dengan server lokal: `BASE_URL=http://localhost:3100/api/v1 npm run test:phase4`.
 
-### Fase 5 — AI program generator (Sprint 7–8)
+### Fase 5 — AI program generator (Sprint 7–8) — selesai
+
+Status: migrasi `20261022121643_phase5_ai`, seed `program_generator` v1 + `repair_pass` v1, API `/ai/programs/generate`, `/ai/jobs/[jobId]`, `/ai/programs/[programId]/regenerate`, UI generate/regenerate di halaman program, dan gate `scripts/phase5-e2e.mjs`.
 
 1. `prompt_versions` + seed prompt dari `ai/prompt-spec.md`.
-2. `ai_generations` audit: status, token, biaya, latency, error_code.
+2. `ai_generations` audit: status, token, biaya, latency, error_code, `fallback_used`, `retry_count`, `input_hash`.
 3. Context builder ≤ 5.000 token + redaksi PII.
 4. Orchestrator: quota → build → tool-use → validate → repair 1× → fallback.
-5. Background job + endpoint status/progress.
-6. Preview wajib review; program selalu `draft`; badge AI + rationale.
+5. Background job (`after()` + `ai_generations.metadata.job`) + endpoint status/progress.
+6. Preview wajib review; program selalu `draft`; badge AI + rationale + banner fallback.
 
 **Gate:** `AC-07-03`, `AC-07-04`, `AC-07-05`, `AC-07-07`; simulasi timeout/429/JSON invalid; fallback tetap menghasilkan program valid; biaya tercatat.
+
+Diverifikasi dengan server + mock OpenCode Go: `npm run test:phase5`. Gate mencakup bodyweight-only + cedera lutut, retry 429, timeout 45s (dipercepat via `OPENCODE_GO_TIMEOUT_MS`), JSON invalid + repair 1×, fallback valid, biaya token > 0, regenerate tepat 3 sesi/minggu, kuota 429, dan akses lintas user 403/404.
 
 ### Fase 6 — Coach chat + rekomendasi (Sprint 9–10)
 
