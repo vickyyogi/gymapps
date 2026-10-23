@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@gymapps/db";
-import { withAuthApi } from "@/lib/api/handler";
+import { withAuthApi, clientIp } from "@/lib/api/handler";
 import { ApiError } from "@/lib/api/errors";
 import { getOwnedWorkout, recalculateWorkoutTotals } from "@/lib/api/resources";
 import {
@@ -8,10 +8,11 @@ import {
   workoutDetailInclude
 } from "@/lib/api/serializers";
 import { evaluateRecommendationsForUser } from "@/lib/ai/recommendations";
+import { writeAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
-export const POST = withAuthApi(async ({ params, session }) => {
+export const POST = withAuthApi(async ({ request, params, session }) => {
   const workoutId = String(params.workoutId);
   const workout = await getOwnedWorkout(workoutId, session.user.id);
   if (workout.status === "abandoned") {
@@ -69,6 +70,17 @@ export const POST = withAuthApi(async ({ params, session }) => {
         triggerWorkoutId: workoutId
       })
     : [];
+
+  if (wasActive) {
+    await writeAudit({
+      userId: session.user.id,
+      action: "workout.finished",
+      entityType: "workout",
+      entityId: workoutId,
+      after: { total_volume_kg: Number(detail.totalVolumeKg), total_sets: detail.totalSets },
+      ipAddress: clientIp(request)
+    });
+  }
 
   return NextResponse.json({
     data: serializeWorkoutDetail(detail),

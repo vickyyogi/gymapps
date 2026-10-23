@@ -265,6 +265,7 @@ model ProgramSession {
 
   @@unique([programId, programWeekId, dayIndex], map: "uniq_program_session_day")
   @@index([programId], map: "idx_program_sessions_program")
+  @@index([programId, completedAt], map: "idx_program_sessions_completed")
   @@map("program_sessions")
 }
 
@@ -401,6 +402,7 @@ model PersonalRecord {
 
   @@unique([userId, exerciseId, recordType, achievedAt], map: "uniq_pr_user_exercise_type_time")
   @@index([userId, exerciseId], map: "idx_pr_user_exercise")
+  @@index([userId, achievedAt(sort: Desc)], map: "idx_pr_user_achieved")
   @@map("personal_records")
 }
 

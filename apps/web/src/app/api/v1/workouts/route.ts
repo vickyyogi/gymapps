@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, Prisma } from "@gymapps/db";
-import { withAuthApi, parseJson, parseQuery } from "@/lib/api/handler";
+import { withAuthApi, parseJson, parseQuery, clientIp } from "@/lib/api/handler";
 import { ApiError } from "@/lib/api/errors";
 import { startWorkoutSchema, workoutListSchema } from "@/lib/api/phase3-validation";
 import { pageArgs, pageResult } from "@/lib/api/pagination";
@@ -11,6 +11,7 @@ import {
   workoutDetailInclude,
   workoutSummaryInclude
 } from "@/lib/api/serializers";
+import { writeAudit } from "@/lib/audit";
 import { newId } from "@/lib/id";
 
 export const runtime = "nodejs";
@@ -134,5 +135,15 @@ export const POST = withAuthApi(async ({ request, session }) => {
     where: { id: workoutId },
     include: workoutDetailInclude
   });
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "workout.started",
+    entityType: "workout",
+    entityId: workoutId,
+    after: { source: input.source, program_id: programId, program_session_id: programSessionId },
+    ipAddress: clientIp(request)
+  });
+
   return NextResponse.json({ data: serializeWorkoutDetail(workout) }, { status: 201 });
 });

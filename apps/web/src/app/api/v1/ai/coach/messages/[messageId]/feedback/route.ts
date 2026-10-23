@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@gymapps/db";
+import { API_RATE_LIMITS } from "@gymapps/shared";
 import { withAuthApi, parseJson } from "@/lib/api/handler";
 import { ApiError } from "@/lib/api/errors";
+import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { feedbackSchema } from "@/lib/api/phase6-validation";
 
 export const runtime = "nodejs";
 
 export const POST = withAuthApi(async ({ request, params, session }) => {
+  enforceRateLimit("coach-feedback", session.user.id, API_RATE_LIMITS.coachFeedback);
   const input = await parseJson(request, feedbackSchema);
   const message = await prisma.chatMessage.findUnique({
     where: { id: String(params.messageId) },

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +14,26 @@ const prisma = new PrismaClient();
 const stamp = Date.now();
 const password = "Password123!";
 const children = [];
+
+function resolveChromePath() {
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  const localAppData = process.env.LOCALAPPDATA ?? "";
+  const candidates =
+    process.platform === "win32"
+      ? [
+          join(process.env.PROGRAMFILES ?? "", "Google/Chrome/Application/chrome.exe"),
+          join(process.env["PROGRAMFILES(X86)"] ?? "", "Google/Chrome/Application/chrome.exe"),
+          join(localAppData, "Google/Chrome/Application/chrome.exe"),
+          join(process.env.PROGRAMFILES ?? "", "Microsoft/Edge/Application/msedge.exe")
+        ]
+      : [
+          "/usr/bin/google-chrome",
+          "/usr/bin/google-chrome-stable",
+          "/usr/bin/chromium",
+          "/usr/bin/chromium-browser"
+        ];
+  return candidates.find((candidate) => candidate && existsSync(candidate)) ?? candidates[0];
+}
 
 function start(command, args, options) {
   const child = spawn(command, args, {
@@ -106,7 +127,7 @@ async function main() {
     env: {
       EXPORT_DIR: join(root, ".exports-test"),
       EXPORT_SIGNING_SECRET: "phase7-test-secret",
-      CHROME_PATH: process.env.CHROME_PATH || "/usr/bin/google-chrome"
+      CHROME_PATH: resolveChromePath()
     }
   });
 

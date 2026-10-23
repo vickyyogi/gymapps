@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@gymapps/db";
+import { API_RATE_LIMITS } from "@gymapps/shared";
 import { withAuthApi, parseJson, parseQuery } from "@/lib/api/handler";
+import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { pageArgs, pageResult } from "@/lib/api/pagination";
 import { getOwnedProgram } from "@/lib/api/resources";
 import { threadCreateSchema, threadListSchema } from "@/lib/api/phase6-validation";
@@ -26,6 +28,7 @@ export const GET = withAuthApi(async ({ request, session }) => {
 });
 
 export const POST = withAuthApi(async ({ request, session }) => {
+  enforceRateLimit("coach-thread", session.user.id, API_RATE_LIMITS.coachThreadCreate);
   const input = await parseJson(request, threadCreateSchema);
   if (input.program_id) await getOwnedProgram(input.program_id, session.user.id);
 

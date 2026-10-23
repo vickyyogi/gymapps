@@ -11,6 +11,16 @@ export const LOGIN_RATE_LIMIT = {
   windowMs: 15 * 60 * 1000
 } as const;
 
+const HOUR_MS = 60 * 60 * 1000;
+
+export const API_RATE_LIMITS = {
+  register: { limit: 30, windowMs: HOUR_MS }, // per IP
+  exportCreate: { limit: 10, windowMs: HOUR_MS }, // per user, PDF/CSV jobs
+  reportCreate: { limit: 10, windowMs: HOUR_MS }, // per user, PDF jobs
+  coachThreadCreate: { limit: 20, windowMs: HOUR_MS }, // per user
+  coachFeedback: { limit: 60, windowMs: 60 * 1000 } // per user
+} as const;
+
 export const ARGON2_OPTIONS = {
   memoryCost: 65_536, // KiB = 64 MB
   timeCost: 3,

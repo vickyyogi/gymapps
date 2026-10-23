@@ -35,6 +35,7 @@ Drift dokumen yang harus dibereskan di Fase 0:
 | Fase 5 | Selesai: `prompt_versions` + `ai_generations`, context builder ≤5.000 token + redaksi PII, OpenCode Go client dengan retry/timeout, orchestrator quota → tool-use → validator → repair 1× → fallback, API job/status/regenerate, UI generate/regenerate + badge/rationale/banner. Gate E2E `scripts/phase5-e2e.mjs` hijau. |
 | Fase 6 | Selesai: chat thread/message persist, SSE streaming + abort partial, 6 tools + sitasi, guardrail medis deterministik, deteksi bahasa, feedback, kuota 30/jam + 200/hari, kill-switch env + DB `ai_chat`, rule engine setelah finish workout, dismiss 30 hari, evidence + notifikasi. Gate E2E `scripts/phase6-e2e.mjs` hijau. |
 | Fase 7 | Selesai: export CSV/JSON background + signed link 7 hari, PDF Playwright via Chrome sistem, PWA manifest/SW/offline, admin CMS exercise + audit log, notifikasi in-app. Gate E2E `scripts/phase7-e2e.mjs` hijau. |
+| Fase 8 | Sebagian: E2E penuh (`scripts/phase8-e2e.mjs`), load test analytics p95 237 ms, index review + 2 index baru, backup/restore drill, review PDP, audit log profile/program/workout. Belum: staging deploy, beta 100 user, error rate/rollback otomatis, gate AI failure & biaya per WAU. Detail: [`phase8-hardening.md`](./phase8-hardening.md). |
 | Eksternal | Belum diverifikasi: Docker (daemon tidak tersedia). Sentry tidak dipakai sementara. |
 
 ---
@@ -164,6 +165,8 @@ Body metrics chart, notes, export CSV/JSON background job, PDF Playwright, PWA/o
 **Gate:** `AC-12-03` link kedaluwarsa; `AC-12-04` lintas user 403; PWA installable; admin publish tanpa deploy.
 
 ### Fase 8 — Hardening & beta (Sprint 13–14)
+
+Status: sebagian selesai. E2E penuh, load test analytics, index review, backup/restore drill, review PDP, dan audit log profile/program/workout sudah ada. Sisa: deploy staging, beta 100 user, error rate < 0,5% dengan rollback otomatis, gate AI failure < 2% dan biaya ≤ USD 0,30/WAU. Detail perintah + hasil: [`phase8-hardening.md`](./phase8-hardening.md).
 
 E2E penuh, load test analytics, review index query panas, audit log, backup/restore drill, review PDP, deploy staging, beta 100 user.
 

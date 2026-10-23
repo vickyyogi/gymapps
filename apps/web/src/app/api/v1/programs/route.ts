@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma, Prisma } from "@gymapps/db";
-import { withAuthApi, parseJson, parseQuery } from "@/lib/api/handler";
+import { withAuthApi, parseJson, parseQuery, clientIp } from "@/lib/api/handler";
 import { programInputSchema, programListSchema } from "@/lib/api/phase3-validation";
 import { pageArgs, pageResult } from "@/lib/api/pagination";
 import { serializeProgram } from "@/lib/api/serializers";
+import { writeAudit } from "@/lib/audit";
 import { newId } from "@/lib/id";
 
 export const runtime = "nodejs";
@@ -60,6 +61,15 @@ export const POST = withAuthApi(async ({ request, session }) => {
         }))
       }
     }
+  });
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "program.created",
+    entityType: "program",
+    entityId: id,
+    after: { name: input.name, duration_weeks: input.duration_weeks, days_per_week: input.days_per_week },
+    ipAddress: clientIp(request)
   });
 
   return NextResponse.json({ data: serializeProgram(program, 0) }, { status: 201 });

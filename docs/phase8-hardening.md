@@ -1,0 +1,99 @@
+# Fase 8 — Hardening & Beta
+
+Dokumen kerja Fase 8: hasil gate, review index, review PDP, dan blocker staging/beta.
+
+## Perintah
+
+| Gate | Command |
+|---|---|
+| E2E penuh (build production + fase 3–7) | `npm run test:phase8` |
+| Load test analytics | `npm run test:load` |
+| Backup/restore drill | `npm run test:backup` |
+| Lint + typecheck + unit | `npm run lint && npm run typecheck && npm test` |
+
+`test:load` dan `test:backup` butuh `infra/docker-compose.yml` (Postgres) hidup. `test:phase7` butuh Chrome; `scripts/phase7-e2e.mjs` sekarang auto-detect `CHROME_PATH` di Windows dan Linux.
+
+## Hasil gate (2026-10-23)
+
+| Gate | Hasil | Catatan |
+|---|---|---|
+| E2E penuh | ✅ `test:phase8` | fase 3–7 hijau di production build, port 3110 |
+| p95 analytics | ✅ 237 ms | 140 request, 5 concurrent, 104 workout / 1.248 set, gate < 1.000 ms |
+| Error rate analytics | ✅ 0% | 140/140 HTTP 200, gate < 0,5% |
+| Backup/restore drill | ✅ | `pg_dump` → restore ke DB `gymapps_restore_check` → jumlah baris sama → drop |
+| AI failure rate | ⚠️ belum terukur | gate < 2% perlu ≥ 20 generasi AI non-test; fixture E2E sengaja membuat job gagal |
+| Biaya AI / WAU | ⚠️ belum terukur | gate ≤ USD 0,30/WAU perlu data produksi |
+| Error rate < 0,5% / rollback otomatis | ⚠️ eksternal | perlu Sentry/APM + deploy target |
+| Beta 100 user | ⚠️ eksternal | butuh staging publik + onboarding peserta |
+
+Metrik AI mengabaikan user fixture (email prefix `phase…`) supaya hasil E2E tidak mengotori gate produksi.
+
+## Index review query panas
+
+| Query panas | Index | Status |
+|---|---|---|
+| riwayat workout (`workouts.user_id`, `started_at`) | `idx_workouts_user_started` | ✅ |
+| workout by status (`workouts.user_id`, `status`) | `idx_workouts_user_status` | ✅ |
+| set per user (`workout_sets.user_id`, `created_at`) | `idx_sets_user_created` | ✅ |
+| set per exercise (`workout_sets.user_id`, `exercise_id`, `created_at`) | `idx_sets_user_exercise_date` | ✅ |
+| PR terakhir (`personal_records.user_id`, `achieved_at` desc) | **`idx_pr_user_achieved` (baru)** | ✅ ditambah Fase 8 |
+| adherence per program (`program_sessions.program_id`, `completed_at`) | **`idx_program_sessions_completed` (baru)** | ✅ ditambah Fase 8 |
+| AI audit (`ai_generations.user_id`, `created_at`) | `idx_ai_gen_user_created` | ✅ |
+| export (`exports.user_id`, `created_at`) | `idx_exports_user_created` | ✅ |
+
+Migrasi: `packages/db/prisma/migrations/20261023022506_phase8_indexes`.
+
+Perbaikan kode: `analyticsVolume` sekarang memfilter `created_at >= from` sehingga query memakai `idx_sets_user_created`, bukan membaca seluruh set user.
+
+## Review PDP / privacy
+
+| Item | Status | Keterangan |
+|---|---|---|
+| Redaksi PII di konteks AI | ✅ | `lib/ai/context.ts` |
+| Export HMAC + ownership + expiry 7 hari | ✅ | 403 lintas user, 410 expired, diverifikasi E2E |
+| Password hash Argon2id | ✅ | |
+| Cookie `httpOnly`, `Secure` hanya production | ✅ | |
+| Audit log perubahan data | 🟡 parsial | admin exercise + profile/program/workout mutation; belum ada audit hapus akun |
+| Hapus akun soft→hard delete | ❌ | `FR-13-07`; belum ada API/UI/job |
+| Verifikasi email + reset password | ❌ | `FR-01-08`, `US-01.5` |
+| Age gate + ToS | ❌ | `NFR-PRIV-10` |
+| Retensi log 30 hari | ❌ | log stdout saja, belum ada rotasi/retensi |
+| Notifikasi email/push | ⚠️ v1.1 | `FR-13-09` |
+
+**Kesimpulan PDP: belum siap untuk beta publik.** Syarat minimum sebelum beta: hapus akun, verifikasi email, reset password, age gate + ToS, dan retensi log.
+
+## Audit log
+
+Ditulis oleh `apps/web/src/lib/audit.ts` untuk mutation:
+
+| Action | Entity |
+|---|---|
+| `profile.updated` | user_profile |
+| `program.created` / `program.updated` / `program.archived` / `program.activated` | program |
+| `workout.started` / `workout.updated` / `workout.finished` / `workout.deleted` | workout |
+| `exercise.published` / `exercise.updated` | exercise (admin, Fase 7) |
+
+Belum: hapus akun, export/PDF, chat message. Audit tersimpan di `audit_logs` dengan `actor_id`, `before`, `after`, `ip_address`.
+
+## Blocker eksternal staging & beta
+
+1. **Host staging + registry container** — belum ada target deploy. Tanpa itu `prisma migrate deploy` dan rollback otomatis tidak bisa dijalankan.
+2. **Sentry / APM** — error rate < 0,5% dan rollback otomatis butuh observability eksternal; sekarang hanya structured log.
+3. **Redis** — sudah ada di `docker-compose.yml` tapi belum dipakai kode. Rate limit masih in-memory per instance.
+4. **Object storage (S3/blob)** — export/PDF masih di disk lokal `.exports`.
+5. **Email provider** — verifikasi email dan reset password butuh Resend/SMTP.
+6. **PostHog / event produk** — `NFR-OBS-03` belum diimplementasikan.
+
+## Blocking sebelum gate Fase 8 penuh
+
+- [x] E2E penuh
+- [x] Load test analytics p95 < 1 detik
+- [x] Review index query panas
+- [x] Backup/restore drill
+- [x] Review PDP
+- [x] Audit log (profile/program/workout)
+- [ ] Error rate < 0,5% + rollback otomatis (butuh APM + staging)
+- [ ] AI failure < 2% (butuh data produksi)
+- [ ] Biaya ≤ USD 0,30/WAU (butuh data produksi)
+- [ ] Deploy staging
+- [ ] Beta 100 user

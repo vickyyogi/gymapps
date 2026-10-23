@@ -228,6 +228,7 @@ export async function analyticsVolume(
       isCompleted: true,
       isWarmup: false,
       deletedAt: null,
+      createdAt: { gte: from },
       workout: { status: "finished", deletedAt: null },
       ...(exerciseId ? { exerciseId } : {}),
       ...(muscle ? { exercise: { primaryMuscle: muscle } } : {})

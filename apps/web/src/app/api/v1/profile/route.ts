@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma, Prisma } from "@gymapps/db";
-import { withAuthApi, parseJson } from "@/lib/api/handler";
+import { withAuthApi, parseJson, clientIp } from "@/lib/api/handler";
 import { profileSchema } from "@/lib/api/phase4-validation";
 import { serializeProfile } from "@/lib/api/phase4-serializers";
+import { writeAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
@@ -60,6 +61,15 @@ export const PATCH = withAuthApi(async ({ request, session }) => {
     if (Object.keys(userData).length > 0) {
       await tx.user.update({ where: { id: session.user.id }, data: userData });
     }
+  });
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "profile.updated",
+    entityType: "user_profile",
+    entityId: session.user.id,
+    after: { profile: Object.keys(profileData), user: Object.keys(userData) },
+    ipAddress: clientIp(request)
   });
 
   const user = await profileWithUser(session.user.id);

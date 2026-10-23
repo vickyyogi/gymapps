@@ -1,6 +1,8 @@
 import { NextResponse, after } from "next/server";
 import { prisma } from "@gymapps/db";
+import { API_RATE_LIMITS } from "@gymapps/shared";
 import { withAuthApi, parseJson } from "@/lib/api/handler";
+import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { exportCreateSchema } from "@/lib/api/phase6-validation";
 import { createExportJob, exportStatus, runExport } from "@/lib/ai/exports";
 
@@ -17,6 +19,7 @@ export const GET = withAuthApi(async ({ session }) => {
 });
 
 export const POST = withAuthApi(async ({ request, session }) => {
+  enforceRateLimit("export", session.user.id, API_RATE_LIMITS.exportCreate);
   const input = await parseJson(request, exportCreateSchema);
   const job = await createExportJob({
     userId: session.user.id,

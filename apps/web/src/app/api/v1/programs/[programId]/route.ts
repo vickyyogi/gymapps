@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@gymapps/db";
-import { withAuthApi, parseJson } from "@/lib/api/handler";
+import { withAuthApi, parseJson, clientIp } from "@/lib/api/handler";
 import { ApiError } from "@/lib/api/errors";
 import { programInputSchema } from "@/lib/api/phase3-validation";
 import { getOwnedProgram, programCompletionPct } from "@/lib/api/resources";
 import { programDetailInclude, serializeProgram, serializeProgramDetail } from "@/lib/api/serializers";
+import { writeAudit } from "@/lib/audit";
 import { newId } from "@/lib/id";
 
 export const runtime = "nodejs";
@@ -78,15 +79,44 @@ export const PATCH = withAuthApi(async ({ request, params, session }) => {
 
   const updated = await getOwnedProgram(programId, session.user.id);
   const pct = await programCompletionPct(programId);
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "program.updated",
+    entityType: "program",
+    entityId: programId,
+    before: {
+      name: current.name,
+      duration_weeks: current.durationWeeks,
+      days_per_week: current.daysPerWeek
+    },
+    after: {
+      name: input.name,
+      duration_weeks: input.duration_weeks,
+      days_per_week: input.days_per_week
+    },
+    ipAddress: clientIp(request)
+  });
+
   return NextResponse.json({ data: serializeProgram(updated, pct) });
 });
 
-export const DELETE = withAuthApi(async ({ params, session }) => {
+export const DELETE = withAuthApi(async ({ request, params, session }) => {
   const programId = String(params.programId);
   await getOwnedProgram(programId, session.user.id);
   await prisma.program.update({
     where: { id: programId },
     data: { status: "archived" }
   });
+
+  await writeAudit({
+    userId: session.user.id,
+    action: "program.archived",
+    entityType: "program",
+    entityId: programId,
+    after: { status: "archived" },
+    ipAddress: clientIp(request)
+  });
+
   return new NextResponse(null, { status: 204 });
 });

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma, Prisma } from "@gymapps/db";
 import { registerSchema } from "@gymapps/shared";
+import { API_RATE_LIMITS } from "@gymapps/shared";
 import { withApi, clientIp, parseJson } from "@/lib/api/handler";
 import { ApiError } from "@/lib/api/errors";
+import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession, attachSessionCookie, toCurrentUser } from "@/lib/auth/session";
 import { newId } from "@/lib/id";
@@ -10,6 +12,7 @@ import { newId } from "@/lib/id";
 export const runtime = "nodejs";
 
 export const POST = withApi(async ({ request }) => {
+  enforceRateLimit("register", clientIp(request), API_RATE_LIMITS.register);
   const input = await parseJson(request, registerSchema);
 
   const existing = await prisma.user.findUnique({

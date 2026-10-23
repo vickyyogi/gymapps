@@ -115,4 +115,14 @@ npm run test:phase6   # self-contained: mock chat SSE + Next dev
 npm run test:phase7   # export, 410/403, PDF, admin publish, PWA
 ```
 
+### Phase 8 (hardening)
+
+```bash
+npm run test:phase8   # build production + fase 3-7 E2E penuh
+npm run test:load     # load test analytics p95 + metrik AI/WAU
+npm run test:backup   # pg_dump -> restore ke DB scratch -> bandingkan jumlah baris
+```
+
+Hasil, review index, review PDP, dan blocker staging/beta ada di `docs/phase8-hardening.md`.
+
 Catatan: PDF butuh Chrome terpasang. `OPENCODE_GO_PRICE_*` memakai USD per 1 juta token; isi `0` bila harga belum diketahui agar dashboard biaya tidak menyesatkan.

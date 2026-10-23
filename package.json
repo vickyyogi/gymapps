@@ -21,7 +21,10 @@
     "db:seed": "npm run db:seed -w @gymapps/db",
     "setup": "npm install && npm run gen:api && npm run db:generate",
     "test:phase6": "node scripts/phase6-e2e.mjs",
-    "test:phase7": "node scripts/phase7-e2e.mjs"
+    "test:phase7": "node scripts/phase7-e2e.mjs",
+    "test:phase8": "npm run build && node scripts/phase8-e2e.mjs",
+    "test:load": "node scripts/phase8-load.mjs",
+    "test:backup": "node scripts/phase8-backup.mjs"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
