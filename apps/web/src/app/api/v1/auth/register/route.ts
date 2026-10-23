@@ -12,7 +12,7 @@ import { newId } from "@/lib/id";
 export const runtime = "nodejs";
 
 export const POST = withApi(async ({ request }) => {
-  enforceRateLimit("register", clientIp(request), API_RATE_LIMITS.register);
+  await enforceRateLimit("register", clientIp(request), API_RATE_LIMITS.register);
   const input = await parseJson(request, registerSchema);
 
   const existing = await prisma.user.findUnique({

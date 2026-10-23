@@ -81,7 +81,7 @@ Gate E2E memeriksa bodyweight-only + cedera lutut, konteks tanpa PII, biaya toke
 - Email verification and password reset are not in the Phase 1 deliverable list; email delivery lands with Phase 7.
 - `Secure` cookie flag is enabled only in production so localhost works over http.
 - Session cookie is refreshed on page navigation by `middleware.ts`, not only by API calls.
-- Login rate limit is in-memory per instance until Redis is wired (Phase 4).
+- Rate limits (login + write/heavy endpoints) use Upstash Redis when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set; otherwise they fall back to per-instance memory. Limits live in `packages/shared` (`LOGIN_RATE_LIMIT`, `API_RATE_LIMITS`). Login uses a fixed window of 15 minutes.
 - `TRUST_PROXY_HEADERS` defaults to `false`, so spoofed `X-Forwarded-For` cannot change the rate-limit key. Set it to `true` only behind a reverse proxy that overwrites the header.
 - Phase 2 domain modules live in `packages/domain` (no React, Next.js, Prisma, or DB).
 - Phase 3 exercise search uses `ILIKE`; migrate to Postgres full-text when the catalog grows. Phase 4 implements `available_only` from the equipment profile.

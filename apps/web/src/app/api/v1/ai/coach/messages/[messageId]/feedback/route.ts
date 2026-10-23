@@ -9,7 +9,7 @@ import { feedbackSchema } from "@/lib/api/phase6-validation";
 export const runtime = "nodejs";
 
 export const POST = withAuthApi(async ({ request, params, session }) => {
-  enforceRateLimit("coach-feedback", session.user.id, API_RATE_LIMITS.coachFeedback);
+  await enforceRateLimit("coach-feedback", session.user.id, API_RATE_LIMITS.coachFeedback);
   const input = await parseJson(request, feedbackSchema);
   const message = await prisma.chatMessage.findUnique({
     where: { id: String(params.messageId) },

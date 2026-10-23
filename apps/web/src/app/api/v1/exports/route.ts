@@ -19,7 +19,7 @@ export const GET = withAuthApi(async ({ session }) => {
 });
 
 export const POST = withAuthApi(async ({ request, session }) => {
-  enforceRateLimit("export", session.user.id, API_RATE_LIMITS.exportCreate);
+  await enforceRateLimit("export", session.user.id, API_RATE_LIMITS.exportCreate);
   const input = await parseJson(request, exportCreateSchema);
   const job = await createExportJob({
     userId: session.user.id,

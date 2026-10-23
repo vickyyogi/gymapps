@@ -24,7 +24,7 @@ export const POST = withApi(async ({ request }) => {
   const ip = clientIp(request);
   const key = loginRateLimitKey(ip, input.email);
 
-  const gate = checkLoginRateLimit(key);
+  const gate = await checkLoginRateLimit(key);
   if (!gate.allowed) {
     throw new ApiError(429, "RATE_LIMITED", "Too many login attempts", {
       headers: {
@@ -41,14 +41,14 @@ export const POST = withApi(async ({ request }) => {
   );
 
   if (!user || !passwordOk || user.deletedAt || user.status !== "active") {
-    recordLoginFailure(key);
-    const after = checkLoginRateLimit(key);
+    await recordLoginFailure(key);
+    const after = await checkLoginRateLimit(key);
     throw new ApiError(401, "INVALID_CREDENTIALS", "Invalid email or password", {
       headers: after.allowed ? undefined : rateLimitHeaders(0, after.resetAt)
     });
   }
 
-  clearLoginRateLimit(key);
+  await clearLoginRateLimit(key);
   const now = new Date();
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: now } });
 

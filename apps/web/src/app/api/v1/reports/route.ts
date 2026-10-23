@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export const POST = withAuthApi(async ({ request, session }) => {
-  enforceRateLimit("report", session.user.id, API_RATE_LIMITS.reportCreate);
+  await enforceRateLimit("report", session.user.id, API_RATE_LIMITS.reportCreate);
   const input = await parseJson(request, reportCreateSchema);
   const job = await createReportJob({
     userId: session.user.id,

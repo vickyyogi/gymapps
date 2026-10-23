@@ -28,7 +28,7 @@ export const GET = withAuthApi(async ({ request, session }) => {
 });
 
 export const POST = withAuthApi(async ({ request, session }) => {
-  enforceRateLimit("coach-thread", session.user.id, API_RATE_LIMITS.coachThreadCreate);
+  await enforceRateLimit("coach-thread", session.user.id, API_RATE_LIMITS.coachThreadCreate);
   const input = await parseJson(request, threadCreateSchema);
   if (input.program_id) await getOwnedProgram(input.program_id, session.user.id);
 

@@ -79,7 +79,7 @@ Belum: hapus akun, export/PDF, chat message. Audit tersimpan di `audit_logs` den
 
 1. **Host staging + registry container** — belum ada target deploy. Tanpa itu `prisma migrate deploy` dan rollback otomatis tidak bisa dijalankan.
 2. **Sentry / APM** — error rate < 0,5% dan rollback otomatis butuh observability eksternal; sekarang hanya structured log.
-3. **Redis** — sudah ada di `docker-compose.yml` tapi belum dipakai kode. Rate limit masih in-memory per instance.
+3. **Redis** — rate limit sudah memakai Upstash Redis (REST) bila env terisi; fallback in-memory bila tidak. Redis lokal di `docker-compose.yml` belum dipakai.
 4. **Object storage (S3/blob)** — export/PDF masih di disk lokal `.exports`.
 5. **Email provider** — verifikasi email dan reset password butuh Resend/SMTP.
 6. **PostHog / event produk** — `NFR-OBS-03` belum diimplementasikan.
