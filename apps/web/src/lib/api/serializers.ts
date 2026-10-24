@@ -37,6 +37,7 @@ export function serializeExercise(exercise: Exercise) {
     is_compound: exercise.isCompound,
     status: exercise.status,
     source: exercise.source,
+    owner_user_id: exercise.ownerUserId,
     media: []
   };
 }

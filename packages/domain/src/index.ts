@@ -3,6 +3,7 @@ export * from "./stats/one-rm";
 export * from "./stats/volume";
 export * from "./stats/pr";
 export * from "./stats/adherence";
+export * from "./stats/units";
 export * from "./program/types";
 export * from "./program/validator";
 export * from "./program/fallback-generator";

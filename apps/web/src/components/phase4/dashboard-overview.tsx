@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { fromKg, weightUnitLabel, type UnitSystem } from "@gymapps/domain";
 import { Link } from "@/i18n/navigation";
 
 type Summary = {
@@ -37,10 +38,17 @@ function fmt(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-export function DashboardOverview({ name }: { name: string }) {
+export function DashboardOverview({
+  name,
+  unitSystem = "metric"
+}: {
+  name: string;
+  unitSystem?: UnitSystem;
+}) {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
+  const unit = weightUnitLabel(unitSystem);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [volume, setVolume] = useState<Volume | null>(null);
   const [calendar, setCalendar] = useState<Calendar | null>(null);
@@ -128,7 +136,7 @@ export function DashboardOverview({ name }: { name: string }) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
           [t("weeklyWorkouts"), String(summary.weekly_logged_workouts)],
-          [t("volume7d"), `${fmt(summary.volume_7d_kg)} kg`],
+          [t("volume7d"), `${fmt(fromKg(summary.volume_7d_kg, unitSystem))} ${unit}`],
           [t("streak"), `${summary.current_streak} ${t("days")}`],
           [
             t("adherence"),
@@ -171,12 +179,12 @@ export function DashboardOverview({ name }: { name: string }) {
             {(volume?.series ?? []).map((item) => (
               <div key={item.week_start} className="group flex flex-1 flex-col items-center gap-1">
                 <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100">
-                  {fmt(item.volume_kg)}
+                  {fmt(fromKg(item.volume_kg, unitSystem))}
                 </span>
                 <div
                   className="w-full rounded-t bg-primary/70"
                   style={{ height: `${Math.max(4, (item.volume_kg / maxVolume) * 120)}px` }}
-                  title={`${item.week_start}: ${fmt(item.volume_kg)} kg`}
+                  title={`${item.week_start}: ${fmt(fromKg(item.volume_kg, unitSystem))} ${unit}`}
                 />
                 <span className="text-[10px] text-muted-foreground">
                   {item.week_start.slice(5)}
@@ -211,27 +219,30 @@ export function DashboardOverview({ name }: { name: string }) {
             ) : null}
           </div>
           {summary.last_pr ? (
-            <p className="mt-4 rounded-lg bg-muted px-3 py-2 text-xs">
-              {t("lastPr")}: {summary.last_pr.exercise_name} · {fmt(summary.last_pr.value)}
-            </p>
+            <div className="mt-4 rounded-lg border border-border bg-background p-3">
+              <p className="text-xs text-muted-foreground">
+                {t("latestPr")} ({summary.total_prs})
+              </p>
+              <p className="mt-0.5 text-sm font-medium">
+                {summary.last_pr.exercise_name} ·{" "}
+                {fmt(fromKg(summary.last_pr.value, unitSystem))} {unit}
+              </p>
+            </div>
           ) : null}
         </section>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <section className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium">{t("calendar")}</h2>
-            <span className="text-xs text-muted-foreground">{t("calendarHint")}</span>
-          </div>
+          <h2 className="text-sm font-medium">{t("activity")}</h2>
           <div
-            className="mt-3 grid grid-flow-col grid-rows-7 gap-1"
-            style={{ gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` }}
+            className="mt-3 grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${Math.max(1, weeks)}, minmax(0, 1fr))` }}
           >
             {(calendar?.days ?? []).map((day) => (
               <div
                 key={day.date}
-                title={`${day.date}: ${fmt(day.volume_kg)} kg`}
+                title={`${day.date}: ${fmt(fromKg(day.volume_kg, unitSystem))} ${unit}`}
                 className={
                   day.intensity === 0
                     ? "aspect-square rounded-sm bg-muted"

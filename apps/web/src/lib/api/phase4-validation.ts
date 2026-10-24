@@ -54,14 +54,27 @@ export const profileSchema = z.object({
     .optional(),
   preferred_cardio: z.array(z.string().trim().max(40)).max(10).optional(),
   height_cm: z.number().min(80).max(250).optional(),
-  birth_date: z.coerce.date().optional(),
+  birth_date: z.coerce
+    .date()
+    .refine(
+      (date) => {
+        const now = new Date();
+        const cutoff = new Date(
+          Date.UTC(now.getUTCFullYear() - 16, now.getUTCMonth(), now.getUTCDate())
+        );
+        return date <= cutoff;
+      },
+      { message: "Minimum age is 16 years" }
+    )
+    .optional(),
   sex: z.enum(["male", "female", "other", "prefer_not_to_say"]).optional(),
   program_style_notes: z.string().trim().max(2000).optional(),
   display_name: z.string().trim().min(1).max(80).optional(),
   locale: z.enum(["id", "en"]).optional(),
   unit_system: z.enum(["metric", "imperial"]).optional(),
   timezone: z.string().trim().min(1).max(60).optional(),
-  theme: z.enum(["light", "dark", "system"]).optional()
+  theme: z.enum(["light", "dark", "system"]).optional(),
+  email_opt_in: z.boolean().optional()
 });
 
 export const onboardingSchema = z.object({

@@ -67,6 +67,9 @@ export default async function AppLayout({
             <Link href="/exports" className="text-sm text-muted-foreground hover:text-foreground">
               {tNav("exports")}
             </Link>
+            <Link href="/settings" className="text-sm text-muted-foreground hover:text-foreground">
+              {tNav("settings")}
+            </Link>
             {session.user.role === "admin" ? (
               <Link href="/admin/exercises" className="text-sm text-muted-foreground hover:text-foreground">
                 {tNav("admin")}

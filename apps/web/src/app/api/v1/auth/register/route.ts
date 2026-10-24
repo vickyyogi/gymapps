@@ -42,7 +42,16 @@ export const POST = withApi(async ({ request }) => {
             plan: "free",
             validFrom: now
           }
-        }
+        },
+        ...(input.birth_date
+          ? {
+              profile: {
+                create: {
+                  birthDate: new Date(`${input.birth_date}T00:00:00.000Z`)
+                }
+              }
+            }
+          : {})
       },
       include: { entitlements: true }
     });

@@ -35,6 +35,8 @@ export interface paths {
                         locale: "id" | "en";
                         /** @constant */
                         accept_terms?: true;
+                        /** Format: date */
+                        birth_date?: string;
                     };
                 };
             };
@@ -347,6 +349,102 @@ export interface paths {
             };
         };
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ganti password saat ini (merevoke semua sesi perangkat lain) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        current_password: string;
+                        new_password: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Berhasil */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthorized"];
+                422: components["responses"]["ValidationError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus akun (soft-delete 30 hari sebelum hard-delete permanen) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        password: string;
+                        /** @enum {string} */
+                        confirm: "DELETE";
+                    };
+                };
+            };
+            responses: {
+                /** @description Akun dijadwalkan untuk penghapusan permanen dalam 30 hari */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data?: {
+                                /** @enum {string} */
+                                status?: "pending_delete";
+                                /** @example 30 */
+                                hard_delete_after_days?: number;
+                            };
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                422: components["responses"]["ValidationError"];
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -1429,6 +1527,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workouts/{workoutId}/exercises/{workoutExerciseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workoutId: string;
+                workoutExerciseId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus exercise dari sesi berjalan */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workoutId: string;
+                    workoutExerciseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Berhasil */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                404: components["responses"]["NotFound"];
+                409: components["responses"]["Conflict"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workouts/{workoutId}/exercises/{workoutExerciseId}/sets": {
         parameters: {
             query?: never;
@@ -1555,6 +1695,7 @@ export interface paths {
                         weight_kg?: number;
                         reps?: number;
                         rpe?: number;
+                        is_warmup?: boolean;
                         is_completed?: boolean;
                     };
                 };
@@ -2909,7 +3050,39 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Daftar export terbaru */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Berhasil */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data?: {
+                                export_id?: string;
+                                /** @enum {string} */
+                                status?: "queued" | "running" | "ready" | "failed";
+                                /** @enum {string} */
+                                type?: "csv" | "json" | "pdf_report";
+                                download_url?: string | null;
+                                /** Format: date-time */
+                                expires_at?: string | null;
+                                expired?: boolean;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
         put?: never;
         /** Buat job export data (CSV/JSON) */
         post: {
@@ -2990,9 +3163,94 @@ export interface paths {
                                 /** Format: date-time */
                                 expires_at?: string | null;
                                 file_size_bytes?: number | null;
+                                expired?: boolean;
+                                error_message?: string | null;
                             };
                         };
                     };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Hapus export dan file */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    exportId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Berhasil */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bukan pemilik */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/exports/{exportId}/download": {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path: {
+                exportId: string;
+            };
+            cookie?: never;
+        };
+        /** Download export (session + signed token + ownership) */
+        get: {
+            parameters: {
+                query: {
+                    token: string;
+                };
+                header?: never;
+                path: {
+                    exportId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description File biner */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Token salah atau bukan pemilik */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Link kedaluwarsa (EXPORT_EXPIRED) */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -3087,6 +3345,8 @@ export interface paths {
                                 download_url?: string | null;
                                 /** Format: date-time */
                                 expires_at?: string | null;
+                                file_size_bytes?: number | null;
+                                error_message?: string | null;
                             };
                         };
                     };
@@ -3099,6 +3359,312 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/reports/{reportId}/download": {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        /** Download PDF laporan (session + signed token + ownership) */
+        get: {
+            parameters: {
+                query: {
+                    token: string;
+                };
+                header?: never;
+                path: {
+                    reportId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description File PDF */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Token salah atau bukan pemilik */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Link kedaluwarsa (EXPORT_EXPIRED) */
+                410: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daftar notifikasi in-app */
+        get: {
+            parameters: {
+                query?: {
+                    unread_only?: "true" | "false";
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Berhasil */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data?: components["schemas"]["Notification"][];
+                            meta?: {
+                                unread_count?: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/{notificationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Tandai satu notifikasi dibaca */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    notificationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Berhasil */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data?: components["schemas"]["Notification"];
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tandai semua notifikasi dibaca */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Berhasil */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data?: {
+                                updated?: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/exercises": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daftar exercise termasuk draft (role admin) */
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    status?: "published" | "draft" | "archived";
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Berhasil */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data?: components["schemas"]["Exercise"][];
+                        };
+                    };
+                };
+                /** @description Role admin diperlukan */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Buat exercise global sebagai draft */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": WithRequired<components["schemas"]["AdminExerciseInput"], "name_id" | "primary_muscle" | "equipment">;
+                };
+            };
+            responses: {
+                /** @description Dibuat */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/exercises/{exerciseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exerciseId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit/publish exercise tanpa deploy */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    exerciseId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdminExerciseInput"];
+                };
+            };
+            responses: {
+                /** @description Berhasil */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data?: components["schemas"]["Exercise"];
+                        };
+                    };
+                };
+                /** @description Role admin diperlukan */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/summary/today": {
@@ -3244,6 +3810,7 @@ export interface components {
             timezone?: string;
             /** @enum {string} */
             theme?: "light" | "dark" | "system";
+            email_opt_in?: boolean;
             onboarding_completed?: boolean;
             entitlement?: {
                 /** @enum {string} */
@@ -3290,6 +3857,7 @@ export interface components {
             timezone?: string;
             /** @enum {string} */
             theme?: "light" | "dark" | "system";
+            email_opt_in?: boolean;
         };
         Exercise: {
             id?: string;
@@ -3536,6 +4104,37 @@ export interface components {
             /** Format: date-time */
             created_at?: string;
         };
+        AdminExerciseInput: {
+            name_id?: string;
+            name_en?: string;
+            description_id?: string | null;
+            description_en?: string | null;
+            instructions_id?: string[];
+            instructions_en?: string[];
+            primary_muscle?: string;
+            secondary_muscles?: string[];
+            equipment?: string[];
+            /** @enum {string} */
+            difficulty?: "beginner" | "intermediate" | "advanced";
+            /** @enum {string} */
+            impact_level?: "low" | "medium" | "high";
+            contraindicated_areas?: string[];
+            is_compound?: boolean;
+            /** @enum {string} */
+            status?: "published" | "draft" | "archived";
+            review_notes?: string | null;
+        };
+        Notification: {
+            id?: string;
+            type?: string;
+            title?: string;
+            body?: string | null;
+            link?: string | null;
+            /** Format: date-time */
+            read_at?: string | null;
+            /** Format: date-time */
+            created_at?: string;
+        };
         ChatThread: {
             id?: string;
             title?: string | null;
@@ -3704,4 +4303,7 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
+type WithRequired<T, K extends keyof T> = T & {
+    [P in K]-?: T[P];
+};
 export type operations = Record<string, never>;

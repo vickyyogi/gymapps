@@ -1,10 +1,11 @@
 import { NextResponse, after } from "next/server";
 import { prisma } from "@gymapps/db";
 import { API_RATE_LIMITS } from "@gymapps/shared";
-import { withAuthApi, parseJson } from "@/lib/api/handler";
+import { withAuthApi, parseJson, clientIp } from "@/lib/api/handler";
 import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { exportCreateSchema } from "@/lib/api/phase6-validation";
 import { createExportJob, exportStatus, runExport } from "@/lib/ai/exports";
+import { writeAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,14 @@ export const POST = withAuthApi(async ({ request, session }) => {
     entities: input.entities,
     from: input.from,
     to: input.to
+  });
+  await writeAudit({
+    userId: session.user.id,
+    action: "export.requested",
+    entityType: "export",
+    entityId: job.id,
+    after: { format: input.format, entities: job.entities },
+    ipAddress: clientIp(request)
   });
   after(() => runExport(job.id));
   return NextResponse.json(

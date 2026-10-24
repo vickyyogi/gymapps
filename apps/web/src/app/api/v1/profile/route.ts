@@ -50,6 +50,7 @@ export const PATCH = withAuthApi(async ({ request, session }) => {
   if (input.unit_system !== undefined) userData.unitSystem = input.unit_system;
   if (input.timezone !== undefined) userData.timezone = input.timezone;
   if (input.theme !== undefined) userData.theme = input.theme;
+  if (input.email_opt_in !== undefined) userData.emailOptIn = input.email_opt_in;
 
   await prisma.$transaction(async (tx) => {
     await tx.userProfile.upsert({

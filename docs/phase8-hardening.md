@@ -51,16 +51,14 @@ Perbaikan kode: `analyticsVolume` sekarang memfilter `created_at >= from` sehing
 |---|---|---|
 | Redaksi PII di konteks AI | ✅ | `lib/ai/context.ts` |
 | Export HMAC + ownership + expiry 7 hari | ✅ | 403 lintas user, 410 expired, diverifikasi E2E |
-| Password hash Argon2id | ✅ | |
+| Password hash Argon2id | ✅ | + ganti password aktif (`POST /api/v1/auth/password/change`) |
 | Cookie `httpOnly`, `Secure` hanya production | ✅ | |
-| Audit log perubahan data | 🟡 parsial | admin exercise + profile/program/workout mutation; belum ada audit hapus akun |
-| Hapus akun soft→hard delete | ❌ | `FR-13-07`; belum ada API/UI/job |
-| Verifikasi email + reset password | ❌ | `FR-01-08`, `US-01.5` |
-| Age gate + ToS | ❌ | `NFR-PRIV-10` |
+| Audit log perubahan data | ✅ | profile, program, workout, admin exercise, ganti password, export/report, dan hapus akun (tanpa PII) |
+| Hapus akun soft→hard delete | ✅ | `DELETE /api/v1/account` (soft delete `pending_delete` + cabut sesi) + `purgeExpiredAccounts()` (hard delete > 30 hari & hapus `.exports`) + UI 2 langkah di `/settings` |
+| Age gate + ToS & Kebijakan Privasi | ✅ | `NFR-PRIV-06` & `NFR-PRIV-10`: halaman `/privacy` & `/terms` dwibahasa, checkbox wajib saat registrasi, validasi usia minimal 16 tahun |
+| Verifikasi email + reset password | ❌ | `FR-01-08`, `US-01.5` (Tahap B — butuh integrasi email provider/token) |
 | Retensi log 30 hari | ❌ | log stdout saja, belum ada rotasi/retensi |
-| Notifikasi email/push | ⚠️ v1.1 | `FR-13-09` |
-
-**Kesimpulan PDP: belum siap untuk beta publik.** Syarat minimum sebelum beta: hapus akun, verifikasi email, reset password, age gate + ToS, dan retensi log.
+| Notifikasi email/push | ⚠️ v1.1 | `FR-13-09` (preferensi `email_opt_in` sudah tersedia di `/settings`) |
 
 ## Audit log
 
@@ -72,8 +70,11 @@ Ditulis oleh `apps/web/src/lib/audit.ts` untuk mutation:
 | `program.created` / `program.updated` / `program.archived` / `program.activated` | program |
 | `workout.started` / `workout.updated` / `workout.finished` / `workout.deleted` | workout |
 | `exercise.published` / `exercise.updated` | exercise (admin, Fase 7) |
+| `password.changed` | user |
+| `account.deleted` | user (metadata bebas PII) |
+| `export.requested` / `report.requested` | export |
 
-Belum: hapus akun, export/PDF, chat message. Audit tersimpan di `audit_logs` dengan `actor_id`, `before`, `after`, `ip_address`.
+Audit tersimpan di `audit_logs` dengan `actor_id`, `before`, `after`, `ip_address`.
 
 ## Blocker eksternal staging & beta
 
@@ -90,8 +91,8 @@ Belum: hapus akun, export/PDF, chat message. Audit tersimpan di `audit_logs` den
 - [x] Load test analytics p95 < 1 detik
 - [x] Review index query panas
 - [x] Backup/restore drill
-- [x] Review PDP
-- [x] Audit log (profile/program/workout)
+- [x] Review PDP (Tahap A: hapus akun, age gate, ToS/Privacy, audit log lengkap)
+- [x] Audit log (profile/program/workout/account/export/password)
 - [ ] Error rate < 0,5% + rollback otomatis (butuh APM + staging)
 - [ ] AI failure < 2% (butuh data produksi)
 - [ ] Biaya ≤ USD 0,30/WAU (butuh data produksi)

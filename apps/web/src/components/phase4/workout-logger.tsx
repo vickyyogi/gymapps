@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { fromKg, toKg, weightUnitLabel, type UnitSystem } from "@gymapps/domain";
 import { ExercisePicker, type PickedExercise } from "@/components/phase4/exercise-picker";
 
 type WorkoutSet = {
@@ -10,6 +11,8 @@ type WorkoutSet = {
   set_number: number;
   weight_kg: number;
   reps: number;
+  rpe: number | null;
+  is_warmup: boolean;
   is_completed: boolean;
   is_pr: boolean;
   delta_vs_last: { weight_kg: number; reps: number } | null;
@@ -45,10 +48,14 @@ function fmt(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
-function deltaLabel(delta: WorkoutSet["delta_vs_last"]) {
+function deltaLabel(delta: WorkoutSet["delta_vs_last"], unitSystem: UnitSystem) {
   if (!delta) return null;
+  const unit = weightUnitLabel(unitSystem);
   const parts = [];
-  if (delta.weight_kg) parts.push(`${delta.weight_kg > 0 ? "+" : ""}${fmt(delta.weight_kg)} kg`);
+  if (delta.weight_kg) {
+    const converted = fromKg(Math.abs(delta.weight_kg), unitSystem);
+    parts.push(`${delta.weight_kg > 0 ? "+" : "-"}${fmt(converted)} ${unit}`);
+  }
   if (delta.reps) parts.push(`${delta.reps > 0 ? "+" : ""}${delta.reps} rep`);
   return parts.length ? parts.join(" · ") : null;
 }
@@ -57,33 +64,60 @@ function ExerciseCard({
   item,
   active,
   pending,
+  unitSystem,
   onLog,
-  onToggle
+  onToggle,
+  onToggleWarmup,
+  onDeleteSet,
+  onRemoveExercise
 }: {
   item: WorkoutExercise;
   active: boolean;
   pending: boolean;
-  onLog: (weight: number, reps: number) => Promise<boolean>;
+  unitSystem: UnitSystem;
+  onLog: (input: {
+    weightKg: number;
+    reps: number;
+    rpe?: number;
+    isWarmup: boolean;
+  }) => Promise<boolean>;
   onToggle: (set: WorkoutSet) => void;
+  onToggleWarmup: (set: WorkoutSet) => void;
+  onDeleteSet: (set: WorkoutSet) => void;
+  onRemoveExercise: () => void;
 }) {
   const t = useTranslations("workout");
+  const unit = weightUnitLabel(unitSystem);
   const last = item.sets.at(-1);
   const previous = item.previous_performance?.sets.at(-1);
-  const [weight, setWeight] = useState(String(last?.weight_kg ?? previous?.weight_kg ?? 0));
+  const initialWeight = fromKg(last?.weight_kg ?? previous?.weight_kg ?? 0, unitSystem);
+  const [weight, setWeight] = useState(String(initialWeight));
   const [reps, setReps] = useState(String(last?.reps ?? previous?.reps ?? 8));
+  const [rpe, setRpe] = useState(last?.rpe ? String(last.rpe) : "");
+  const [isWarmup, setIsWarmup] = useState(false);
 
   useEffect(() => {
     if (!last) return;
-    setWeight(String(last.weight_kg));
+    setWeight(String(fromKg(last.weight_kg, unitSystem)));
     setReps(String(last.reps));
-  }, [last]);
+    setRpe(last.rpe ? String(last.rpe) : "");
+  }, [last, unitSystem]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const ok = await onLog(Number(weight), Number(reps));
+    const numericWeight = Number(weight);
+    const weightKg = toKg(numericWeight, unitSystem);
+    const parsedRpe = rpe.trim() ? Number(rpe) : undefined;
+    const ok = await onLog({
+      weightKg,
+      reps: Number(reps),
+      ...(parsedRpe !== undefined && !Number.isNaN(parsedRpe) ? { rpe: parsedRpe } : {}),
+      isWarmup
+    });
     if (ok) {
-      setWeight(String(Number(weight)));
+      setWeight(String(numericWeight));
       setReps(String(Number(reps)));
+      setIsWarmup(false);
     }
   }
 
@@ -101,20 +135,34 @@ function ExerciseCard({
               : ""}
           </p>
         </div>
-        {item.previous_performance ? (
-          <p className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-            {t("previous")}: {fmt(item.previous_performance.sets.at(-1)?.weight_kg ?? 0)} kg ×{" "}
-            {item.previous_performance.sets.at(-1)?.reps ?? 0}
-          </p>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {item.previous_performance ? (
+            <p className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+              {t("previous")}:{" "}
+              {fmt(fromKg(item.previous_performance.sets.at(-1)?.weight_kg ?? 0, unitSystem))}{" "}
+              {unit} × {item.previous_performance.sets.at(-1)?.reps ?? 0}
+            </p>
+          ) : null}
+          {active ? (
+            <button
+              type="button"
+              onClick={onRemoveExercise}
+              disabled={pending}
+              title={t("removeExercise")}
+              className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:border-danger hover:text-danger disabled:opacity-50"
+            >
+              {t("removeExercise")}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {item.sets.length ? (
         <ul className="mt-3 divide-y divide-border rounded-lg border border-border">
           {item.sets.map((set) => {
-            const delta = deltaLabel(set.delta_vs_last);
+            const delta = deltaLabel(set.delta_vs_last, unitSystem);
             return (
-              <li key={set.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+              <li key={set.id} className="flex flex-wrap items-center gap-2.5 px-3 py-2 text-sm">
                 <button
                   type="button"
                   onClick={() => active && onToggle(set)}
@@ -129,9 +177,33 @@ function ExerciseCard({
                   ✓
                 </button>
                 <span className="w-8 text-xs text-muted-foreground">#{set.set_number}</span>
+                {active ? (
+                  <button
+                    type="button"
+                    onClick={() => onToggleWarmup(set)}
+                    disabled={pending}
+                    title={t("toggleWarmup")}
+                    className={
+                      set.is_warmup
+                        ? "rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400"
+                        : "rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:border-foreground"
+                    }
+                  >
+                    {t("warmupShort")}
+                  </button>
+                ) : set.is_warmup ? (
+                  <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    {t("warmupShort")}
+                  </span>
+                ) : null}
                 <span className={set.is_completed ? "font-medium" : "text-muted-foreground"}>
-                  {fmt(set.weight_kg)} kg × {set.reps}
+                  {fmt(fromKg(set.weight_kg, unitSystem))} {unit} × {set.reps}
                 </span>
+                {set.rpe !== null && set.rpe !== undefined ? (
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                    {t("rpe")} {fmt(set.rpe)}
+                  </span>
+                ) : null}
                 {set.is_pr ? (
                   <span className="rounded bg-primary/15 px-1.5 py-0.5 text-xs font-medium text-primary">
                     PR
@@ -139,6 +211,18 @@ function ExerciseCard({
                 ) : null}
                 {delta ? (
                   <span className="ml-auto text-xs text-muted-foreground">{delta}</span>
+                ) : null}
+                {active ? (
+                  <button
+                    type="button"
+                    onClick={() => onDeleteSet(set)}
+                    disabled={pending}
+                    aria-label={t("removeSet")}
+                    title={t("removeSet")}
+                    className={`${delta ? "" : "ml-auto"} rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-danger/10 hover:text-danger disabled:opacity-50`}
+                  >
+                    ×
+                  </button>
                 ) : null}
               </li>
             );
@@ -149,7 +233,7 @@ function ExerciseCard({
       {active ? (
         <form onSubmit={submit} className="mt-3 flex flex-wrap items-end gap-2">
           <label className="text-xs text-muted-foreground">
-            {t("weight")}
+            {unitSystem === "imperial" ? t("weightLb") : t("weight")}
             <input
               type="number"
               min={0}
@@ -170,6 +254,28 @@ function ExerciseCard({
               className="mt-1 block w-20 rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
             />
           </label>
+          <label className="text-xs text-muted-foreground">
+            {t("rpeOptional")}
+            <input
+              type="number"
+              min={5}
+              max={10}
+              step="0.5"
+              placeholder="6–10"
+              value={rpe}
+              onChange={(event) => setRpe(event.target.value)}
+              className="mt-1 block w-20 rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={isWarmup}
+              onChange={(event) => setIsWarmup(event.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border"
+            />
+            <span>{t("warmup")}</span>
+          </label>
           <button
             type="submit"
             disabled={pending}
@@ -183,12 +289,19 @@ function ExerciseCard({
   );
 }
 
-export function WorkoutLogger({ workoutId }: { workoutId: string }) {
+export function WorkoutLogger({
+  workoutId,
+  unitSystem = "metric"
+}: {
+  workoutId: string;
+  unitSystem?: UnitSystem;
+}) {
   const t = useTranslations("workout");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
   const locale = useLocale();
   const router = useRouter();
+  const unit = weightUnitLabel(unitSystem);
 
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [loading, setLoading] = useState(true);
@@ -251,7 +364,32 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
     }
   }
 
-  async function logSet(item: WorkoutExercise, weight: number, reps: number) {
+  async function removeExercise(item: WorkoutExercise) {
+    setPendingId(item.id);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/v1/workouts/${workoutId}/exercises/${item.id}`,
+        { method: "DELETE" }
+      );
+      if (!response.ok && response.status !== 204) {
+        const payload = await response.json().catch(() => null);
+        const code = payload?.error?.code ?? "INTERNAL_ERROR";
+        setError(tErrors.has(code) ? tErrors(code) : tErrors("INTERNAL_ERROR"));
+        return;
+      }
+      await load();
+    } catch {
+      setError(tErrors("NETWORK_ERROR"));
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function logSet(
+    item: WorkoutExercise,
+    input: { weightKg: number; reps: number; rpe?: number; isWarmup: boolean }
+  ) {
     setPendingId(item.id);
     setError(null);
     try {
@@ -260,7 +398,13 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ weight_kg: weight, reps, is_completed: true })
+          body: JSON.stringify({
+            weight_kg: input.weightKg,
+            reps: input.reps,
+            is_warmup: input.isWarmup,
+            is_completed: true,
+            ...(input.rpe !== undefined ? { rpe: input.rpe } : {})
+          })
         }
       );
       if (!response.ok) {
@@ -287,6 +431,32 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ is_completed: !set.is_completed })
+      });
+      await load();
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function toggleWarmup(item: WorkoutExercise, set: WorkoutSet) {
+    setPendingId(set.id);
+    try {
+      await fetch(`/api/v1/workouts/${workoutId}/exercises/${item.id}/sets/${set.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ is_warmup: !set.is_warmup })
+      });
+      await load();
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function deleteSet(item: WorkoutExercise, set: WorkoutSet) {
+    setPendingId(set.id);
+    try {
+      await fetch(`/api/v1/workouts/${workoutId}/exercises/${item.id}/sets/${set.id}`, {
+        method: "DELETE"
       });
       await load();
     } finally {
@@ -348,7 +518,7 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
-            [t("volume"), `${fmt(workout.total_volume_kg)} kg`],
+            [t("volume"), `${fmt(fromKg(workout.total_volume_kg, unitSystem))} ${unit}`],
             [t("workingSets"), String(workout.total_sets)],
             [t("reps"), String(workout.total_reps)],
             [t("prs"), String(workout.pr_count)]
@@ -388,7 +558,8 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">{workout.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {fmt(workout.total_volume_kg)} kg · {workout.total_sets} {t("sets")}
+            {fmt(fromKg(workout.total_volume_kg, unitSystem))} {unit} · {workout.total_sets}{" "}
+            {t("sets")}
           </p>
         </div>
         <button
@@ -428,9 +599,13 @@ export function WorkoutLogger({ workoutId }: { workoutId: string }) {
             key={item.id}
             item={item}
             active
+            unitSystem={unitSystem}
             pending={pendingId === item.id || pendingId === "add"}
-            onLog={(weight, reps) => logSet(item, weight, reps)}
+            onLog={(input) => logSet(item, input)}
             onToggle={(set) => toggleSet(item, set)}
+            onToggleWarmup={(set) => toggleWarmup(item, set)}
+            onDeleteSet={(set) => deleteSet(item, set)}
+            onRemoveExercise={() => removeExercise(item)}
           />
         ))}
       </div>

@@ -42,6 +42,7 @@ export const PATCH = withAuthApi(async ({ request, params, session }) => {
         volumeKg: setVolume(weightKg, reps),
         est1rmKg: estimateOneRm(weightKg, reps),
         ...(input.rpe !== undefined ? { rpe: input.rpe } : {}),
+        ...(input.is_warmup !== undefined ? { isWarmup: input.is_warmup } : {}),
         ...(input.is_completed !== undefined ? { isCompleted: input.is_completed } : {})
       }
     });

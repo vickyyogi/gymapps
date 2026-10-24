@@ -84,6 +84,7 @@ paths:
                 display_name: { type: string, maxLength: 80 }
                 locale: { type: string, enum: [id, en], default: id }
                 accept_terms: { type: boolean, const: true }
+                birth_date: { type: string, format: date }
       responses:
         '201':
           description: Akun dibuat dan sesi login langsung dibuat (cookie 30 hari)
@@ -224,6 +225,55 @@ paths:
                 password: { type: string, minLength: 8, maxLength: 128 }
       responses:
         '204': { description: Berhasil }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /auth/password/change:
+    post:
+      tags: [Auth]
+      summary: Ganti password saat ini (merevoke semua sesi perangkat lain)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string, minLength: 1, maxLength: 128 }
+                new_password: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        '204': { description: Berhasil }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /account:
+    delete:
+      tags: [Auth]
+      summary: Hapus akun (soft-delete 30 hari sebelum hard-delete permanen)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password, confirm]
+              properties:
+                password: { type: string, minLength: 1, maxLength: 128 }
+                confirm: { type: string, enum: [DELETE] }
+      responses:
+        '200':
+          description: Akun dijadwalkan untuk penghapusan permanen dalam 30 hari
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, enum: [pending_delete] }
+                      hard_delete_after_days: { type: integer, example: 30 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '422': { $ref: '#/components/responses/ValidationError' }
 
   # ──────────────────────────────── PROFILE ────────────────────────────────
@@ -769,6 +819,18 @@ paths:
                 properties:
                   data: { $ref: '#/components/schemas/WorkoutExercise' }
 
+  /workouts/{workoutId}/exercises/{workoutExerciseId}:
+    parameters:
+      - { name: workoutId, in: path, required: true, schema: { type: string } }
+      - { name: workoutExerciseId, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [Workouts]
+      summary: Hapus exercise dari sesi berjalan
+      responses:
+        '204': { description: Berhasil }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
   /workouts/{workoutId}/exercises/{workoutExerciseId}/sets:
     parameters:
       - { name: workoutId, in: path, required: true, schema: { type: string } }
@@ -829,6 +891,7 @@ paths:
                 weight_kg: { type: number, minimum: 0, maximum: 1000 }
                 reps: { type: integer, minimum: 0, maximum: 500 }
                 rpe: { type: number, minimum: 0.5, maximum: 10 }
+                is_warmup: { type: boolean }
                 is_completed: { type: boolean }
       responses:
         '200':
@@ -1974,6 +2037,7 @@ components:
         unit_system: { type: string, enum: [metric, imperial] }
         timezone: { type: string }
         theme: { type: string, enum: [light, dark, system] }
+        email_opt_in: { type: boolean }
         onboarding_completed: { type: boolean }
         entitlement:
           type: object
@@ -2028,6 +2092,7 @@ components:
         unit_system: { type: string, enum: [metric, imperial] }
         timezone: { type: string }
         theme: { type: string, enum: [light, dark, system] }
+        email_opt_in: { type: boolean }
 
     Exercise:
       type: object

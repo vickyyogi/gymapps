@@ -13,6 +13,11 @@ import {
   generateFallbackProgram,
   setsByMuscle,
   totalVolume,
+  fromKg,
+  kgToLb,
+  lbToKg,
+  toKg,
+  weightUnitLabel,
   validateProgram,
   weeklyAdherence,
   type BodyArea,
@@ -349,5 +354,13 @@ describe("quota", () => {
     const result = checkQuota([now - 1000], { perMinute: 20, perDay: 5 }, now);
     expect(result.allowed).toBe(true);
     expect(result.retryAfterSeconds).toBe(0);
+    expect(kgToLb(100)).toBe(220.5);
+    expect(lbToKg(220.46)).toBe(100);
+    expect(fromKg(80, "metric")).toBe(80);
+    expect(fromKg(80, "imperial")).toBe(176.4);
+    expect(toKg(176.4, "imperial")).toBe(80.01);
+    expect(toKg(80, "metric")).toBe(80);
+    expect(weightUnitLabel("metric")).toBe("kg");
+    expect(weightUnitLabel("imperial")).toBe("lb");
   });
 });

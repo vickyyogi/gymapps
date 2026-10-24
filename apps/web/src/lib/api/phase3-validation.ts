@@ -78,7 +78,9 @@ export const createExerciseSchema = z.object({
   name_id: z.string().trim().min(1).max(120),
   name_en: z.string().trim().min(1).max(120).optional(),
   description_id: z.string().trim().max(500).optional(),
+  description_en: z.string().trim().max(500).optional(),
   instructions_id: z.array(z.string().trim().min(1).max(500)).max(6).default([]),
+  instructions_en: z.array(z.string().trim().min(1).max(500)).max(6).default([]),
   primary_muscle: muscle,
   secondary_muscles: z.array(muscle).max(10).default([]),
   equipment: z.array(equipment).min(1).max(15),
@@ -195,6 +197,7 @@ export const workoutSetSchema = z
 export const updateSetSchema = z.object({
   weight_kg: z.number().min(0).max(1000).optional(),
   reps: z.number().int().min(0).max(500).optional(),
-  rpe: z.number().min(0.5).max(10).optional(),
+  rpe: z.number().min(0.5).max(10).nullable().optional(),
+  is_warmup: z.boolean().optional(),
   is_completed: z.boolean().optional()
 });

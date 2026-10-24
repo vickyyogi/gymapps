@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import type { UnitSystem } from "@gymapps/domain";
 import { getSession } from "@/lib/auth/session";
 import { DashboardOverview } from "@/components/phase4/dashboard-overview";
 
@@ -17,5 +18,8 @@ export default async function DashboardPage({
   if (!session) redirect(`/${locale}/login`);
 
   const name = session.user.displayName ?? session.user.email;
-  return <DashboardOverview name={name} />;
+  const unitSystem: UnitSystem =
+    session.user.unitSystem === "imperial" ? "imperial" : "metric";
+
+  return <DashboardOverview name={name} unitSystem={unitSystem} />;
 }

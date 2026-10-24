@@ -18,7 +18,9 @@ export const API_RATE_LIMITS = {
   exportCreate: { limit: 10, windowMs: HOUR_MS }, // per user, PDF/CSV jobs
   reportCreate: { limit: 10, windowMs: HOUR_MS }, // per user, PDF jobs
   coachThreadCreate: { limit: 20, windowMs: HOUR_MS }, // per user
-  coachFeedback: { limit: 60, windowMs: 60 * 1000 } // per user
+  coachFeedback: { limit: 60, windowMs: 60 * 1000 }, // per user
+  passwordChange: { limit: 10, windowMs: HOUR_MS }, // per user
+  accountDelete: { limit: 5, windowMs: HOUR_MS } // per user
 } as const;
 
 export const ARGON2_OPTIONS = {

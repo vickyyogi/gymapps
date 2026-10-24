@@ -26,6 +26,7 @@ export function serializeProfile(profile: UserProfile, user: User) {
     unit_system: user.unitSystem,
     timezone: user.timezone,
     theme: user.theme,
+    email_opt_in: user.emailOptIn,
     created_at: profile.createdAt.toISOString(),
     updated_at: profile.updatedAt.toISOString()
   };
