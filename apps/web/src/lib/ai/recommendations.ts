@@ -4,8 +4,12 @@ import { prisma, Prisma } from "@gymapps/db";
 import {
   evaluateAdherenceDrop,
   evaluateDeload,
+  evaluateFrequencyLow,
   evaluateImbalance,
+  evaluateMissingEquipment,
+  evaluateOvertrainingRisk,
   evaluatePlateau,
+  evaluatePrMilestone,
   evaluateStaleProgram,
   type Recommendation as RuleResult
 } from "@gymapps/domain";
@@ -81,6 +85,96 @@ function candidatesFor(
         title,
         body,
         actionType: "add_deload_week",
+        actionPayload: { program_id: programId ?? null },
+        relatedProgramId: programId ?? null,
+        relatedExerciseId: null
+      };
+    }
+
+    if (result.rule === "overtraining_risk") {
+      const surges = Number(evidence.consecutive_surges ?? 3);
+      const title =
+        language === "en"
+          ? "High overtraining risk detected"
+          : "Risiko overtraining tinggi terdeteksi";
+      const body =
+        language === "en"
+          ? `Weekly volume has increased by more than 20% for ${surges} consecutive weeks. Take a deload or reduce intensity to prevent fatigue and injury.`
+          : `Volume mingguan naik lebih dari 20% selama ${surges} minggu berturut-turut. Lakukan deload atau turunkan intensitas untuk mencegah kelelahan berlebih dan cedera.`;
+      return {
+        result,
+        evidence,
+        title,
+        body,
+        actionType: "add_deload_week",
+        actionPayload: { program_id: programId ?? null },
+        relatedProgramId: programId ?? null,
+        relatedExerciseId: null
+      };
+    }
+
+    if (result.rule === "pr_milestone") {
+      const name = String(evidence.latest_exercise_name ?? (language === "en" ? "Exercise" : "Latihan"));
+      const val = evidence.value ?? 0;
+      const title =
+        language === "en"
+          ? `New PR Milestone: ${name}!`
+          : `Rekor Pribadi Baru: ${name}!`;
+      const body =
+        language === "en"
+          ? `Congratulations on hitting a new record on ${name} (${val} kg)! Keep up the progressive overload while keeping good form.`
+          : `Selamat atas pencapaian rekor baru pada ${name} (${val} kg)! Pertahankan beban progresif dan tetap jaga teknik gerakan.`;
+      return {
+        result,
+        evidence,
+        title,
+        body,
+        actionType: "view_exercise",
+        actionPayload: { exercise_id: exerciseId ?? null },
+        relatedProgramId: null,
+        relatedExerciseId: exerciseId ?? null
+      };
+    }
+
+    if (result.rule === "missing_equipment_conflict") {
+      const count = Number(evidence.conflict_count ?? 1);
+      const title =
+        language === "en"
+          ? "Equipment mismatch in active program"
+          : "Konflik peralatan pada program aktif";
+      const body =
+        language === "en"
+          ? `Your active program includes ${count} exercise(s) that require equipment not listed in your profile. Swap exercises or update your equipment.`
+          : `Program aktifmu memiliki ${count} latihan yang membutuhkan peralatan yang belum ada di profil. Ganti latihan atau perbarui profil peralatanmu.`;
+      return {
+        result,
+        evidence,
+        title,
+        body,
+        actionType: "view_program",
+        actionPayload: { program_id: programId ?? null },
+        relatedProgramId: programId ?? null,
+        relatedExerciseId: null
+      };
+    }
+
+    if (result.rule === "frequency_low") {
+      const avg = evidence.avg_sessions_per_week ?? 1;
+      const target = evidence.target_days_per_week ?? 3;
+      const title =
+        language === "en"
+          ? "Workout frequency below target"
+          : "Frekuensi latihan di bawah target";
+      const body =
+        language === "en"
+          ? `Your recent average frequency is ${avg} sessions/week (target: ${target}). Try scheduling shorter sessions to maintain consistency.`
+          : `Rata-rata frekuensi latihanmu akhir-akhir ini adalah ${avg} sesi/minggu (target: ${target}). Jadwalkan sesi yang lebih singkat agar konsistensi tetap terjaga.`;
+      return {
+        result,
+        evidence,
+        title,
+        body,
+        actionType: "view_program",
         actionPayload: { program_id: programId ?? null },
         relatedProgramId: programId ?? null,
         relatedExerciseId: null
@@ -174,49 +268,83 @@ export async function evaluateRecommendationsForUser(options: {
   const now = options.now ?? new Date();
   const weekStart = startOfWeek(now);
   const since35 = new Date(now.getTime() - 35 * DAY_MS);
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: options.userId },
-    select: { locale: true }
-  });
-  const language = user.locale === "en" ? "en" : "id";
 
-  const [program, workouts, dismissed, recentExisting] = await Promise.all([
-    prisma.program.findFirst({
-      where: { userId: options.userId, status: "active", deletedAt: null },
-      include: {
-        weeks: { select: { isDeload: true, weekNumber: true } },
-        sessions: {
-          select: { id: true, completedAt: true },
-          orderBy: { completedAt: "desc" }
+  const [user, userProfile, program, workouts, recentPrSets, dismissed, recentExisting] =
+    await Promise.all([
+      prisma.user.findUniqueOrThrow({
+        where: { id: options.userId },
+        select: { locale: true }
+      }),
+      prisma.userProfile.findUnique({
+        where: { userId: options.userId },
+        select: { equipment: true, daysPerWeek: true }
+      }),
+      prisma.program.findFirst({
+        where: { userId: options.userId, status: "active", deletedAt: null },
+        include: {
+          weeks: { select: { isDeload: true, weekNumber: true } },
+          sessions: {
+            select: {
+              id: true,
+              completedAt: true,
+              exercises: {
+                select: {
+                  exerciseId: true,
+                  exercise: { select: { id: true, equipment: true, nameId: true, nameEn: true } }
+                }
+              }
+            },
+            orderBy: { completedAt: "desc" }
+          }
         }
-      }
-    }),
-    prisma.workout.findMany({
-      where: {
-        userId: options.userId,
-        status: "finished",
-        deletedAt: null,
-        startedAt: { gte: since35 }
-      },
-      select: { id: true, startedAt: true, totalVolumeKg: true }
-    }),
-    prisma.aiRecommendation.findMany({
-      where: {
-        userId: options.userId,
-        status: "dismissed",
-        dismissedUntil: { gt: now }
-      },
-      select: { rule: true }
-    }),
-    prisma.aiRecommendation.findMany({
-      where: {
-        userId: options.userId,
-        status: { in: ["new", "read"] },
-        createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS) }
-      },
-      select: { rule: true }
-    })
-  ]);
+      }),
+      prisma.workout.findMany({
+        where: {
+          userId: options.userId,
+          status: "finished",
+          deletedAt: null,
+          startedAt: { gte: since35 }
+        },
+        select: { id: true, startedAt: true, totalVolumeKg: true }
+      }),
+      prisma.workoutSet.findMany({
+        where: {
+          userId: options.userId,
+          isPr: true,
+          isCompleted: true,
+          deletedAt: null,
+          createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS) }
+        },
+        select: {
+          exerciseId: true,
+          weightKg: true,
+          reps: true,
+          est1rmKg: true,
+          createdAt: true,
+          exercise: { select: { nameId: true, nameEn: true } }
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5
+      }),
+      prisma.aiRecommendation.findMany({
+        where: {
+          userId: options.userId,
+          status: "dismissed",
+          dismissedUntil: { gt: now }
+        },
+        select: { rule: true }
+      }),
+      prisma.aiRecommendation.findMany({
+        where: {
+          userId: options.userId,
+          status: { in: ["new", "read"] },
+          createdAt: { gte: new Date(now.getTime() - 7 * DAY_MS) }
+        },
+        select: { rule: true }
+      })
+    ]);
+
+  const language = user.locale === "en" ? "en" : "id";
 
   const blockedRules = new Set([
     ...dismissed.map((row) => row.rule),
@@ -224,14 +352,20 @@ export async function evaluateRecommendationsForUser(options: {
   ]);
 
   const weekly = new Map<string, number>();
+  const weeklyCountsMap = new Map<string, number>();
   for (const workout of workouts) {
     const key = isoDate(startOfWeek(workout.startedAt));
     weekly.set(key, (weekly.get(key) ?? 0) + Number(workout.totalVolumeKg));
+    weeklyCountsMap.set(key, (weeklyCountsMap.get(key) ?? 0) + 1);
   }
   const weeklyRows = [...weekly.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([week, volume]) => ({ week, volume_kg: round(volume) }));
   const weeklyVolumes = weeklyRows.map((row) => row.volume_kg);
+
+  const weeklySessionCounts = [...weeklyCountsMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, count]) => count);
 
   const weeksSinceStart = program
     ? Math.floor(
@@ -267,7 +401,93 @@ export async function evaluateRecommendationsForUser(options: {
     });
   }
 
+  const overtraining = evaluateOvertrainingRisk({ weeklyVolumes });
+  if (overtraining) {
+    raw.push({
+      result: overtraining,
+      programId: program?.id ?? null,
+      context: {
+        metric: "consecutive_volume_spikes",
+        value: (overtraining.evidence.increases_pct as number[] | undefined)?.length ?? 0,
+        unit: "weeks",
+        delta_pct: (overtraining.evidence.increases_pct as number[] | undefined)?.at(-1) ?? 0,
+        series: weeklyRows.slice(-4)
+      }
+    });
+  }
+
+  if (recentPrSets.length > 0) {
+    const prItems = recentPrSets.map((s) => ({
+      exerciseId: s.exerciseId,
+      exerciseName: language === "en" ? s.exercise.nameEn : s.exercise.nameId,
+      recordType: s.est1rmKg ? "est_1rm" : "weight",
+      value: Number(s.weightKg ?? s.est1rmKg ?? 0)
+    }));
+    const prMilestone = evaluatePrMilestone({ recentPrs: prItems });
+    if (prMilestone) {
+      raw.push({
+        result: prMilestone,
+        exerciseId: prItems[0]?.exerciseId ?? null,
+        context: {
+          metric: "pr_count",
+          value: prItems.length,
+          unit: "prs",
+          delta_pct: null,
+          series: []
+        }
+      });
+    }
+  }
+
+  const targetDays = userProfile?.daysPerWeek ?? program?.daysPerWeek ?? 3;
+  const freqLow = evaluateFrequencyLow({
+    weeklySessionCounts,
+    targetDaysPerWeek: targetDays
+  });
+  if (freqLow) {
+    raw.push({
+      result: freqLow,
+      programId: program?.id ?? null,
+      context: {
+        metric: "avg_sessions_per_week",
+        value: Number(freqLow.evidence.avg_sessions_per_week ?? 0),
+        unit: "sessions/week",
+        delta_pct: null,
+        series: []
+      }
+    });
+  }
+
   if (program) {
+    const programExerciseItems: Array<{ exerciseId: string; exerciseName?: string; equipment: string[] }> = [];
+    for (const session of program.sessions) {
+      for (const item of session.exercises) {
+        programExerciseItems.push({
+          exerciseId: item.exerciseId,
+          exerciseName: language === "en" ? item.exercise.nameEn : item.exercise.nameId,
+          equipment: item.exercise.equipment
+        });
+      }
+    }
+    const userEquipment = (userProfile?.equipment as string[]) ?? [];
+    const missingEquip = evaluateMissingEquipment({
+      programExercises: programExerciseItems,
+      userEquipment
+    });
+    if (missingEquip) {
+      raw.push({
+        result: missingEquip,
+        programId: program.id,
+        context: {
+          metric: "missing_equipment_conflicts",
+          value: Number(missingEquip.evidence.conflict_count ?? 0),
+          unit: "exercises",
+          delta_pct: null,
+          series: []
+        }
+      });
+    }
+
     const completedThisWeek = program.sessions.filter(
       (session) => session.completedAt && session.completedAt >= weekStart
     ).length;

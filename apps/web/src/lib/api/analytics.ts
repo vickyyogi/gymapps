@@ -65,18 +65,25 @@ async function muscleSets(userId: string, from: Date) {
     },
     select: {
       volumeKg: true,
-      exercise: { select: { primaryMuscle: true } }
+      exercise: { select: { primaryMuscle: true, secondaryMuscles: true } }
     }
   });
 }
 
 function muscleBalanceRows(
-  rows: Array<{ volumeKg: unknown; exercise: { primaryMuscle: string } }>
+  rows: Array<{
+    volumeKg: unknown;
+    exercise: { primaryMuscle: string; secondaryMuscles: string[] };
+  }>
 ) {
   const totals = new Map<string, number>();
   for (const row of rows) {
-    const muscle = row.exercise.primaryMuscle;
-    totals.set(muscle, (totals.get(muscle) ?? 0) + Number(row.volumeKg));
+    const vol = Number(row.volumeKg);
+    const primary = row.exercise.primaryMuscle;
+    totals.set(primary, (totals.get(primary) ?? 0) + vol);
+    for (const sec of row.exercise.secondaryMuscles) {
+      totals.set(sec, (totals.get(sec) ?? 0) + vol * 0.5);
+    }
   }
   const total = [...totals.values()].reduce((sum, value) => sum + value, 0);
   return [...totals.entries()]
@@ -95,9 +102,8 @@ export async function analyticsSummary(userId: string, range: AnalyticsRange) {
   const sevenDays = new Date(now.getTime() - 7 * DAY);
   const fourteenDays = new Date(now.getTime() - 14 * DAY);
   const thirtyDays = new Date(now.getTime() - 30 * DAY);
-  const ninetyDays = new Date(now.getTime() - 90 * DAY);
 
-  const [workouts, sets30d, totalPrs, lastPr, activeProgram, profile, setDates] =
+  const [workouts, sets30d, prCount, lastPr, activeProgram, profile] =
     await Promise.all([
       finishedWorkouts(userId, from),
       muscleSets(userId, thirtyDays),
@@ -109,54 +115,51 @@ export async function analyticsSummary(userId: string, range: AnalyticsRange) {
       }),
       prisma.program.findFirst({
         where: { userId, status: "active", deletedAt: null },
-        select: { id: true, daysPerWeek: true }
+        include: { sessions: { select: { completedAt: true } } }
       }),
-      prisma.userProfile.findUnique({ where: { userId }, select: { goals: true } }),
-      prisma.workout.findMany({
-        where: {
-          userId,
-          status: "finished",
-          deletedAt: null,
-          startedAt: { gte: ninetyDays }
-        },
-        select: { startedAt: true }
+      prisma.userProfile.findUnique({
+        where: { userId },
+        select: { goals: true, daysPerWeek: true }
       })
     ]);
 
-  const volume7 = workouts
-    .filter((item) => item.startedAt >= sevenDays)
-    .reduce((sum, item) => sum + Number(item.totalVolumeKg), 0);
-  const volumePrev7 = workouts
-    .filter((item) => item.startedAt >= fourteenDays && item.startedAt < sevenDays)
-    .reduce((sum, item) => sum + Number(item.totalVolumeKg), 0);
-  const workoutsThisWeek = workouts.filter((item) => item.startedAt >= week).length;
+  const workoutsThisWeek = workouts.filter((workout) => workout.startedAt >= week).length;
+  const workouts7 = workouts.filter((workout) => workout.startedAt >= sevenDays).length;
   const workoutsPrev7 = workouts.filter(
-    (item) => item.startedAt >= fourteenDays && item.startedAt < sevenDays
+    (workout) => workout.startedAt >= fourteenDays && workout.startedAt < sevenDays
   ).length;
-  const workouts7 = workouts.filter((item) => item.startedAt >= sevenDays).length;
 
-  const days = [...new Set(setDates.map((item) => isoDate(item.startedAt)))].sort().reverse();
-  const today = isoDate(now);
-  const yesterday = isoDate(new Date(now.getTime() - DAY));
+  const volume7 = workouts
+    .filter((workout) => workout.startedAt >= sevenDays)
+    .reduce((sum, workout) => sum + Number(workout.totalVolumeKg), 0);
+  const volumePrev7 = workouts
+    .filter((workout) => workout.startedAt >= fourteenDays && workout.startedAt < sevenDays)
+    .reduce((sum, workout) => sum + Number(workout.totalVolumeKg), 0);
+  const volume30 = workouts
+    .filter((workout) => workout.startedAt >= thirtyDays)
+    .reduce((sum, workout) => sum + Number(workout.totalVolumeKg), 0);
+
+  const workoutDays = new Set(workouts.map((w) => isoDate(w.startedAt)));
   let streak = 0;
-  if (days[0] === today || days[0] === yesterday) {
-    const cursor = new Date(`${days[0]}T00:00:00.000Z`);
-    const set = new Set(days);
-    while (set.has(isoDate(cursor))) {
-      streak += 1;
-      cursor.setUTCDate(cursor.getUTCDate() - 1);
-    }
+  const cursor = new Date(now);
+  cursor.setUTCHours(0, 0, 0, 0);
+  if (!workoutDays.has(isoDate(cursor))) {
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  while (workoutDays.has(isoDate(cursor))) {
+    streak += 1;
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
   }
 
-  let adherence: number | null = null;
-  if (activeProgram) {
-    const completed = await prisma.programSession.count({
-      where: {
-        programId: activeProgram.id,
-        completedAt: { gte: week }
-      }
-    });
-    adherence = Math.min(1, completed / Math.max(1, activeProgram.daysPerWeek));
+  let adherenceCurrentWeek: number | null = null;
+  if (activeProgram && activeProgram.daysPerWeek > 0) {
+    const sessions = activeProgram.sessions.filter(
+      (session) => session.completedAt && session.completedAt >= week
+    );
+    adherenceCurrentWeek = round(
+      Math.min(1, sessions.length / activeProgram.daysPerWeek),
+      2
+    );
   }
 
   const balance = muscleBalanceRows(sets30d);
@@ -169,10 +172,10 @@ export async function analyticsSummary(userId: string, range: AnalyticsRange) {
         : `Volume 7 hari turun ${round(Math.abs(deltaVolume))}% dari minggu sebelumnya.`
     );
   }
-  if (balance.length > 1) {
+  if (balance.length) {
     const top = balance[0];
     if (top && top.share_pct > 40) {
-      insights.push(`Porsi ${top.muscle} ${top.share_pct}% — pertimbangkan variasi push/pull/legs.`);
+      insights.push(`Porsi ${top.muscle} ${top.share_pct}% - pertimbangkan variasi push/pull/legs.`);
     }
   }
   if (workoutsThisWeek === 0) {
@@ -185,14 +188,10 @@ export async function analyticsSummary(userId: string, range: AnalyticsRange) {
   return {
     weekly_logged_workouts: workoutsThisWeek,
     volume_7d_kg: round(volume7),
-    volume_30d_kg: round(
-      workouts
-        .filter((item) => item.startedAt >= thirtyDays)
-        .reduce((sum, item) => sum + Number(item.totalVolumeKg), 0)
-    ),
+    volume_30d_kg: round(volume30),
     current_streak: streak,
-    adherence_current_week: adherence,
-    total_prs: totalPrs,
+    adherence_current_week: adherenceCurrentWeek,
+    total_prs: prCount,
     last_pr: lastPr
       ? {
           exercise_name: lastPr.exercise.nameId,
@@ -264,19 +263,19 @@ export async function analyticsVolume(
     .map((bucket) => ({
       week_start: bucket.week_start,
       volume_kg: round(bucket.volume_kg),
-      working_sets: bucket.working_sets,
-      workouts: bucket.workoutIds.size
+      working_sets: bucket.working_sets
     }));
 
-  const current = series.at(-1)?.volume_kg ?? 0;
+  const last = series.at(-1)?.volume_kg ?? 0;
   const previous = series.at(-2)?.volume_kg ?? 0;
-  const delta = volumeDeltaPct(current, previous);
+  const delta = volumeDeltaPct(last, previous);
+
   return {
     series,
     insight: {
       text:
         delta === null
-          ? "Belum cukup data untuk membandingkan minggu."
+          ? "Data volume terkumpul untuk analisis."
           : delta >= 0
             ? `Volume minggu terakhir naik ${round(delta)}%.`
             : `Volume minggu terakhir turun ${round(Math.abs(delta))}%.`,
@@ -290,11 +289,19 @@ export async function analyticsMuscleBalance(userId: string, weeks: number) {
   const rows = await muscleSets(userId, from);
   const totals = new Map<string, { volume: number; sets: number }>();
   for (const row of rows) {
-    const muscle = row.exercise.primaryMuscle;
-    const current = totals.get(muscle) ?? { volume: 0, sets: 0 };
-    current.volume += Number(row.volumeKg);
-    current.sets += 1;
-    totals.set(muscle, current);
+    const vol = Number(row.volumeKg);
+    const primary = row.exercise.primaryMuscle;
+    const currentPrimary = totals.get(primary) ?? { volume: 0, sets: 0 };
+    currentPrimary.volume += vol;
+    currentPrimary.sets += 1;
+    totals.set(primary, currentPrimary);
+
+    for (const sec of row.exercise.secondaryMuscles) {
+      const currentSec = totals.get(sec) ?? { volume: 0, sets: 0 };
+      currentSec.volume += vol * 0.5;
+      currentSec.sets += 0.5;
+      totals.set(sec, currentSec);
+    }
   }
   const total = [...totals.values()].reduce((sum, value) => sum + value.volume, 0);
   return {
@@ -302,7 +309,7 @@ export async function analyticsMuscleBalance(userId: string, weeks: number) {
       .map(([muscle, value]) => ({
         muscle,
         volume_kg: round(value.volume),
-        working_sets: value.sets,
+        working_sets: round(value.sets, 1),
         share_pct: total ? round((value.volume / total) * 100) : 0
       }))
       .sort((a, b) => b.volume_kg - a.volume_kg)

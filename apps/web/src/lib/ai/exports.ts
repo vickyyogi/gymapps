@@ -347,10 +347,25 @@ export async function runExport(exportId: string) {
         ...exerciseRows.map((item) => ["exercises", item] as [string, unknown])
       ];
       content = [
-        "entity,id,payload",
+        "entity,id,payload,date,exercise,weight_kg,reps,volume_kg",
         ...rows.map(([entity, item]) => {
-          const record = item as { id?: string };
-          return [csvCell(entity), csvCell(String(record.id ?? "")), csvCell(JSON.stringify(item))].join(",");
+          const record = item as Record<string, unknown>;
+          const id = String(record.id ?? "");
+          const date = String(record.created_at ?? record.started_at ?? record.recorded_on ?? "");
+          const exercise = String(record.exercise_name_id ?? record.exercise_name ?? record.name_id ?? record.name ?? "");
+          const weightKg = record.weight_kg !== undefined && record.weight_kg !== null ? String(record.weight_kg) : "";
+          const reps = record.reps !== undefined && record.reps !== null ? String(record.reps) : "";
+          const volumeKg = record.volume_kg !== undefined && record.volume_kg !== null ? String(record.volume_kg) : "";
+          return [
+            csvCell(entity),
+            csvCell(id),
+            csvCell(JSON.stringify(item)),
+            csvCell(date),
+            csvCell(exercise),
+            csvCell(weightKg),
+            csvCell(reps),
+            csvCell(volumeKg)
+          ].join(",");
         })
       ].join("\n");
       extension = "csv";

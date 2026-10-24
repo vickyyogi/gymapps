@@ -10,6 +10,10 @@ import {
   evaluateImbalance,
   evaluatePlateau,
   evaluateStaleProgram,
+  evaluateOvertrainingRisk,
+  evaluatePrMilestone,
+  evaluateMissingEquipment,
+  evaluateFrequencyLow,
   generateFallbackProgram,
   setsByMuscle,
   totalVolume,
@@ -328,6 +332,51 @@ describe("rules", () => {
 
     expect(evaluateStaleProgram(base)).toMatchObject({ rule: "stale_program" });
     expect(evaluateStaleProgram({ ...base, status: "draft" })).toBeNull();
+  });
+
+  it("detects overtraining risk on 3 consecutive 20%+ volume jumps", () => {
+    expect(
+      evaluateOvertrainingRisk({ weeklyVolumes: [1000, 1300, 1600, 2000] })
+    ).toMatchObject({ rule: "overtraining_risk", severity: "P1" });
+    expect(
+      evaluateOvertrainingRisk({ weeklyVolumes: [1000, 1100, 1200, 1300] })
+    ).toBeNull();
+  });
+
+  it("detects pr milestone when new prs are achieved", () => {
+    expect(
+      evaluatePrMilestone({
+        recentPrs: [{ exerciseId: "ex_1", recordType: "1rm", value: 120 }]
+      })
+    ).toMatchObject({ rule: "pr_milestone", severity: "P3" });
+    expect(evaluatePrMilestone({ recentPrs: [] })).toBeNull();
+  });
+
+  it("detects missing equipment conflicts in active program", () => {
+    const conflict = evaluateMissingEquipment({
+      programExercises: [
+        { exerciseId: "ex_1", exerciseName: "Barbell Squat", equipment: ["barbell"] },
+        { exerciseId: "ex_2", exerciseName: "Push up", equipment: ["bodyweight"] }
+      ],
+      userEquipment: ["dumbbell"]
+    });
+    expect(conflict).toMatchObject({ rule: "missing_equipment_conflict", severity: "P2" });
+    expect(conflict?.evidence.conflict_count).toBe(1);
+
+    const ok = evaluateMissingEquipment({
+      programExercises: [{ exerciseId: "ex_2", equipment: ["bodyweight"] }],
+      userEquipment: []
+    });
+    expect(ok).toBeNull();
+  });
+
+  it("detects low frequency when session counts are low", () => {
+    expect(
+      evaluateFrequencyLow({ weeklySessionCounts: [1, 1, 0], targetDaysPerWeek: 4 })
+    ).toMatchObject({ rule: "frequency_low", severity: "P3" });
+    expect(
+      evaluateFrequencyLow({ weeklySessionCounts: [4, 3, 4], targetDaysPerWeek: 4 })
+    ).toBeNull();
   });
 });
 

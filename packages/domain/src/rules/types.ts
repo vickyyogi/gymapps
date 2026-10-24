@@ -5,7 +5,11 @@ export type RuleName =
   | "deload_suggestion"
   | "volume_imbalance"
   | "adherence_drop"
-  | "stale_program";
+  | "stale_program"
+  | "overtraining_risk"
+  | "pr_milestone"
+  | "missing_equipment_conflict"
+  | "frequency_low";
 
 export type Recommendation = {
   rule: RuleName;

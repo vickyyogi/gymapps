@@ -13,4 +13,8 @@ export * from "./rules/deload";
 export * from "./rules/imbalance";
 export * from "./rules/adherence-drop";
 export * from "./rules/stale";
+export * from "./rules/overtraining-risk";
+export * from "./rules/pr-milestone";
+export * from "./rules/missing-equipment";
+export * from "./rules/frequency-low";
 export * from "./entitlements/quota";
