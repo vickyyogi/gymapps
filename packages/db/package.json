@@ -13,16 +13,15 @@
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
-    "@prisma/client": "^6.19.3",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "dotenv": "^17.4.2",
     "ulid": "^3.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
-    "prisma": "^6.19.3",
+    "prisma": "^7.10.1",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }

@@ -57,40 +57,52 @@ export function NotificationBell({ locale }: { locale: string }) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label={t("label")}
-        className="relative rounded-lg border border-border px-2 py-1.5 text-sm"
+        aria-expanded={open}
+        className="btn btn-ghost btn-sm p-2 rounded-full"
       >
-        <span aria-hidden>🔔</span>
+        <span aria-hidden className="text-body-large">🔔</span>
         {unread > 0 ? (
-          <span className="absolute -right-1 -top-1 rounded-full bg-danger px-1 text-[10px] font-semibold text-white">
+          <span className="absolute -top-0.5 -right-0.5 chip chip-status chip-status-up text-[10px] px-1.5 py-0">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}
       </button>
       {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-xl border border-border bg-card p-2 shadow-lg">
-          <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-xs font-medium">{t("title")}</span>
+        <div className="absolute right-0 z-20 mt-2 w-80 card-elevated animate-fade-in overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <span className="text-subhead text-text-primary">{t("title")}</span>
             {unread > 0 ? (
-              <button type="button" onClick={readAll} className="text-xs underline underline-offset-2">
+              <button
+                type="button"
+                onClick={readAll}
+                className="btn btn-ghost btn-sm text-caption"
+              >
                 {t("readAll")}
               </button>
             ) : null}
           </div>
-          <ul className="max-h-80 divide-y divide-border overflow-y-auto">
+          <ul className="list divide-y divide-border max-h-80 overflow-y-auto">
             {rows.map((row) => (
-              <li key={row.id}>
+              <li key={row.id} className="list-item px-3 py-2 gap-3">
                 <button
                   type="button"
                   onClick={() => openNotification(row)}
-                  className={`w-full px-2 py-2 text-left text-sm ${row.read_at ? "opacity-60" : ""}`}
+                  className="w-full text-left gap-3 p-0 hover:bg-transparent active:bg-transparent flex items-start"
                 >
-                  <p className="font-medium">{row.title}</p>
-                  {row.body ? <p className="mt-0.5 text-xs text-muted-foreground">{row.body}</p> : null}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body font-medium text-text-primary truncate">{row.title}</p>
+                    {row.body ? <p className="mt-0.5 text-body-small text-text-secondary">{row.body}</p> : null}
+                  </div>
+                  {!row.read_at && (
+                    <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5" aria-label="Unread" />
+                  )}
                 </button>
               </li>
             ))}
             {!rows.length ? (
-              <li className="px-2 py-3 text-sm text-muted-foreground">{t("empty")}</li>
+              <li className="list-item px-3 py-4 text-center">
+                <p className="text-body text-text-tertiary">{t("empty")}</p>
+              </li>
             ) : null}
           </ul>
         </div>

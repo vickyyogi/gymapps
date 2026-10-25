@@ -14,7 +14,9 @@
     "recommendations": "Rekomendasi",
     "exports": "Export",
     "settings": "Pengaturan",
-    "admin": "Admin"
+    "admin": "Admin",
+    "menu": "Menu navigasi",
+    "close": "Tutup menu"
   },
   "theme": {
     "label": "Tema",
@@ -31,6 +33,7 @@
     "email": "Email",
     "password": "Kata sandi",
     "displayName": "Nama tampilan",
+    "displayNamePlaceholder": "Nama Anda",
     "loading": "Memuat…",
     "saving": "Menyimpan…",
     "save": "Simpan",
@@ -171,6 +174,7 @@
     "muscleBalance": "Keseimbangan otot",
     "lastPr": "PR terakhir",
     "calendar": "Kalender aktivitas",
+    "calendarAriaLabel": "Kalender aktivitas {weeks} minggu terakhir",
     "calendarHint": "12 minggu terakhir",
     "activeProgram": "Program aktif",
     "completion": "Penyelesaian",
@@ -443,6 +447,7 @@
     "split": "Pembagian",
     "durationWeeks": "Durasi (minggu)",
     "daysPerWeek": "Hari per minggu",
+    "dayRangeHint": "Split ini hanya mendukung {min}–{max} hari per minggu.",
     "sessionMinutes": "Durasi sesi (menit)",
     "notes": "Catatan tambahan",
     "notesPlaceholder": "Contoh: utamakan compound, hindari latihan berdampak tinggi.",

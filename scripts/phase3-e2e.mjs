@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { PrismaClient } from "@prisma/client";
+import { createPrisma } from "./prisma-client.mjs";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3100/api/v1";
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 
 const stamp = Date.now();
 const userA = { email: `phase3-a-${stamp}@example.com`, password: "Password123!" };

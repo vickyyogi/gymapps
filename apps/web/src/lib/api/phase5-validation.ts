@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SPLIT_DAY_RANGE } from "@gymapps/domain";
 
 const GOALS = [
   "lose_weight",
@@ -66,16 +67,8 @@ export const programGenerateSchema = z.object({
 
 export type ProgramGenerateInput = z.infer<typeof programGenerateSchema>;
 
-const SPLIT_DAYS: Record<string, [number, number]> = {
-  full_body: [2, 4],
-  upper_lower: [2, 4],
-  push_pull_legs: [3, 3],
-  bro_split: [3, 7],
-  custom: [2, 7]
-};
-
 export function generateShapeError(input: ProgramGenerateInput): string | null {
-  const [min, max] = SPLIT_DAYS[input.split_type] ?? [1, 7];
+  const [min, max] = SPLIT_DAY_RANGE[input.split_type] ?? [1, 7];
   if (input.days_per_week < min || input.days_per_week > max) {
     return `${input.split_type} allows ${min}-${max} days per week`;
   }

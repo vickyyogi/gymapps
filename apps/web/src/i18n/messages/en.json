@@ -14,7 +14,9 @@
     "recommendations": "Recommendations",
     "exports": "Exports",
     "settings": "Settings",
-    "admin": "Admin"
+    "admin": "Admin",
+    "menu": "Navigation menu",
+    "close": "Close menu"
   },
   "theme": {
     "label": "Theme",
@@ -31,6 +33,7 @@
     "email": "Email",
     "password": "Password",
     "displayName": "Display name",
+    "displayNamePlaceholder": "Your name",
     "loading": "Loading…",
     "saving": "Saving…",
     "save": "Save",
@@ -171,6 +174,7 @@
     "muscleBalance": "Muscle balance",
     "lastPr": "Latest PR",
     "calendar": "Activity calendar",
+    "calendarAriaLabel": "Activity calendar for the last {weeks} weeks",
     "calendarHint": "Last 12 weeks",
     "activeProgram": "Active program",
     "completion": "Completion",
@@ -443,6 +447,7 @@
     "split": "Split",
     "durationWeeks": "Duration (weeks)",
     "daysPerWeek": "Days per week",
+    "dayRangeHint": "This split supports {min}–{max} days per week.",
     "sessionMinutes": "Session length (min)",
     "notes": "Extra notes",
     "notesPlaceholder": "Example: compound first, avoid high-impact exercises.",

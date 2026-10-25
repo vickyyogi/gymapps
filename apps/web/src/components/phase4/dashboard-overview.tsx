@@ -79,8 +79,8 @@ export function DashboardOverview({
       .finally(() => setLoading(false));
   }, [tErrors]);
 
-  if (loading) return <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>;
-  if (error) return <p className="text-sm text-danger">{error}</p>;
+  if (loading) return <p className="text-body text-text-tertiary animate-fade-in">{tCommon("loading")}</p>;
+  if (error) return <p className="text-body text-error animate-fade-in">{error}</p>;
   if (!summary) return null;
 
   const goalMismatch =
@@ -89,96 +89,107 @@ export function DashboardOverview({
   const weeks = calendar ? Math.ceil(calendar.days.length / 7) : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 animate-fade-in">
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("greeting", { name })}</p>
+          <h1 className="text-headline">{t("title")}</h1>
+          <p className="mt-1 text-body-small text-text-secondary">{t("greeting", { name })}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {active ? (
             <Link
               href={`/workouts/${active.id}`}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              className="btn btn-primary btn-md"
             >
               {t("resume")} · {active.total_sets} {t("sets")}
             </Link>
           ) : (
             <Link
               href="/workouts"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              className="btn btn-primary btn-md"
             >
               {t("start")}
             </Link>
           )}
-          <Link href="/programs" className="rounded-lg border border-border px-4 py-2 text-sm">
+          <Link href="/programs" className="btn btn-secondary btn-md">
             {t("programs")}
           </Link>
         </div>
       </div>
 
+      {/* Goal Mismatch Alert */}
       {goalMismatch ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm">
-          <span>
-            {t("goalMismatch", {
-              goal:
-                program?.goal && t.has(`goals.${program.goal}`)
-                  ? t(`goals.${program.goal}`)
-                  : (program?.goal ?? "")
-            })}
-          </span>
-          <Link href="/onboarding?edit=1" className="font-medium underline underline-offset-4">
-            {t("updateGoal")}
-          </Link>
+        <div className="card border-primary/30 bg-primary-light/50 animate-slide-up">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-body-small text-text-primary">
+              {t("goalMismatch", {
+                goal:
+                  program?.goal && t.has(`goals.${program.goal}`)
+                    ? t(`goals.${program.goal}`)
+                    : (program?.goal ?? "")
+              })}
+            </span>
+            <Link href="/onboarding?edit=1" className="text-body-small font-medium underline underline-offset-4 text-primary hover:text-primary-hover">
+              {t("updateGoal")}
+            </Link>
+          </div>
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* Key Metrics Grid - 2-column on mobile, 4-column on desktop */}
+      <div className="dashboard-grid">
         {[
-          [t("weeklyWorkouts"), String(summary.weekly_logged_workouts)],
-          [t("volume7d"), `${fmt(fromKg(summary.volume_7d_kg, unitSystem))} ${unit}`],
-          [t("streak"), `${summary.current_streak} ${t("days")}`],
+          [t("weeklyWorkouts"), String(summary.weekly_logged_workouts), "metric-primary"],
+          [t("volume7d"), `${fmt(fromKg(summary.volume_7d_kg, unitSystem))} ${unit}`, "metric-primary"],
+          [t("streak"), `${summary.current_streak} ${t("days")}`, "metric-positive"],
           [
             t("adherence"),
             summary.adherence_current_week === null
               ? "—"
-              : `${Math.round(summary.adherence_current_week * 100)}%`
+              : `${Math.round(summary.adherence_current_week * 100)}%`,
+            "metric-positive"
           ]
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="mt-1 text-xl font-semibold">{value}</p>
+        ].map(([label, value, metricColor]) => (
+          <div key={label} className="metric-widget">
+            <p className="text-overline text-text-secondary">{label}</p>
+            <p className="metric-value text-[22px] mt-1" style={{ color: `var(--color-${metricColor})` }}>
+              {value}
+            </p>
           </div>
         ))}
       </div>
 
+      {/* Insights */}
       {summary.insights.length ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 animate-fade-in">
           {summary.insights.map((insight) => (
-            <p key={insight} className="rounded-full bg-muted px-3 py-1.5 text-xs">
+            <span key={insight} className="chip chip-filter">
               {insight}
-            </p>
+            </span>
           ))}
         </div>
       ) : null}
 
+      {/* Volume Trend & Muscle Balance */}
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <section className="rounded-xl border border-border bg-card p-4">
+        {/* Volume Trend */}
+        <section className="card">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-sm font-medium">{t("volumeTrend")}</h2>
-              <p className="text-xs text-muted-foreground">{volume?.insight.text}</p>
+              <h2 className="text-subhead">{t("volumeTrend")}</h2>
+              <p className="text-caption text-text-secondary mt-0.5">{volume?.insight.text}</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {volume?.insight.delta_pct
-                ? `${volume.insight.delta_pct > 0 ? "+" : ""}${fmt(volume.insight.delta_pct)}%`
-                : ""}
-            </p>
+            {volume?.insight.delta_pct !== undefined && (
+              <p className="text-caption text-text-secondary whitespace-nowrap">
+                {volume.insight.delta_pct > 0 ? "+" : ""}{fmt(volume.insight.delta_pct)}%
+              </p>
+            )}
           </div>
           <div className="mt-4 flex h-36 items-end gap-1.5">
             {(volume?.series ?? []).map((item) => (
               <div key={item.week_start} className="group flex flex-1 flex-col items-center gap-1">
-                <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100">
+                <span className="text-overline text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity">
                   {fmt(fromKg(item.volume_kg, unitSystem))}
                 </span>
                 <div
@@ -186,27 +197,28 @@ export function DashboardOverview({
                   style={{ height: `${Math.max(4, (item.volume_kg / maxVolume) * 120)}px` }}
                   title={`${item.week_start}: ${fmt(fromKg(item.volume_kg, unitSystem))} ${unit}`}
                 />
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-overline text-text-tertiary">
                   {item.week_start.slice(5)}
                 </span>
               </div>
             ))}
             {!volume?.series.length ? (
-              <p className="self-center text-sm text-muted-foreground">{t("noData")}</p>
+              <p className="self-center text-body text-text-tertiary">{t("noData")}</p>
             ) : null}
           </div>
         </section>
 
-        <section className="rounded-xl border border-border bg-card p-4">
-          <h2 className="text-sm font-medium">{t("muscleBalance")}</h2>
+        {/* Muscle Balance */}
+        <section className="card">
+          <h2 className="text-subhead">{t("muscleBalance")}</h2>
           <div className="mt-3 space-y-2">
             {summary.muscle_balance.map((item) => (
-              <div key={item.muscle}>
-                <div className="flex justify-between text-xs">
-                  <span>{t(`muscles.${item.muscle}`)}</span>
-                  <span className="text-muted-foreground">{item.share_pct}%</span>
+              <div key={item.muscle} className="animate-fade-in">
+                <div className="flex justify-between text-caption">
+                  <span className="text-text-primary">{t(`muscles.${item.muscle}`)}</span>
+                  <span className="text-text-secondary font-medium">{item.share_pct}%</span>
                 </div>
-                <div className="mt-1 h-2 rounded-full bg-muted">
+                <div className="mt-1 h-2 rounded-full bg-border" role="progressbar" aria-valuenow={item.share_pct} aria-valuemin={0} aria-valuemax={100}>
                   <div
                     className="h-2 rounded-full bg-primary"
                     style={{ width: `${Math.min(100, item.share_pct)}%` }}
@@ -215,15 +227,15 @@ export function DashboardOverview({
               </div>
             ))}
             {!summary.muscle_balance.length ? (
-              <p className="text-sm text-muted-foreground">{t("noData")}</p>
+              <p className="text-body text-text-tertiary">{t("noData")}</p>
             ) : null}
           </div>
           {summary.last_pr ? (
-            <div className="mt-4 rounded-lg border border-border bg-background p-3">
-              <p className="text-xs text-muted-foreground">
-                {t("latestPr")} ({summary.total_prs})
+            <div className="mt-4 card-elevated">
+              <p className="text-caption text-text-secondary">
+                {t("lastPr")} ({summary.total_prs})
               </p>
-              <p className="mt-0.5 text-sm font-medium">
+              <p className="mt-0.5 text-body font-medium text-text-primary">
                 {summary.last_pr.exercise_name} ·{" "}
                 {fmt(fromKg(summary.last_pr.value, unitSystem))} {unit}
               </p>
@@ -232,60 +244,70 @@ export function DashboardOverview({
         </section>
       </div>
 
+      {/* Calendar Heatmap & Active Program */}
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <section className="rounded-xl border border-border bg-card p-4">
-          <h2 className="text-sm font-medium">{t("activity")}</h2>
+        {/* Calendar Heatmap */}
+        <section className="card">
+          <h2 className="text-subhead">{t("calendar")}</h2>
           <div
-            className="mt-3 grid gap-1"
+            className="calendar-heatmap mt-3"
             style={{ gridTemplateColumns: `repeat(${Math.max(1, weeks)}, minmax(0, 1fr))` }}
+            role="img"
+            aria-label={t("calendarAriaLabel", { weeks })}
           >
             {(calendar?.days ?? []).map((day) => (
               <div
                 key={day.date}
                 title={`${day.date}: ${fmt(fromKg(day.volume_kg, unitSystem))} ${unit}`}
-                className={
-                  day.intensity === 0
-                    ? "aspect-square rounded-sm bg-muted"
-                    : day.intensity === 1
-                      ? "aspect-square rounded-sm bg-primary/25"
+                className="calendar-day transition-fast"
+                style={{
+                  backgroundColor:
+                    day.intensity === 0
+                      ? "var(--color-border)"
+                      : day.intensity === 1
+                      ? "var(--color-primary-light)"
                       : day.intensity === 2
-                        ? "aspect-square rounded-sm bg-primary/45"
-                        : day.intensity === 3
-                          ? "aspect-square rounded-sm bg-primary/70"
-                          : "aspect-square rounded-sm bg-primary"
-                }
+                      ? "#A5B4FC"
+                      : day.intensity === 3
+                      ? "#818CF8"
+                      : "var(--color-primary)"
+                }}
               />
             ))}
           </div>
         </section>
 
-        <section className="rounded-xl border border-border bg-card p-4">
-          <h2 className="text-sm font-medium">{t("activeProgram")}</h2>
+        {/* Active Program */}
+        <section className="card">
+          <h2 className="text-subhead">{t("activeProgram")}</h2>
           {program ? (
-            <div className="mt-2">
-              <Link href={`/programs/${program.id}`} className="font-medium hover:underline">
+            <div className="mt-2 space-y-3">
+              <Link href={`/programs/${program.id}`} className="font-medium hover:underline text-text-primary">
                 {program.name}
               </Link>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("completion")}: {Math.round(program.completion_pct)}%
-              </p>
-              <div className="mt-2 h-2 rounded-full bg-muted">
-                <div
-                  className="h-2 rounded-full bg-primary"
-                  style={{ width: `${Math.min(100, program.completion_pct)}%` }}
-                />
+              <div>
+                <div className="flex justify-between text-caption mb-1">
+                  <span className="text-text-secondary">{t("completion")}</span>
+                  <span className="text-text-primary font-medium">{Math.round(program.completion_pct)}%</span>
+                </div>
+                <div className="progress" role="progressbar" aria-valuenow={program.completion_pct} aria-valuemin={0} aria-valuemax={100}>
+                  <div
+                    className="progress-bar progress-bar-primary"
+                    style={{ width: `${Math.min(100, program.completion_pct)}%` }}
+                  />
+                </div>
               </div>
               <Link
                 href="/programs"
-                className="mt-3 inline-block text-xs font-medium underline underline-offset-4"
+                className="text-caption font-medium underline underline-offset-4 text-primary hover:text-primary-hover inline-block"
               >
                 {t("managePrograms")}
               </Link>
             </div>
           ) : (
-            <div className="mt-2 space-y-2">
-              <p className="text-sm text-muted-foreground">{t("noProgram")}</p>
-              <Link href="/programs" className="inline-block text-sm font-medium underline underline-offset-4">
+            <div className="mt-2 space-y-2 text-center py-4">
+              <p className="text-body text-text-tertiary">{t("noProgram")}</p>
+              <Link href="/programs" className="btn btn-primary btn-sm">
                 {t("createProgram")}
               </Link>
             </div>

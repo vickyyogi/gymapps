@@ -51,7 +51,7 @@ export const reportCreateSchema = z.object({
 });
 
 export const notificationListSchema = z.object({
-  unread_only: z.enum(["true", "false"]).transform((value) => value === "true").default("false"),
+  unread_only: z.enum(["true", "false"]).transform((value) => value === "true").default(false),
   limit: z.coerce.number().int().min(1).max(100).default(30)
 });
 

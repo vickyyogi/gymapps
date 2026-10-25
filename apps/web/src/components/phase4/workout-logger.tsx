@@ -122,11 +122,11 @@ function ExerciseCard({
   }
 
   return (
-    <section className="rounded-xl border border-border bg-card p-4">
+    <section className="card animate-fade-in">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="font-medium">{item.exercise_name}</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <h3 className="text-body font-medium text-text-primary">{item.exercise_name}</h3>
+          <p className="mt-0.5 text-caption text-text-secondary">
             {item.sets.length} {t("sets")}
             {item.previous_performance
               ? ` · ${t("lastPerformed", {
@@ -137,11 +137,9 @@ function ExerciseCard({
         </div>
         <div className="flex items-center gap-2">
           {item.previous_performance ? (
-            <p className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-              {t("previous")}:{" "}
-              {fmt(fromKg(item.previous_performance.sets.at(-1)?.weight_kg ?? 0, unitSystem))}{" "}
-              {unit} × {item.previous_performance.sets.at(-1)?.reps ?? 0}
-            </p>
+            <span className="chip chip-status chip-status-flat text-caption">
+              {t("previous")}: {fmt(fromKg(item.previous_performance.sets.at(-1)?.weight_kg ?? 0, unitSystem))} {unit} × {item.previous_performance.sets.at(-1)?.reps ?? 0}
+            </span>
           ) : null}
           {active ? (
             <button
@@ -149,7 +147,7 @@ function ExerciseCard({
               onClick={onRemoveExercise}
               disabled={pending}
               title={t("removeExercise")}
-              className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:border-danger hover:text-danger disabled:opacity-50"
+              className="btn btn-ghost btn-sm text-caption text-error hover:text-error"
             >
               {t("removeExercise")}
             </button>
@@ -158,59 +156,55 @@ function ExerciseCard({
       </div>
 
       {item.sets.length ? (
-        <ul className="mt-3 divide-y divide-border rounded-lg border border-border">
+        <ul className="mt-3 list divide-y divide-border">
           {item.sets.map((set) => {
             const delta = deltaLabel(set.delta_vs_last, unitSystem);
             return (
-              <li key={set.id} className="flex flex-wrap items-center gap-2.5 px-3 py-2 text-sm">
+              <li key={set.id} className="list-item flex-wrap gap-2 px-3 py-2">
                 <button
                   type="button"
                   onClick={() => active && onToggle(set)}
                   disabled={!active || pending}
                   aria-label={set.is_completed ? t("markIncomplete") : t("markComplete")}
-                  className={
-                    set.is_completed
-                      ? "flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
-                      : "flex size-6 items-center justify-center rounded-full border border-border text-muted-foreground"
-                  }
+                  className={set.is_completed
+                    ? "flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                    : "flex size-6 items-center justify-center rounded-full border border-border text-text-tertiary"}
                 >
                   ✓
                 </button>
-                <span className="w-8 text-xs text-muted-foreground">#{set.set_number}</span>
+                <span className="w-8 text-caption text-text-tertiary">#{set.set_number}</span>
                 {active ? (
                   <button
                     type="button"
                     onClick={() => onToggleWarmup(set)}
                     disabled={pending}
                     title={t("toggleWarmup")}
-                    className={
-                      set.is_warmup
-                        ? "rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400"
-                        : "rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground hover:border-foreground"
-                    }
+                    className={set.is_warmup
+                      ? "chip chip-status chip-status-warning text-[10px]"
+                      : "btn btn-ghost btn-sm text-[10px] px-2 py-0.5"}
                   >
                     {t("warmupShort")}
                   </button>
                 ) : set.is_warmup ? (
-                  <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                  <span className="chip chip-status chip-status-warning text-[10px]">
                     {t("warmupShort")}
                   </span>
                 ) : null}
-                <span className={set.is_completed ? "font-medium" : "text-muted-foreground"}>
+                <span className={set.is_completed ? "font-medium text-text-primary" : "text-text-secondary"}>
                   {fmt(fromKg(set.weight_kg, unitSystem))} {unit} × {set.reps}
                 </span>
                 {set.rpe !== null && set.rpe !== undefined ? (
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  <span className="chip chip-status chip-status-flat text-[10px]">
                     {t("rpe")} {fmt(set.rpe)}
                   </span>
                 ) : null}
                 {set.is_pr ? (
-                  <span className="rounded bg-primary/15 px-1.5 py-0.5 text-xs font-medium text-primary">
+                  <span className="chip chip-filter text-[10px] bg-primary-light/80">
                     PR
                   </span>
                 ) : null}
                 {delta ? (
-                  <span className="ml-auto text-xs text-muted-foreground">{delta}</span>
+                  <span className="ml-auto text-caption text-text-tertiary">{delta}</span>
                 ) : null}
                 {active ? (
                   <button
@@ -219,7 +213,7 @@ function ExerciseCard({
                     disabled={pending}
                     aria-label={t("removeSet")}
                     title={t("removeSet")}
-                    className={`${delta ? "" : "ml-auto"} rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-danger/10 hover:text-danger disabled:opacity-50`}
+                    className={`${delta ? "" : "ml-auto"} btn btn-ghost btn-sm text-[10px] px-1.5 py-0.5 text-error hover:bg-error-light`}
                   >
                     ×
                   </button>
@@ -232,7 +226,7 @@ function ExerciseCard({
 
       {active ? (
         <form onSubmit={submit} className="mt-3 flex flex-wrap items-end gap-2">
-          <label className="text-xs text-muted-foreground">
+          <label className="input-label text-caption">
             {unitSystem === "imperial" ? t("weightLb") : t("weight")}
             <input
               type="number"
@@ -240,10 +234,10 @@ function ExerciseCard({
               step="0.5"
               value={weight}
               onChange={(event) => setWeight(event.target.value)}
-              className="mt-1 block w-24 rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+              className="input w-24"
             />
           </label>
-          <label className="text-xs text-muted-foreground">
+          <label className="input-label text-caption">
             {t("reps")}
             <input
               type="number"
@@ -251,10 +245,10 @@ function ExerciseCard({
               step="1"
               value={reps}
               onChange={(event) => setReps(event.target.value)}
-              className="mt-1 block w-20 rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+              className="input w-20"
             />
           </label>
-          <label className="text-xs text-muted-foreground">
+          <label className="input-label text-caption">
             {t("rpeOptional")}
             <input
               type="number"
@@ -264,22 +258,22 @@ function ExerciseCard({
               placeholder="6–10"
               value={rpe}
               onChange={(event) => setRpe(event.target.value)}
-              className="mt-1 block w-20 rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+              className="input w-20"
             />
           </label>
-          <label className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-2 text-xs text-muted-foreground">
+          <label className="flex items-center gap-1.5 btn btn-ghost btn-sm px-2.5 py-2 text-caption">
             <input
               type="checkbox"
               checked={isWarmup}
               onChange={(event) => setIsWarmup(event.target.checked)}
-              className="h-3.5 w-3.5 rounded border-border"
+              className="checkbox"
             />
             <span>{t("warmup")}</span>
           </label>
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            className="btn btn-primary btn-md"
           >
             {pending ? "…" : t("logSet")}
           </button>
@@ -485,17 +479,17 @@ export function WorkoutLogger({
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>;
+    return <p className="text-body text-text-tertiary animate-fade-in">{tCommon("loading")}</p>;
   }
 
   if (!workout) {
     return (
-      <div className="space-y-3">
-        <p className="text-sm text-danger">{error ?? tErrors("INTERNAL_ERROR")}</p>
+      <div className="space-y-3 animate-fade-in">
+        <p className="text-body text-error">{error ?? tErrors("INTERNAL_ERROR")}</p>
         <button
           type="button"
           onClick={() => load(true)}
-          className="rounded-lg border border-border px-3 py-2 text-sm"
+          className="btn btn-secondary btn-sm"
         >
           {tCommon("retry")}
         </button>
@@ -506,26 +500,24 @@ export function WorkoutLogger({
   if (workout.status !== "active") {
     const minutes = Math.max(1, Math.round((workout.duration_seconds ?? 0) / 60));
     return (
-      <div className="space-y-5">
+      <div className="space-y-4 animate-fade-in">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("finished")}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{workout.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-overline text-text-secondary">{t("finished")}</p>
+          <h1 className="mt-1 text-headline">{workout.title}</h1>
+          <p className="mt-1 text-body-small text-text-secondary">
             {new Date(workout.started_at).toLocaleString()} · {minutes} {t("minutes")}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="dashboard-grid">
           {[
             [t("volume"), `${fmt(fromKg(workout.total_volume_kg, unitSystem))} ${unit}`],
             [t("workingSets"), String(workout.total_sets)],
             [t("reps"), String(workout.total_reps)],
             [t("prs"), String(workout.pr_count)]
           ].map(([label, value]) => (
-            <div key={label} className="rounded-xl border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">{label}</p>
-              <p className="mt-1 text-xl font-semibold">{value}</p>
+            <div key={label} className="metric-widget">
+              <p className="text-overline text-text-secondary">{label}</p>
+              <p className="metric-value text-[22px] mt-1">{value}</p>
             </div>
           ))}
         </div>
@@ -533,14 +525,14 @@ export function WorkoutLogger({
           <button
             type="button"
             onClick={() => router.push(`/${locale}/dashboard`)}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            className="btn btn-primary btn-md"
           >
             {t("backToDashboard")}
           </button>
           <button
             type="button"
             onClick={() => router.push(`/${locale}/workouts`)}
-            className="rounded-lg border border-border px-4 py-2 text-sm"
+            className="btn btn-secondary btn-md"
           >
             {t("allWorkouts")}
           </button>
@@ -550,14 +542,12 @@ export function WorkoutLogger({
   }
 
   return (
-    <div className="space-y-5 pb-16">
+    <div className="space-y-4 pb-16 animate-fade-in">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("activeSession")}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{workout.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-overline text-text-secondary">{t("activeSession")}</p>
+          <h1 className="mt-1 text-headline">{workout.title}</h1>
+          <p className="mt-1 text-body-small text-text-secondary">
             {fmt(fromKg(workout.total_volume_kg, unitSystem))} {unit} · {workout.total_sets}{" "}
             {t("sets")}
           </p>
@@ -566,30 +556,32 @@ export function WorkoutLogger({
           type="button"
           onClick={finish}
           disabled={finishing}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          className="btn btn-primary btn-md"
         >
           {finishing ? "…" : t("finish")}
         </button>
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="input-helper input-helper-error animate-fade-in">
           {error}
         </p>
       ) : null}
 
       {rest > 0 ? (
-        <div className="sticky top-14 z-10 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm">
-          <span>
-            {t("restTimer")} · {Math.floor(rest / 60)}:{String(rest % 60).padStart(2, "0")}
-          </span>
-          <button
-            type="button"
-            onClick={() => setRest(0)}
-            className="rounded border border-primary/40 px-2 py-1 text-xs font-medium"
-          >
-            {t("skipRest")}
-          </button>
+        <div className="card border-primary/30 bg-primary-light/50 sticky top-14 z-10 animate-slide-up">
+          <div className="flex items-center justify-between">
+            <span className="text-body-small text-text-primary">
+              {t("restTimer")} · {Math.floor(rest / 60)}:{String(rest % 60).padStart(2, "0")}
+            </span>
+            <button
+              type="button"
+              onClick={() => setRest(0)}
+              className="btn btn-secondary btn-sm text-caption"
+            >
+              {t("skipRest")}
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -610,9 +602,11 @@ export function WorkoutLogger({
         ))}
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-dashed border-border p-4">
-        <p className="text-sm text-muted-foreground">{t("addExerciseHint")}</p>
-        <ExercisePicker onSelect={addExercise} />
+      <div className="card border-dashed border-border">
+        <div className="flex items-center justify-between">
+          <p className="text-body-small text-text-secondary">{t("addExerciseHint")}</p>
+          <ExercisePicker onSelect={addExercise} />
+        </div>
       </div>
     </div>
   );

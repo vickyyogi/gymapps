@@ -38,13 +38,13 @@ export const registerSchema = z.object({
   locale: z.enum(LOCALES).default("id"),
   accept_terms: z.literal(true).optional(),
   birth_date: birthDateSchema.optional()
-}) satisfies z.ZodType<RegisterRequest, z.ZodTypeDef, unknown>;
+}) satisfies z.ZodType<RegisterRequest, unknown>;
 
 export const loginSchema = z.object({
   email,
   // No min length: a short wrong password must return generic 401, not 422.
   password: z.string().min(1).max(128)
-}) satisfies z.ZodType<LoginRequest, z.ZodTypeDef, unknown>;
+}) satisfies z.ZodType<LoginRequest, unknown>;
 
 export const changePasswordSchema = z
   .object({
@@ -54,12 +54,12 @@ export const changePasswordSchema = z
   .refine((val) => val.current_password !== val.new_password, {
     message: "New password must be different from current password",
     path: ["new_password"]
-  }) satisfies z.ZodType<ChangePasswordRequest, z.ZodTypeDef, unknown>;
+  }) satisfies z.ZodType<ChangePasswordRequest, unknown>;
 
 export const deleteAccountSchema = z.object({
   password: z.string().min(1).max(128),
   confirm: z.literal("DELETE")
-}) satisfies z.ZodType<DeleteAccountRequest, z.ZodTypeDef, unknown>;
+}) satisfies z.ZodType<DeleteAccountRequest, unknown>;
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

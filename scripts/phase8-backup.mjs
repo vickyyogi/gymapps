@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PrismaClient } from "@prisma/client";
+import { createPrisma } from "./prisma-client.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const compose = join(root, "infra/docker-compose.yml");
 const scratch = "gymapps_restore_check";
 const scratchUrl = `postgresql://gymapps:gymapps@localhost:5432/${scratch}?schema=public`;
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 let scratchClient = null;
 
 function docker(args, input) {
@@ -61,7 +61,7 @@ async function main() {
   docker(["psql", "-U", "gymapps", "-d", scratch, "-v", "ON_ERROR_STOP=1", "--quiet"], dump);
 
   const source = await counts(prisma);
-  scratchClient = new PrismaClient({ datasourceUrl: scratchUrl });
+  scratchClient = createPrisma(scratchUrl);
   const restored = await counts(scratchClient);
 
   assert.deepEqual(restored, source, "restored row counts differ from source");

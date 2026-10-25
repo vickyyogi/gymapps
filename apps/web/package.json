@@ -14,14 +14,17 @@
     "@gymapps/domain": "*",
     "@gymapps/shared": "*",
     "@node-rs/argon2": "^2.2.2",
+    "@radix-ui/react-dialog": "^1.3.1",
+    "@radix-ui/react-dropdown-menu": "^2.2.1",
     "@upstash/redis": "^1.39.0",
-    "next": "15.5.28",
+    "lucide-react": "^1.61.0",
+    "next": "^16.4.3",
     "next-intl": "^4.14.9",
     "playwright-core": "^1.64.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "server-only": "^0.0.1",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -30,6 +33,6 @@
     "@types/react-dom": "^19.2.3",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.5"
   }
 }

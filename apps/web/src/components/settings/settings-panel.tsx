@@ -201,87 +201,88 @@ export function SettingsPanel({ email }: { email: string }) {
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>;
+    return <p className="text-body text-text-tertiary animate-fade-in">{tCommon("loading")}</p>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
+          <h1 className="text-headline">{t("title")}</h1>
+          <p className="mt-1 text-body-small text-text-secondary">{t("description")}</p>
         </div>
         <Link
           href="/onboarding?edit=1"
-          className="rounded-lg border border-border px-3 py-2 text-sm hover:border-primary"
+          className="btn btn-secondary btn-sm"
         >
           {t("editTrainingProfile")}
         </Link>
       </div>
 
       {error ? (
-        <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <div role="alert" className="card border-error/40 bg-error-light text-error animate-slide-up">
+          <p className="text-body-small">{error}</p>
+        </div>
       ) : null}
 
-      <section className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-semibold">{t("profileSection")}</h2>
+      <section className="card">
+        <h2 className="text-subhead">{t("profileSection")}</h2>
         <form onSubmit={savePreferences} className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium">{tCommon("email")}</span>
+          <div className="dashboard-grid">
+            <label className="block space-y-1">
+              <span className="text-caption font-medium text-text-secondary">{tCommon("email")}</span>
               <input
                 type="email"
                 value={email}
                 disabled
-                className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground"
+                className="input bg-background text-text-tertiary cursor-not-allowed"
               />
             </label>
 
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium">{tCommon("displayName")}</span>
+            <label className="block space-y-1">
+              <span className="text-caption font-medium text-text-secondary">{tCommon("displayName")}</span>
               <input
                 type="text"
                 maxLength={80}
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="input"
+                placeholder={tCommon("displayNamePlaceholder")}
               />
             </label>
 
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium">{tLocale("label")}</span>
+            <label className="block space-y-1">
+              <span className="text-caption font-medium text-text-secondary">{tLocale("label")}</span>
               <select
                 value={locale}
                 onChange={(event) => setLocale(event.target.value === "en" ? "en" : "id")}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="input"
               >
                 <option value="id">{tLocale("id")}</option>
                 <option value="en">{tLocale("en")}</option>
               </select>
             </label>
 
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium">{t("unitSystem")}</span>
+            <label className="block space-y-1">
+              <span className="text-caption font-medium text-text-secondary">{t("unitSystem")}</span>
               <select
                 value={unitSystem}
                 onChange={(event) =>
                   setUnitSystem(event.target.value === "imperial" ? "imperial" : "metric")
                 }
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="input"
               >
                 <option value="metric">{t("units.metric")}</option>
                 <option value="imperial">{t("units.imperial")}</option>
               </select>
             </label>
 
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium">{t("timezone")}</span>
+            <label className="block space-y-1">
+              <span className="text-caption font-medium text-text-secondary">{t("timezone")}</span>
               <select
                 value={timezone}
                 onChange={(event) => setTimezone(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="input"
               >
                 {TIMEZONES.map((tz) => (
                   <option key={tz} value={tz}>
@@ -291,14 +292,14 @@ export function SettingsPanel({ email }: { email: string }) {
               </select>
             </label>
 
-            <label className="block space-y-1 text-sm">
-              <span className="font-medium">{tTheme("label")}</span>
+            <label className="block space-y-1">
+              <span className="text-caption font-medium text-text-secondary">{tTheme("label")}</span>
               <select
                 value={theme}
                 onChange={(event) =>
                   setTheme(event.target.value as "light" | "dark" | "system")
                 }
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="input"
               >
                 <option value="system">{tTheme("system")}</option>
                 <option value="light">{tTheme("light")}</option>
@@ -307,49 +308,50 @@ export function SettingsPanel({ email }: { email: string }) {
             </label>
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={emailOptIn}
               onChange={(event) => setEmailOptIn(event.target.checked)}
+              className="checkbox"
             />
-            <span>{t("emailOptIn")}</span>
+            <span className="text-body text-text-primary">{t("emailOptIn")}</span>
           </label>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
               disabled={savingProfile}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+              className="btn btn-primary btn-md"
             >
               {savingProfile ? tCommon("saving") : tCommon("save")}
             </button>
             {profileSaved ? (
-              <span className="text-sm text-muted-foreground">{t("saved")}</span>
+              <span className="text-body-small text-text-secondary">{t("saved")}</span>
             ) : null}
           </div>
         </form>
       </section>
 
-      <section className="space-y-5 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-semibold">{t("securitySection")}</h2>
+      <section className="card">
+        <h2 className="text-subhead">{t("securitySection")}</h2>
 
-        <form onSubmit={submitPasswordChange} className="space-y-3">
-          <h3 className="text-sm font-medium">{t("changePasswordTitle")}</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block space-y-1 text-sm">
-              <span className="text-muted-foreground">{t("currentPassword")}</span>
+        <form onSubmit={submitPasswordChange} className="mt-4 space-y-4">
+          <h3 className="text-body font-medium text-text-primary">{t("changePasswordTitle")}</h3>
+          <div className="dashboard-grid">
+            <label className="block space-y-1">
+              <span className="text-caption text-text-secondary">{t("currentPassword")}</span>
               <input
                 type="password"
                 required
                 autoComplete="current-password"
                 value={currentPassword}
                 onChange={(event) => setCurrentPassword(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="input"
               />
             </label>
-            <label className="block space-y-1 text-sm">
-              <span className="text-muted-foreground">{t("newPassword")}</span>
+            <label className="block space-y-1">
+              <span className="text-caption text-text-secondary">{t("newPassword")}</span>
               <input
                 type="password"
                 required
@@ -358,7 +360,7 @@ export function SettingsPanel({ email }: { email: string }) {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="input"
               />
             </label>
           </div>
@@ -366,103 +368,94 @@ export function SettingsPanel({ email }: { email: string }) {
             <button
               type="submit"
               disabled={changingPassword}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:border-primary disabled:opacity-60"
+              className="btn btn-secondary btn-md"
             >
               {changingPassword ? tCommon("saving") : t("changePasswordSubmit")}
             </button>
             {passwordSaved ? (
-              <span className="text-sm text-muted-foreground">{t("passwordChanged")}</span>
+              <span className="text-body-small text-text-secondary">{t("passwordChanged")}</span>
             ) : null}
           </div>
         </form>
 
-        <div className="border-t border-border pt-4">
-          <h3 className="text-sm font-medium">{t("sessionsTitle")}</h3>
-          <p className="mt-1 text-xs text-muted-foreground">{t("sessionsDescription")}</p>
+        <div className="border-t border-border pt-4 mt-4">
+          <h3 className="text-body font-medium text-text-primary">{t("sessionsTitle")}</h3>
+          <p className="mt-1 text-caption text-text-secondary">{t("sessionsDescription")}</p>
           <button
             type="button"
             onClick={logoutAllDevices}
             disabled={loggingOutAll}
-            className="mt-3 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:border-primary disabled:opacity-60"
+            className="mt-3 btn btn-secondary btn-sm"
           >
             {t("logoutAll")}
           </button>
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-semibold">{t("dataSection")}</h2>
-        <p className="text-sm text-muted-foreground">{t("exportDataDescription")}</p>
-        <div className="flex flex-wrap gap-3 text-sm">
-          <Link
-            href="/exports"
-            className="rounded-lg border border-border px-3 py-2 font-medium hover:border-primary"
-          >
+      <section className="card">
+        <h2 className="text-subhead">{t("dataSection")}</h2>
+        <p className="mt-1 text-body-small text-text-secondary">{t("exportDataDescription")}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/exports" className="btn btn-secondary btn-sm">
             {t("openExports")}
           </Link>
-          <Link
-            href="/privacy"
-            className="rounded-lg border border-border px-3 py-2 hover:border-primary"
-          >
+          <Link href="/privacy" className="btn btn-ghost btn-sm">
             {t("privacyPolicy")}
           </Link>
-          <Link
-            href="/terms"
-            className="rounded-lg border border-border px-3 py-2 hover:border-primary"
-          >
+          <Link href="/terms" className="btn btn-ghost btn-sm">
             {t("termsOfService")}
           </Link>
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-danger/40 bg-danger/5 p-6">
-        <h2 className="text-base font-semibold text-danger">{t("dangerZone")}</h2>
-        <p className="text-sm text-muted-foreground">{t("deleteAccountWarning")}</p>
+      <section className="card border-error/40 bg-error-light/50">
+        <h2 className="text-subhead text-error">{t("dangerZone")}</h2>
+        <p className="mt-1 text-body-small text-text-secondary">{t("deleteAccountWarning")}</p>
 
         {!deleteStep2 ? (
           <button
             type="button"
             onClick={() => setDeleteStep2(true)}
-            className="rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger hover:bg-danger/10"
+            className="mt-3 btn btn-ghost btn-sm text-error hover:bg-error-light hover:text-error"
           >
             {t("deleteStep1Button")}
           </button>
         ) : (
-          <form onSubmit={confirmDeleteAccount} className="space-y-3 rounded-xl border border-danger/40 bg-card p-4">
-            <h3 className="text-sm font-semibold">{t("deleteStep2Title")}</h3>
-            <p className="text-xs text-muted-foreground">{t("deleteStep2Instruction")}</p>
+          <form onSubmit={confirmDeleteAccount} className="mt-4 space-y-4 card-elevated border border-error/30 p-4 animate-slide-up">
+            <h3 className="text-body font-semibold text-text-primary">{t("deleteStep2Title")}</h3>
+            <p className="text-caption text-text-secondary">{t("deleteStep2Instruction")}</p>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block space-y-1 text-sm">
-                <span className="font-medium">{t("confirmLabel")}</span>
+            <div className="dashboard-grid">
+              <label className="block space-y-1">
+                <span className="text-caption font-medium text-text-secondary">{t("confirmLabel")}</span>
                 <input
                   type="text"
                   required
                   placeholder="DELETE"
                   value={deleteConfirmText}
                   onChange={(event) => setDeleteConfirmText(event.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-danger"
+                  className="input focus:border-error"
                 />
               </label>
 
-              <label className="block space-y-1 text-sm">
-                <span className="font-medium">{tCommon("password")}</span>
+              <label className="block space-y-1">
+                <span className="text-caption font-medium text-text-secondary">{tCommon("password")}</span>
                 <input
                   type="password"
                   required
                   autoComplete="current-password"
                   value={deletePassword}
                   onChange={(event) => setDeletePassword(event.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-danger"
+                  className="input focus:border-error"
                 />
               </label>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-2">
               <button
                 type="submit"
                 disabled={deletingAccount || deleteConfirmText !== "DELETE" || !deletePassword}
-                className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="btn btn-destructive btn-sm"
               >
                 {t("confirmDeleteButton")}
               </button>
@@ -473,7 +466,7 @@ export function SettingsPanel({ email }: { email: string }) {
                   setDeleteConfirmText("");
                   setDeletePassword("");
                 }}
-                className="rounded-lg border border-border px-4 py-2 text-sm"
+                className="btn btn-secondary btn-sm"
               >
                 {t("cancelDelete")}
               </button>

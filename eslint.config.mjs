@@ -15,6 +15,7 @@ const config = [
       "**/node_modules/**",
       "**/next-env.d.ts",
       "packages/shared/src/openapi.d.ts",
+      "packages/db/src/generated/**",
       "infra/**"
     ]
   }

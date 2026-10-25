@@ -1,4 +1,5 @@
 import type { BodyArea, EquipmentType, ExerciseMeta, MuscleGroup } from "../types";
+import { SPLIT_DAY_RANGE } from "./validator";
 import type {
   Program,
   ProgramExercise,
@@ -108,6 +109,9 @@ function broPlans(days: number): DayPlan[] {
 
 function plansFor(splitType: SplitType, days: number): DayPlan[] {
   if (splitType === "upper_lower") {
+    // ponytail: 2 hari/minggu = 1 sesi upper. V-05 caps that session at 25 sets,
+    // so a sparse catalog (no primary back/shoulders work) can't reach V-04's
+    // 8-set floor. Upgrade path: extend the catalog or relax V-04 for 2-day splits.
     return Array.from({ length: days }, (_, index) =>
       index % 2 === 0
         ? {
@@ -155,20 +159,9 @@ export function generateFallbackProgram(input: GenerateProgramInput): Program {
   if (!Number.isInteger(daysPerWeek) || daysPerWeek < 1 || daysPerWeek > 7) {
     throw new Error("fallback generator supports 1-7 days per week");
   }
-  if (splitType === "full_body" && daysPerWeek < 2) {
-    throw new Error("full_body requires 2-4 days");
-  }
-  if (splitType === "upper_lower" && daysPerWeek < 2) {
-    throw new Error("upper_lower requires 2-4 days");
-  }
-  if (splitType === "push_pull_legs" && daysPerWeek !== 3) {
-    throw new Error("push_pull_legs requires exactly 3 days");
-  }
-  if (splitType === "bro_split" && daysPerWeek < 3) {
-    throw new Error("bro_split requires 3-7 days");
-  }
-  if (splitType === "custom" && daysPerWeek < 2) {
-    throw new Error("custom fallback requires 2-7 days");
+  const [minDays, maxDays] = SPLIT_DAY_RANGE[splitType];
+  if (daysPerWeek < minDays || daysPerWeek > maxDays) {
+    throw new Error(`${splitType} requires ${minDays}-${maxDays} days`);
   }
 
   const schedule = scheduleFor(daysPerWeek);

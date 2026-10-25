@@ -2,14 +2,14 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PrismaClient } from "@prisma/client";
+import { createPrisma } from "./prisma-client.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.env.PHASE5_PORT) || 3105;
 const mockPort = Number(process.env.MOCK_AI_PORT) || 3199;
 const APP = `http://127.0.0.1:${port}`;
 const API = `${APP}/api/v1`;
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 const stamp = Date.now();
 const email = `phase5-${stamp}@example.com`;
 const otherEmail = `phase5-other-${stamp}@example.com`;

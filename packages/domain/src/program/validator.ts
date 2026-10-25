@@ -28,12 +28,16 @@ const BIG_MUSCLES: MuscleGroup[] = [
   "glutes"
 ];
 
-const SPLIT_DAY_RANGE: Record<SplitType, [number, number]> = {
+// Single source of truth for "which frequency fits which split". The AI API
+// pre-check, the fallback generator, and program validation all use this table.
+// custom stays 2-7: V-04 needs 8-22 weekly sets per big muscle, unreachable on a
+// 1-day week.
+export const SPLIT_DAY_RANGE: Record<SplitType, [number, number]> = {
   full_body: [2, 4],
   upper_lower: [2, 4],
   push_pull_legs: [3, 3],
   bro_split: [3, 7],
-  custom: [1, 7]
+  custom: [2, 7]
 };
 
 type UnknownRecord = Record<string, unknown>;

@@ -115,7 +115,7 @@ export const noteUpdateSchema = noteSchema.partial();
 
 export const noteListSchema = z.object({
   category: z.enum(["general", "injury", "nutrition", "mood", "equipment"]).optional(),
-  pinned_first: z.enum(["true", "false"]).transform((value) => value === "true").default("true"),
+  pinned_first: z.enum(["true", "false"]).transform((value) => value === "true").default(true),
   cursor: z.string().max(500).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(30)
 });

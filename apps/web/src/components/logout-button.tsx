@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { LogOut } from "lucide-react";
 
 export function LogoutButton() {
   const locale = useLocale();
@@ -22,9 +23,11 @@ export function LogoutButton() {
       type="button"
       onClick={logout}
       disabled={pending}
-      className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"
+      aria-label={t("logout")}
+      title={t("logout")}
+      className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition-fast hover:bg-primary-light hover:text-text-primary"
     >
-      {t("logout")}
+      <LogOut size={18} aria-hidden />
     </button>
   );
 }

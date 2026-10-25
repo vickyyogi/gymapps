@@ -105,7 +105,7 @@ export function ExercisePicker({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-border px-3 py-2 text-sm font-medium hover:border-primary"
+        className="btn btn-secondary btn-sm"
       >
         {label ?? t("add")}
       </button>
@@ -113,15 +113,15 @@ export function ExercisePicker({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4 animate-fade-in"
         >
-          <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-t-2xl border border-border bg-card shadow-xl sm:rounded-2xl">
+          <div className="card-elevated w-full max-w-xl max-h-[90vh] flex flex-col rounded-xl animate-slide-up">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h2 className="text-base font-semibold">{t("title")}</h2>
+              <h2 className="text-subhead">{t("title")}</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted"
+                className="btn btn-ghost btn-sm"
               >
                 {tCommon("close")}
               </button>
@@ -132,14 +132,14 @@ export function ExercisePicker({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("searchPlaceholder")}
                 autoFocus
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="input"
               />
               <div className="flex flex-wrap gap-2">
                 <select
                   value={muscle}
                   onChange={(event) => setMuscle(event.target.value)}
                   aria-label={t("muscleFilter")}
-                  className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                  className="input py-2"
                 >
                   <option value="">{t("allMuscles")}</option>
                   {MUSCLES.map((item) => (
@@ -152,7 +152,7 @@ export function ExercisePicker({
                   value={equipment}
                   onChange={(event) => setEquipment(event.target.value)}
                   aria-label={t("equipmentFilter")}
-                  className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm"
+                  className="input py-2"
                 >
                   <option value="">{t("allEquipment")}</option>
                   {EQUIPMENT.map((item) => (
@@ -161,11 +161,12 @@ export function ExercisePicker({
                     </option>
                   ))}
                 </select>
-                <label className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 text-sm">
+                <label className="flex items-center gap-2 text-body-small text-text-secondary">
                   <input
                     type="checkbox"
                     checked={availableOnly}
                     onChange={(event) => setAvailableOnly(event.target.checked)}
+                    className="checkbox"
                   />
                   {t("availableOnly")}
                 </label>
@@ -173,11 +174,11 @@ export function ExercisePicker({
             </div>
             <div className="min-h-32 flex-1 overflow-y-auto p-2">
               {loading ? (
-                <p className="p-4 text-sm text-muted-foreground">{tCommon("loading")}</p>
+                <p className="p-4 text-body text-text-tertiary">{tCommon("loading")}</p>
               ) : error ? (
-                <p className="p-4 text-sm text-danger">{tCommon("retry")}</p>
+                <p className="p-4 text-body text-error">{tCommon("retry")}</p>
               ) : rows.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground">{t("empty")}</p>
+                <p className="p-4 text-body text-text-tertiary">{t("empty")}</p>
               ) : (
                 rows.map((exercise) => (
                   <button
@@ -187,18 +188,18 @@ export function ExercisePicker({
                       onSelect(exercise);
                       setOpen(false);
                     }}
-                    className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-muted"
+                    className="list-item w-full gap-3 hover:bg-muted/50"
                   >
-                    <span>
-                      <span className="block text-sm font-medium">{exercise.name_id}</span>
-                      <span className="text-xs text-muted-foreground">
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-body font-medium text-text-primary truncate">{exercise.name_id}</span>
+                      <span className="text-caption text-text-secondary">
                         {t(`muscles.${exercise.primary_muscle}`)} ·{" "}
                         {exercise.equipment
                           .map((item) => t(`equipmentOptions.${item}`))
                           .join(", ")}
                       </span>
                     </span>
-                    <span className="text-xs text-muted-foreground">{t("pick")}</span>
+                    <span className="text-caption text-text-tertiary">{t("pick")}</span>
                   </button>
                 ))
               )}

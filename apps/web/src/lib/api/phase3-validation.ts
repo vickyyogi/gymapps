@@ -69,7 +69,7 @@ export const exerciseListSchema = z.object({
   equipment: csvEnum(EQUIPMENT).optional(),
   difficulty: z.enum(DIFFICULTY).optional(),
   available_only: boolParam.optional(),
-  include_custom: boolParam.default("true"),
+  include_custom: boolParam.default(true),
   cursor,
   limit: z.coerce.number().int().min(1).max(100).default(30)
 });

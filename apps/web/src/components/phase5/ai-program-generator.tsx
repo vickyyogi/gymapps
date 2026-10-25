@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { SPLIT_DAY_RANGE, type SplitType } from "@gymapps/domain";
 
 const SPLITS = ["full_body", "upper_lower", "push_pull_legs", "bro_split", "custom"];
 const GOALS = [
@@ -37,6 +38,10 @@ type Props = {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function dayRange(split: string): [number, number] {
+  return SPLIT_DAY_RANGE[split as SplitType] ?? [1, 7];
+}
+
 export function AiProgramGenerator({ mode = "generate", programId, defaults }: Props) {
   const t = useTranslations("ai");
   const tCommon = useTranslations("common");
@@ -46,6 +51,8 @@ export function AiProgramGenerator({ mode = "generate", programId, defaults }: P
   const [job, setJob] = useState<Job | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [split, setSplit] = useState<string>(defaults?.split_type ?? "push_pull_legs");
+  const daysRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!job || job.status === "succeeded" || job.status === "failed") return;
@@ -71,7 +78,10 @@ export function AiProgramGenerator({ mode = "generate", programId, defaults }: P
           }
           if (next.status === "failed") {
             const code = next.error?.error.code ?? "AI_GENERATION_FAILED";
-            setError(tErrors.has(code) ? tErrors(code) : tErrors("AI_GENERATION_FAILED"));
+            const base = tErrors.has(code) ? tErrors(code) : tErrors("AI_GENERATION_FAILED");
+            const reason = next.error?.error.message ?? "";
+            // ponytail: reason masih teks server (Inggris); terjemahkan bila sudah ada glossary.
+            setError(reason && !base.includes(reason) ? `${base} (${reason})` : base);
             setPending(false);
             return;
           }
@@ -89,16 +99,32 @@ export function AiProgramGenerator({ mode = "generate", programId, defaults }: P
     };
   }, [job, locale, router, tErrors]);
 
+  function changeSplit(value: string) {
+    setSplit(value);
+    const [min, max] = dayRange(value);
+    const input = daysRef.current;
+    if (input) {
+      const days = Number(input.value);
+      input.value = String(Math.min(max, Math.max(min, days || min)));
+    }
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const daysPerWeek = Number(form.get("days_per_week"));
+    const [min, max] = dayRange(split);
+    if (daysPerWeek < min || daysPerWeek > max) {
+      setError(t("dayRangeHint", { min, max }));
+      return;
+    }
     setPending(true);
     setError(null);
-    const form = new FormData(event.currentTarget);
     const body = {
       goal: form.get("goal"),
       split_type: form.get("split_type"),
       duration_weeks: Number(form.get("duration_weeks")),
-      days_per_week: Number(form.get("days_per_week")),
+      days_per_week: daysPerWeek,
       session_minutes: Number(form.get("session_minutes")),
       notes: String(form.get("notes") ?? "").trim() || undefined
     };
@@ -116,7 +142,19 @@ export function AiProgramGenerator({ mode = "generate", programId, defaults }: P
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         const code = payload?.error?.code ?? "INTERNAL_ERROR";
-        setError(tErrors.has(code) ? tErrors(code) : tErrors("INTERNAL_ERROR"));
+        // ponytail: detail teks dari server belum terlokalisasi; terjemahkan path+message bila perlu.
+        const details = Array.isArray(payload?.error?.details)
+          ? (payload.error.details as Array<{ message?: string }>)
+              .map((item) => item?.message)
+              .filter(Boolean)
+          : [];
+        setError(
+          details.length
+            ? details.join(" · ")
+            : tErrors.has(code)
+              ? tErrors(code)
+              : tErrors("INTERNAL_ERROR")
+        );
         setPending(false);
         return;
       }
@@ -133,6 +171,8 @@ export function AiProgramGenerator({ mode = "generate", programId, defaults }: P
       setPending(false);
     }
   }
+
+  const [minDays, maxDays] = dayRange(split);
 
   return (
     <details className="rounded-xl border border-border bg-card p-4">
@@ -189,11 +229,12 @@ export function AiProgramGenerator({ mode = "generate", programId, defaults }: P
             <select
               name="split_type"
               defaultValue={defaults?.split_type ?? "push_pull_legs"}
+              onChange={(event) => changeSplit(event.target.value)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             >
-              {SPLITS.map((split) => (
-                <option key={split} value={split}>
-                  {t(`splits.${split}`)}
+              {SPLITS.map((option) => (
+                <option key={option} value={option}>
+                  {t(`splits.${option}`)}
                 </option>
               ))}
             </select>
@@ -214,11 +255,15 @@ export function AiProgramGenerator({ mode = "generate", programId, defaults }: P
             <input
               name="days_per_week"
               type="number"
-              min={2}
-              max={7}
+              ref={daysRef}
+              min={minDays}
+              max={maxDays}
               defaultValue={defaults?.days_per_week ?? 3}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             />
+            <p className="text-xs text-muted-foreground">
+              {t("dayRangeHint", { min: minDays, max: maxDays })}
+            </p>
           </label>
           <label className="space-y-1 text-sm">
             {t("sessionMinutes")}

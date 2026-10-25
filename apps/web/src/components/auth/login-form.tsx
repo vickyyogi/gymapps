@@ -50,13 +50,13 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
   }
 
   return (
-    <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
+    <div className="card w-full max-w-sm animate-fade-in">
+      <h1 className="text-headline">{t("title")}</h1>
+      <p className="mt-1 text-body-small text-text-secondary">{t("description")}</p>
 
       <form onSubmit={submit} className="mt-6 space-y-4">
-        <div className="space-y-1.5">
-          <label htmlFor="email" className="text-sm font-medium">
+        <div className="space-y-1">
+          <label htmlFor="email" className="input-label">
             {tCommon("email")}
           </label>
           <input
@@ -65,12 +65,12 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
             type="email"
             required
             autoComplete="email"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            className="input"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium">
+        <div className="space-y-1">
+          <label htmlFor="password" className="input-label">
             {tCommon("password")}
           </label>
           <input
@@ -79,12 +79,12 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
             type="password"
             required
             autoComplete="current-password"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            className="input"
           />
         </div>
 
         {error ? (
-          <p role="alert" className="text-sm text-danger">
+          <p role="alert" className="input-helper input-helper-error animate-fade-in">
             {error}
           </p>
         ) : null}
@@ -92,15 +92,15 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          className="btn btn-primary btn-md w-full"
         >
           {pending ? t("submitting") : t("submit")}
         </button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-muted-foreground">
+      <p className="mt-5 text-center text-body-small text-text-secondary">
         {t("noAccount")}{" "}
-        <Link href="/register" className="font-medium text-foreground underline-offset-4 hover:underline">
+        <Link href="/register" className="font-medium text-primary hover:text-primary-hover underline underline-offset-2">
           {t("register")}
         </Link>
       </p>

@@ -1,12 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { getSession } from "@/lib/auth/session";
-import { LocaleSwitcher } from "@/components/locale-switcher";
-import { LogoutButton } from "@/components/logout-button";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { NotificationBell } from "@/components/notification-bell";
+import { AppSidebar, type NavItem } from "@/components/app-sidebar";
 import { PwaRegister } from "@/components/pwa-register";
 
 export const dynamic = "force-dynamic";
@@ -30,61 +26,29 @@ export default async function AppLayout({
     redirect(`/${locale}/onboarding`);
   }
 
-  const [tNav, tApp] = await Promise.all([
-    getTranslations("nav"),
-    getTranslations("app")
-  ]);
+  const tNav = await getTranslations("nav");
+
+  const items: NavItem[] = [
+    { href: "/dashboard", key: "dashboard", label: tNav("dashboard") },
+    { href: "/workouts", key: "workouts", label: tNav("workouts") },
+    { href: "/programs", key: "programs", label: tNav("programs") },
+    { href: "/exercises", key: "exercises", label: tNav("exercises") },
+    { href: "/progress", key: "progress", label: tNav("progress") },
+    { href: "/coach", key: "coach", label: tNav("coach") },
+    { href: "/recommendations", key: "recommendations", label: tNav("recommendations") },
+    { href: "/exports", key: "exports", label: tNav("exports") },
+    { href: "/settings", key: "settings", label: tNav("settings") },
+    ...(session.user.role === "admin"
+      ? [{ href: "/admin/exercises", key: "admin", label: tNav("admin") }]
+      : [])
+  ];
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
-          <Link href="/dashboard" className="text-sm font-semibold tracking-tight">
-            {tApp("name")}
-          </Link>
-          <nav className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto whitespace-nowrap">
-            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("dashboard")}
-            </Link>
-            <Link href="/workouts" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("workouts")}
-            </Link>
-            <Link href="/programs" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("programs")}
-            </Link>
-            <Link href="/exercises" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("exercises")}
-            </Link>
-            <Link href="/progress" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("progress")}
-            </Link>
-            <Link href="/coach" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("coach")}
-            </Link>
-            <Link href="/recommendations" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("recommendations")}
-            </Link>
-            <Link href="/exports" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("exports")}
-            </Link>
-            <Link href="/settings" className="text-sm text-muted-foreground hover:text-foreground">
-              {tNav("settings")}
-            </Link>
-            {session.user.role === "admin" ? (
-              <Link href="/admin/exercises" className="text-sm text-muted-foreground hover:text-foreground">
-                {tNav("admin")}
-              </Link>
-            ) : null}
-          </nav>
-          <div className="flex shrink-0 items-center gap-2">
-            <NotificationBell locale={locale} />
-            <LocaleSwitcher />
-            <ThemeToggle />
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <AppSidebar items={items} userName={session.user.displayName ?? session.user.email} />
+      <main className="px-4 py-8 lg:pl-72">
+        <div className="mx-auto max-w-5xl">{children}</div>
+      </main>
       <PwaRegister />
     </div>
   );

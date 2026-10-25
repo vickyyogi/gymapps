@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { PrismaClient } from "@prisma/client";
+import { createPrisma } from "./prisma-client.mjs";
 
 const API = process.env.BASE_URL ?? "http://localhost:3100/api/v1";
 const APP = process.env.APP_URL ?? "http://localhost:3100";
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 const stamp = Date.now();
 const email = `phase4-${stamp}@example.com`;
 const otherEmail = `phase4-other-${stamp}@example.com`;

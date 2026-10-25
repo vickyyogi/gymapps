@@ -4,13 +4,13 @@ import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PrismaClient } from "@prisma/client";
+import { createPrisma } from "./prisma-client.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.env.PHASE7_PORT) || 3107;
 const APP = `http://127.0.0.1:${port}`;
 const API = `${APP}/api/v1`;
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 const stamp = Date.now();
 const password = "Password123!";
 const children = [];

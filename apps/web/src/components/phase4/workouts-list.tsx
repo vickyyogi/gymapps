@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { fromKg } from "@gymapps/domain";
 
 type Workout = {
   id: string;
@@ -68,71 +69,75 @@ export function WorkoutsList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
+          <h1 className="text-headline">{t("title")}</h1>
+          <p className="mt-1 text-body-small text-text-secondary">{t("description")}</p>
         </div>
         <button
           type="button"
           onClick={start}
           disabled={starting || Boolean(active)}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="btn btn-primary btn-md"
         >
           {starting ? tCommon("loading") : t("start")}
         </button>
       </div>
 
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="input-helper input-helper-error animate-fade-in">
+          {error}
+        </p>
+      ) : null}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+        <p className="text-body text-text-tertiary animate-fade-in">{tCommon("loading")}</p>
       ) : (
         <>
           {active ? (
             <button
               type="button"
               onClick={() => router.push(`/${locale}/workouts/${active.id}`)}
-              className="flex w-full items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 p-4 text-left"
+              className="card border-primary/40 bg-primary-light/50 w-full text-left animate-slide-up"
             >
-              <span>
-                <span className="block text-xs font-medium uppercase tracking-wide text-primary">
-                  {t("resume")}
+              <div className="flex items-center justify-between gap-3">
+                <span>
+                  <span className="text-overline text-primary">{t("resume")}</span>
+                  <span className="mt-1 block font-medium text-text-primary">{active.title}</span>
+                  <span className="mt-0.5 block text-caption text-text-secondary">
+                    {new Date(active.started_at).toLocaleString()} · {active.total_sets} {t("sets")}
+                  </span>
                 </span>
-                <span className="mt-1 block font-medium">{active.title}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  {new Date(active.started_at).toLocaleString()} · {active.total_sets} {t("sets")}
-                </span>
-              </span>
-              <span className="text-sm font-medium text-primary">{t("continue")}</span>
+                <span className="text-body font-medium text-primary">{t("continue")}</span>
+              </div>
             </button>
           ) : null}
 
           <section className="space-y-2">
-            <h2 className="text-sm font-medium">{t("history")}</h2>
+            <h2 className="text-subhead">{t("history")}</h2>
             {history.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                {t("empty")}
+              <div className="card border-dashed border-border text-center py-6 animate-fade-in">
+                <p className="text-body text-text-tertiary">{t("empty")}</p>
               </div>
             ) : (
-              <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+              <ul className="list">
                 {history.map((workout) => (
                   <li key={workout.id}>
                     <button
                       type="button"
                       onClick={() => router.push(`/${locale}/workouts/${workout.id}`)}
-                      className="flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left hover:bg-muted/50"
+                      className="list-item gap-3 w-full text-left hover:bg-background active:bg-primary-light/50"
                     >
-                      <span>
-                        <span className="block text-sm font-medium">{workout.title}</span>
-                        <span className="text-xs text-muted-foreground">
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-body font-medium text-text-primary truncate">{workout.title}</span>
+                        <span className="text-caption text-text-secondary">
                           {new Date(workout.started_at).toLocaleDateString()} ·{" "}
                           {workout.exercise_count} {t("exercises")}
                         </span>
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        {fmt(workout.total_volume_kg)} kg · {workout.total_sets} {t("sets")}
+                      <span className="text-caption text-text-tertiary whitespace-nowrap flex-shrink-0">
+                        {fmt(fromKg(workout.total_volume_kg, "metric"))} kg · {workout.total_sets} {t("sets")}
                         {workout.pr_count ? ` · ${workout.pr_count} PR` : ""}
                       </span>
                     </button>

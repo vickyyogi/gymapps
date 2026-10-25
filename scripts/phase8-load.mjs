@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PrismaClient } from "@prisma/client";
+import { createPrisma } from "./prisma-client.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.env.PHASE8_LOAD_PORT) || 3108;
@@ -11,7 +11,7 @@ const apiUrl = `${appUrl}/api/v1`;
 const iterations = Number(process.env.LOAD_ITERATIONS) || 20;
 const concurrency = Number(process.env.LOAD_CONCURRENCY) || 5;
 const weeks = Number(process.env.LOAD_WEEKS) || 26;
-const prisma = new PrismaClient();
+const prisma = createPrisma();
 const stamp = Date.now();
 const password = "Password123!";
 const email = `phase8-load-${stamp}@example.com`;

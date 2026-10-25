@@ -4,12 +4,12 @@
 // email uses TEXT (lowercased in app) instead of CITEXT so Prisma migrate stays drift-free.
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum MuscleGroup {
