@@ -1,7 +1,7 @@
 {
   "apps/web/next-env.d.ts": {
-    "mtime": 1793023190.8851218,
-    "seen": 1793023200.671634,
+    "mtime": 1793024021.99972,
+    "seen": 1793024025.0655375,
     "ast_hash": "aa94238a90e7d04b7a47ecc3145ba6a0",
     "semantic_hash": ""
   },
@@ -180,15 +180,15 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/api/v1/ai/programs/[programId]/regenerate/route.ts": {
-    "mtime": 1792940252.433374,
-    "seen": 1793018885.249299,
-    "ast_hash": "cf361a328cec0a55e21bed916ecd9b73",
+    "mtime": 1793023830.1477952,
+    "seen": 1793024025.067203,
+    "ast_hash": "b8da2b7beb1ad2ddca0f572cc2461baf",
     "semantic_hash": ""
   },
   "apps/web/src/app/api/v1/ai/programs/generate/route.ts": {
-    "mtime": 1792940252.433374,
-    "seen": 1793018885.2493002,
-    "ast_hash": "b3c90fe6519cf230fe229bce4ed3b8c9",
+    "mtime": 1793023830.1479173,
+    "seen": 1793024025.067205,
+    "ast_hash": "9544fc65537d81abeb0aa14476943724",
     "semantic_hash": ""
   },
   "apps/web/src/app/api/v1/ai/recommendations/[recommendationId]/route.ts": {
@@ -318,9 +318,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/api/v1/exports/route.ts": {
-    "mtime": 1792940252.435483,
-    "seen": 1793018885.249331,
-    "ast_hash": "305339dcbde4b92906d07498b2578d2e",
+    "mtime": 1793023830.148027,
+    "seen": 1793024025.0684545,
+    "ast_hash": "cd5b2583aafb5c636acf3a8db5058322",
     "semantic_hash": ""
   },
   "apps/web/src/app/api/v1/health/route.ts": {
@@ -432,9 +432,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/api/v1/reports/route.ts": {
-    "mtime": 1792940252.4370482,
-    "seen": 1793018885.2493556,
-    "ast_hash": "06625ea2169b85b39467a0697c35a0c7",
+    "mtime": 1793023830.1481383,
+    "seen": 1793024025.0693393,
+    "ast_hash": "cff7e7ac3caafe02df9015ab9ba183bd",
     "semantic_hash": ""
   },
   "apps/web/src/app/api/v1/workouts/[workoutId]/exercises/[workoutExerciseId]/sets/[setId]/route.ts": {
@@ -846,9 +846,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/id.ts": {
-    "mtime": 1792940252.441795,
-    "seen": 1793018885.249445,
-    "ast_hash": "4baa0976136684c6c952efd783f59abf",
+    "mtime": 1793023805.6537673,
+    "seen": 1793024025.0723796,
+    "ast_hash": "b6f4d34dea09c5b7058ed009b9b828bf",
     "semantic_hash": ""
   },
   "apps/web/src/lib/log.test.ts": {
@@ -1044,9 +1044,9 @@
     "semantic_hash": ""
   },
   "packages/jobs/src/index.ts": {
-    "mtime": 1792940252.4564867,
-    "seen": 1793018885.2494984,
-    "ast_hash": "22ef989bdb4f3714513ec91de60a968f",
+    "mtime": 1793023935.8779125,
+    "seen": 1793024025.07381,
+    "ast_hash": "94fa19df2e4371a38cde2b851703dcef",
     "semantic_hash": ""
   },
   "packages/jobs/tsconfig.json": {
@@ -1170,9 +1170,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793023126.2321756,
-    "seen": 1793023200.680584,
-    "ast_hash": "500fa432f5b7f3e506af68bd9853d053",
+    "mtime": 1793023935.877713,
+    "seen": 1793024025.0743816,
+    "ast_hash": "c2d2e4d458a3fd580db19fa25e37be25",
     "semantic_hash": ""
   },
   "apps/web/public/offline.html": {
@@ -1206,9 +1206,9 @@
     "semantic_hash": ""
   },
   "docs/data-model.md": {
-    "mtime": 1793023131.1537728,
-    "seen": 1793023200.6807477,
-    "ast_hash": "6ef6a8582bf9efdcd74a8c345fd7e06a",
+    "mtime": 1793023945.250964,
+    "seen": 1793024025.0745559,
+    "ast_hash": "0d1a172c452250f6054ae779bc401c0e",
     "semantic_hash": ""
   },
   "docs/decisions/ADR-001-program-shape.md": {
@@ -1503,6 +1503,24 @@
     "mtime": 1793023142.8337805,
     "seen": 1793023200.678781,
     "ast_hash": "234fb494de0527512c36d4384733bc40",
+    "semantic_hash": ""
+  },
+  "apps/web/src/instrumentation.ts": {
+    "mtime": 1793023819.7824779,
+    "seen": 1793024025.0709596,
+    "ast_hash": "64a44bd5036d9dd0779054883acdc0b3",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/jobs.test.ts": {
+    "mtime": 1793023916.382622,
+    "seen": 1793024025.0723813,
+    "ast_hash": "c7cb92415140db662089967353477837",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/jobs.ts": {
+    "mtime": 1793023935.8771355,
+    "seen": 1793024025.0723827,
+    "ast_hash": "6ebe41eb4b758f35779c565873595ec3",
     "semantic_hash": ""
   }
 }
