@@ -576,6 +576,12 @@ Notifikasi dibuat saat rekomendasi baru, export siap, atau laporan PDF siap. Tid
 
 `id`, `user_id`, `type` (`csv` \| `json` \| `pdf_report`), `status` (`queued` \| `running` \| `ready` \| `failed`), `entities` TEXT[], `period_start`, `period_end`, `file_path` (lokal, tidak diekspos), `file_size_bytes`, `error_message`, `metadata` JSONB, `expires_at` (created_at + 7 hari), `created_at`
 
+### 6.9 `rate_limits`
+
+`key` (PK, format `{scope}:{identity}`), `count` INT, `reset_at` TIMESTAMPTZ — pengganti Redis untuk rate limiting. Upsert atomik (`INSERT ... ON CONFLICT`) menjaga counter konsisten antar instance.
+
+**Index:** `idx_rate_limits_reset(reset_at)`
+
 ---
 
 ## 7. Enum

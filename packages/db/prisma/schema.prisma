@@ -678,3 +678,12 @@ model AuditLog {
   @@index([entityType, entityId], map: "idx_audit_entity")
   @@map("audit_logs")
 }
+
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime @map("reset_at") @db.Timestamptz(3)
+
+  @@index([resetAt], map: "idx_rate_limits_reset")
+  @@map("rate_limits")
+}
