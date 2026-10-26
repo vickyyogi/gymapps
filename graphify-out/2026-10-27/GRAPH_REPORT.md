@@ -1,22 +1,22 @@
-# Graph Report - gymapps  (2026-10-26)
+# Graph Report - gymapps  (2026-10-27)
 
 ## Corpus Check
-- 261 files · ~135,487 words
+- 262 files · ~136,001 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 8 file(s) not represented in the graph (top: .example 3, (none) 1, .webmanifest 1)
+- Unclassified: 10 file(s) not represented in the graph (top: (none) 3, .example 3, .webmanifest 1)
 
 ## Summary
-- 1822 nodes · 4106 edges · 110 communities (101 shown, 9 thin omitted)
+- 1863 nodes · 4150 edges · 124 communities (114 shown, 10 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 21 edges (avg confidence: 0.88)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `24edb615`
+- Built from commit: `2f7cf3d6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- handler.ts
+- prisma
 - client.ts
 - web/package.json
 - prisma
@@ -27,10 +27,10 @@
 - phase5-validation.ts
 - session.ts
 - AI Prompt Specification — GymApps v1
-- ApiError
+- newId
 - exports.ts
 - db/package.json
-- analytics.ts
+- api/analytics.ts
 - register/route.ts
 - serializers.ts
 - onboarding/page.tsx
@@ -44,14 +44,14 @@
 - programs-list.tsx
 - workout-logger.tsx
 - shared/package.json
-- schema.ts
-- v1/exercises/route.ts
+- handler.ts
+- admin/exercises/route.ts
 - Observability
 - phase8-backup.mjs
 - 5. Epics, User Stories & Prioritas
 - phase5-e2e.mjs
-- mock-chat-ai.mjs
-- 2. Goals, Non-Goals, dan Success Metrics
+- mock-ai.mjs
+- [workoutId]/route.ts
 - ProgressTracker
 - domain/package.json
 - phase7-e2e.mjs
@@ -64,7 +64,7 @@
 - 4. Program & Latihan
 - clientIp
 - Fase 8 — Hardening & Beta
-- 5. Pipeline Program Generator
+- body-metrics/route.ts
 - getSession
 - dashboard-overview.tsx
 - compilerOptions
@@ -94,11 +94,14 @@
 - 5. Tabel AI
 - 3. Tabel Inti
 - Rencana Implementasi GymApps v1
-- next.config.ts
+- phase4-validation.ts
 - Dokumentasi GymApps
 - db/tsconfig.json
 - openapi.d.ts
 - shared/tsconfig.json
+- adherence/route.ts
+- services
+- web
 - 14. Roadmap
 - 1. Ringkasan Eksekutif / Executive Summary
 - 8. Spesifikasi API
@@ -111,17 +114,28 @@
 - jobs/tsconfig.json
 - postcss.config.mjs
 - sw.js
-- SettingsPanel
+- minio
+- Deploy (container)
+- environment
+- profile/route.ts
 - parseJson
 - phase8-backup.mjs
-- 6. Coach Chat
+- one-rm/route.ts
 - WorkoutLogger
+- volume/route.ts
+- AiProgramGenerator
+- healthcheck
 - fallback-generator.ts
+- forgot-password-form.tsx
 - next-intl
+- register-form.tsx
 - 4. Competitive Landscape & Positioning
 - 7. Model Data
 - AGENTS.md
 - web/AGENTS.md
+- checkQuota
+- 12. Analytics, Funnel & KPIs
+- 13. Monetisasi (Rencana, Implementasi v1.2)
 
 ## God Nodes (most connected - your core abstractions)
 1. `ApiError` - 103 edges
@@ -138,123 +152,123 @@
 ## Surprising Connections (you probably didn't know these)
 - `Event yang dikirim` --references--> `onRequestError()`  [INFERRED]
   docs/observability.md → apps/web/src/instrumentation.ts
-- `Index review query panas` --references--> `analyticsVolume()`  [INFERRED]
-  docs/phase8-hardening.md → apps/web/src/lib/api/analytics.ts
-- `5.4 `chat_messages`` --references--> `feedback()`  [INFERRED]
-  docs/data-model.md → apps/web/src/components/phase6/coach-chat.tsx
 - `Review PDP / privacy` --references--> `purgeExpiredAccounts()`  [INFERRED]
   docs/phase8-hardening.md → apps/web/src/lib/account-retention.ts
-- `8. Post-Processing & Moderasi` --references--> `context()`  [INFERRED]
-  docs/ai/prompt-spec.md → packages/domain/src/domain.test.ts
+- `Index review query panas` --references--> `analyticsVolume()`  [INFERRED]
+  docs/phase8-hardening.md → apps/web/src/lib/api/analytics.ts
+- `12.1 Daftar Event (PostHog)` --references--> `valid()`  [INFERRED]
+  docs/PRD.md → packages/domain/src/stats/one-rm.ts
+- `5.4 `chat_messages`` --references--> `feedback()`  [INFERRED]
+  docs/data-model.md → apps/web/src/components/phase6/coach-chat.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (110 total, 9 thin omitted)
+## Communities (124 total, 10 thin omitted)
 
-### Community 0 - "handler.ts"
-Cohesion: 0.06
-Nodes (39): DELETE, ownedThread(), runtime, GET, runtime, GET, runtime, GET (+31 more)
+### Community 0 - "prisma"
+Cohesion: 0.12
+Nodes (18): DELETE, ownedThread(), runtime, GET, runtime, GET, GROUPS, runtime (+10 more)
 
 ### Community 1 - "client.ts"
-Cohesion: 0.08
-Nodes (44): POST, streamResponse(), buildChatContext(), CHAT_MAX_CONTEXT_TOKENS, ChatCard, ChatCitation, ChatSend, ChatTurnInput (+36 more)
+Cohesion: 0.07
+Nodes (48): ownedThread(), POST, runtime, streamResponse(), buildChatContext(), CHAT_MAX_CONTEXT_TOKENS, ChatCard, ChatCitation (+40 more)
 
 ### Community 2 - "web/package.json"
 Cohesion: 0.05
-Nodes (47): dependencies, @aws-sdk/client-s3@^3.1156.0, @gymapps/db@*, @gymapps/domain@*, @gymapps/shared@*, lucide-react@^1.61.0, next@^16.4.3, next-intl@^4.14.9 (+39 more)
+Nodes (49): dependencies, @aws-sdk/client-s3@^3.1156.0, @gymapps/db@*, @gymapps/domain@*, @gymapps/shared@*, lucide-react@^1.61.0, next@^16.4.3, next-intl@^4.14.9 (+41 more)
 
 ### Community 3 - "prisma"
 Cohesion: 0.08
-Nodes (24): POST, runtime, GET, ownedThread(), runtime, PATCH, runtime, GET (+16 more)
+Nodes (22): PATCH, runtime, GET, runtime, SEVERITY_ORDER, PATCH, runtime, GET (+14 more)
 
 ### Community 4 - "scripts"
 Cohesion: 0.06
 Nodes (36): compat, config, devDependencies, eslint@^9.39.5, eslint-config-next@^15.5.28, @eslint/eslintrc@^3.3.1, typescript@^5.9.3, engines (+28 more)
 
 ### Community 5 - "orchestrator.ts"
-Cohesion: 0.14
-Nodes (21): GET, runtime, asMetadata(), completenessIssues(), failJob(), GOAL_LABEL, JobMetadata, jobResponse() (+13 more)
+Cohesion: 0.10
+Nodes (29): GET, runtime, asMetadata(), completenessIssues(), failJob(), GOAL_LABEL, JobMetadata, jobResponse() (+21 more)
 
 ### Community 6 - "domain.test.ts"
-Cohesion: 0.10
-Nodes (19): 8. Post-Processing & Moderasi, BIG_MUSCLES, catalog(), context(), generated(), input(), checkQuota(), QuotaLimits (+11 more)
+Cohesion: 0.13
+Nodes (23): Candidate, candidatesFor(), evaluateRecommendationsForUser(), isoDate(), PULL, PUSH, SEVERITY_ORDER, startOfWeek() (+15 more)
 
 ### Community 7 - "app-sidebar.tsx"
-Cohesion: 0.17
-Nodes (16): AppLayout(), dynamic, AppSidebar(), ICONS, NavItem, NavLinks(), SidebarBody(), LogoutButton() (+8 more)
+Cohesion: 0.21
+Nodes (11): AppLayout(), dynamic, AppSidebar(), NavItem, Notification, NotificationBell(), load(), openNotification() (+3 more)
 
 ### Community 8 - "phase5-validation.ts"
-Cohesion: 0.13
-Nodes (14): BODY_AREAS, bodyArea(), buildProgramContext(), ContextArrayKey, hashContext(), MAX_CONTEXT_TOKENS, EQUIPMENT, generateShapeError() (+6 more)
+Cohesion: 0.14
+Nodes (14): BODY_AREAS, bodyArea(), buildProgramContext(), ContextArrayKey, fitContext(), hashContext(), MAX_CONTEXT_TOKENS, EQUIPMENT (+6 more)
 
 ### Community 9 - "session.ts"
-Cohesion: 0.11
-Nodes (20): attachSessionCookie(), cookieOptions(), hashToken(), TokenPurpose, TTL_MS, APP_SEGMENTS, config, intlMiddleware (+12 more)
+Cohesion: 0.08
+Nodes (28): POST, runtime, POST, runtime, attachSessionCookie(), clearSessionCookie(), cookieOptions(), ActiveSession (+20 more)
 
 ### Community 10 - "AI Prompt Specification — GymApps v1"
-Cohesion: 0.11
-Nodes (18): 10.1 Kasus Otomatis (CI, 20 kasus), 10.2 Kasus Manual (50 kasus, review mingguan), 10.3 Red-Team Set (30 prompt, wajib 0 violation), 10. Eval Set, 11. Monitoring & Biaya, 12. Fallback & Kill-Switch, 1. Prinsip, 2. Model & Konfigurasi (+10 more)
+Cohesion: 0.06
+Nodes (31): 10.1 Kasus Otomatis (CI, 20 kasus), 10.2 Kasus Manual (50 kasus, review mingguan), 10.3 Red-Team Set (30 prompt, wajib 0 violation), 10. Eval Set, 11. Monitoring & Biaya, 12. Fallback & Kill-Switch, 1. Prinsip, 2. Model & Konfigurasi (+23 more)
 
-### Community 11 - "ApiError"
-Cohesion: 0.16
-Nodes (24): POST, runtime, DELETE, runtime, POST, runtime, DELETE, PATCH (+16 more)
+### Community 11 - "newId"
+Cohesion: 0.25
+Nodes (13): POST, runtime, POST, runtime, idempotencyKeyFrom(), savedIdempotentResponse(), saveIdempotentResponse(), currentBests() (+5 more)
 
 ### Community 12 - "exports.ts"
 Cohesion: 0.07
-Nodes (43): playwright-core@^1.64.1, GET, runtime, DELETE, GET, ownedExport(), runtime, GET (+35 more)
+Nodes (44): server-only@^0.0.1, GET, runtime, DELETE, GET, ownedExport(), runtime, GET (+36 more)
 
 ### Community 13 - "db/package.json"
 Cohesion: 0.06
 Nodes (43): dependencies, dotenv@^17.4.2, @prisma/adapter-pg@^7.10.1, @prisma/client@^7.10.1, ulid@^3.0.2, devDependencies, prisma@^7.10.1, tsx@^4.23.15 (+35 more)
 
-### Community 14 - "analytics.ts"
-Cohesion: 0.05
-Nodes (50): GET, runtime, GET, runtime, GET, runtime, DELETE, owned() (+42 more)
+### Community 14 - "api/analytics.ts"
+Cohesion: 0.17
+Nodes (13): GET, runtime, GET, runtime, analyticsMuscleBalance(), AnalyticsRange, analyticsSummary(), finishedWorkouts() (+5 more)
 
 ### Community 15 - "register/route.ts"
-Cohesion: 0.18
-Nodes (23): POST, runtime, POST, runtime, POST, runtime, GET, runtime (+15 more)
+Cohesion: 0.19
+Nodes (21): POST, runtime, POST, runtime, POST, runtime, POST, runtime (+13 more)
 
 ### Community 16 - "serializers.ts"
-Cohesion: 0.11
-Nodes (19): POST, runtime, GET, PATCH, runtime, POST, runtime, programInputSchema (+11 more)
+Cohesion: 0.13
+Nodes (15): GET, GET, runtime, iso(), nullableNumber(), numberValue(), PreviousPerformance, PreviousSet (+7 more)
 
 ### Community 17 - "onboarding/page.tsx"
-Cohesion: 0.21
-Nodes (10): AuthLayout(), dynamic, OnboardingPage(), VerifyEmailGate(), LocaleSwitcher(), Theme, THEMES, ThemeToggle() (+2 more)
+Cohesion: 0.23
+Nodes (12): AuthLayout(), ICONS, NavLinks(), SidebarBody(), LocaleSwitcher(), LogoutButton(), Theme, THEMES (+4 more)
 
 ### Community 18 - "validator.ts"
-Cohesion: 0.24
-Nodes (15): ValidationResult, averageReps(), BIG_MUSCLES, isInt(), isNum(), isRecord(), issue(), parseProgram() (+7 more)
+Cohesion: 0.12
+Nodes (27): ProgramExercise, ProgramSession, Progression, ProgressionType, ValidationContext, ValidationIssue, ValidationResult, averageReps() (+19 more)
 
 ### Community 19 - "auth.ts"
 Cohesion: 0.09
 Nodes (25): birthDateSchema, ChangePasswordInput, ChangePasswordRequest, changePasswordSchema, DeleteAccountInput, DeleteAccountRequest, deleteAccountSchema, email (+17 more)
 
 ### Community 20 - "jobs.ts"
-Cohesion: 0.13
-Nodes (24): POST, runtime, maxDuration, POST, runtime, onRequestError(), register(), createExportJob() (+16 more)
+Cohesion: 0.12
+Nodes (23): POST, runtime, maxDuration, POST, runtime, onRequestError(), register(), createExportJob() (+15 more)
 
 ### Community 21 - "onboarding-wizard.tsx"
-Cohesion: 0.18
-Nodes (9): ClassNames(), EQUIPMENT, Form, GOALS, INITIAL, INJURIES, LEVELS, OnboardingWizard() (+1 more)
+Cohesion: 0.14
+Nodes (12): dynamic, OnboardingPage(), VerifyEmailGate(), ClassNames(), EQUIPMENT, Form, GOALS, INITIAL (+4 more)
 
 ### Community 22 - "domain/src/index.ts"
-Cohesion: 0.07
-Nodes (36): narratorAiConfig(), Candidate, candidatesFor(), evaluateRecommendationsForUser(), isoDate(), narrate(), PULL, PUSH (+28 more)
+Cohesion: 0.11
+Nodes (19): ADR-0002, AdherenceDropInput, DeloadInput, FrequencyLowInput, ImbalanceInput, MissingEquipmentInput, ProgramExerciseEquipment, OvertrainingRiskInput (+11 more)
 
 ### Community 23 - "login/route.ts"
-Cohesion: 0.17
-Nodes (18): POST, runtime, POST, runtime, GET, runtime, rateLimitHeaders(), checkLoginRateLimit() (+10 more)
+Cohesion: 0.24
+Nodes (15): POST, runtime, GET, runtime, rateLimitHeaders(), checkLoginRateLimit(), clearLoginRateLimit(), loginRateLimitKey() (+7 more)
 
 ### Community 24 - "phase3-validation.ts"
 Cohesion: 0.08
-Nodes (33): GET, runtime, GET, POST, runtime, detail(), GET, PATCH (+25 more)
+Nodes (25): DELETE, findVisibleExercise(), GET, PATCH, runtime, addWorkoutExerciseSchema, boolParam, createExerciseSchema (+17 more)
 
 ### Community 25 - "programs-list.tsx"
-Cohesion: 0.13
-Nodes (19): dynamic, ProgramsPage(), GOALS, Program, ProgramsList(), activate(), archive(), load() (+11 more)
+Cohesion: 0.15
+Nodes (12): dynamic, ProgramsPage(), LoginPage(), LoginForm(), GOALS, Program, ProgramsList(), activate() (+4 more)
 
 ### Community 27 - "workout-logger.tsx"
 Cohesion: 0.13
@@ -264,20 +278,20 @@ Nodes (11): dynamic, ProgramPage(), EQUIPMENT, ExercisePicker(), MUSCLES, Picked
 Cohesion: 0.12
 Nodes (19): dependencies, vitest@5.0.5, zod@^4.6.7, devDependencies, openapi-typescript@^7.13.0, typescript@^5.9.3, typescript, vitest (+11 more)
 
-### Community 29 - "schema.ts"
-Cohesion: 0.17
-Nodes (13): EmitProgram, emitProgramSchema, exercise, NormalizeInput, progression, session, week, Program (+5 more)
+### Community 29 - "handler.ts"
+Cohesion: 0.11
+Nodes (21): POST, runtime, STEPS, POST, runtime, GET, runtime, createProgramGenerationJob() (+13 more)
 
-### Community 30 - "v1/exercises/route.ts"
-Cohesion: 0.14
-Nodes (21): PATCH, runtime, GET, POST, runtime, DELETE, findVisibleExercise(), GET (+13 more)
+### Community 30 - "admin/exercises/route.ts"
+Cohesion: 0.33
+Nodes (9): PATCH, runtime, GET, POST, runtime, POST, slugify(), serializeExercise() (+1 more)
 
 ### Community 31 - "Observability"
 Cohesion: 0.33
 Nodes (5): Alert (NFR-OBS-06), Belum ada, Dashboard (NFR-OBS-05), Event yang dikirim, Observability
 
 ### Community 32 - "phase8-backup.mjs"
-Cohesion: 0.19
+Cohesion: 0.27
 Nodes (6): buildId, main(), root, run(), stop(), waitFor()
 
 ### Community 33 - "5. Epics, User Stories & Prioritas"
@@ -288,13 +302,13 @@ Nodes (16): 5.1 Ringkasan Epik, 5. Epics, User Stories & Prioritas, EP-01 — Au
 Cohesion: 0.25
 Nodes (15): assertBodyweightKneeSafe(), assertSessionCount(), call(), children, generate(), main(), ok(), prisma (+7 more)
 
-### Community 35 - "mock-chat-ai.mjs"
-Cohesion: 0.47
-Nodes (4): json(), requests, server, sseChunk()
+### Community 35 - "mock-ai.mjs"
+Cohesion: 0.24
+Nodes (9): contextFrom(), emitProgram(), json(), requests, server, json(), requests, server (+1 more)
 
-### Community 36 - "2. Goals, Non-Goals, dan Success Metrics"
-Cohesion: 0.50
-Nodes (4): 2.1 Goals v1, 2.2 Non-Goals v1, 2.3 Success Metrics (North Star & Guardrail), 2. Goals, Non-Goals, dan Success Metrics
+### Community 36 - "[workoutId]/route.ts"
+Cohesion: 0.17
+Nodes (19): DELETE, runtime, DELETE, PATCH, runtime, POST, runtime, detail() (+11 more)
 
 ### Community 37 - "ProgressTracker"
 Cohesion: 0.17
@@ -330,43 +344,43 @@ Nodes (14): 3.4 `exercises` — Katalog Gerakan, call(), main(), measure(), work
 
 ### Community 45 - "threads/route.ts"
 Cohesion: 0.16
-Nodes (20): GET, POST, runtime, DELETE, owned(), PATCH, runtime, GET (+12 more)
+Nodes (24): GET, POST, runtime, GET, GET, runtime, GET, POST (+16 more)
 
 ### Community 46 - "4. Program & Latihan"
 Cohesion: 0.15
 Nodes (13): 4.10 `notes`, 4.11 `workout_templates`, 4.12 `workout_template_exercises`, 4.1 `programs`, 4.2 `program_weeks`, 4.3 `program_sessions`, 4.4 `program_exercises`, 4.5 `workouts` — Sesi Tercatat (+5 more)
 
 ### Community 47 - "clientIp"
-Cohesion: 0.16
-Nodes (22): DELETE, runtime, ADR-0004, POST, runtime, POST, runtime, POST (+14 more)
+Cohesion: 0.15
+Nodes (29): DELETE, runtime, ADR-0004, POST, POST, runtime, POST, runtime (+21 more)
 
 ### Community 48 - "Fase 8 — Hardening & Beta"
-Cohesion: 0.29
-Nodes (6): Audit log, Blocker eksternal staging & beta, Blocking sebelum gate Fase 8 penuh, Fase 8 — Hardening & Beta, Hasil gate (2026-10-23), Perintah
+Cohesion: 0.25
+Nodes (7): Audit log, Blocker eksternal staging & beta, Blocking sebelum gate Fase 8 penuh, Fase 8 — Hardening & Beta, Hasil gate (2026-10-23), Perintah, Review PDP / privacy
 
-### Community 49 - "5. Pipeline Program Generator"
-Cohesion: 0.29
-Nodes (7): 5.1 Tahapan, 5.2 Tool `emit_program`, 5.3 System Prompt — `program_generator` (v1), 5.4 System Prompt — `repair_pass` (v1), 5.5 Validator — Aturan V-01 … V-13, 5.6 Fallback Generator (Rule-based), 5. Pipeline Program Generator
+### Community 49 - "body-metrics/route.ts"
+Cohesion: 0.18
+Nodes (10): DELETE, owned(), PATCH, runtime, GET, POST, runtime, num() (+2 more)
 
 ### Community 50 - "getSession"
-Cohesion: 0.23
-Nodes (11): AdminExercisesPage(), dynamic, AdminExerciseEditor(), load(), save(), select(), Exercise, formFrom() (+3 more)
+Cohesion: 0.26
+Nodes (10): AdminExercisesPage(), dynamic, AdminExerciseEditor(), load(), save(), select(), Exercise, formFrom() (+2 more)
 
 ### Community 51 - "dashboard-overview.tsx"
 Cohesion: 0.21
-Nodes (11): DashboardPage(), dynamic, ActiveWorkout, Calendar, DashboardOverview(), fmt(), Profile, Program (+3 more)
+Nodes (10): DashboardPage(), dynamic, ActiveWorkout, Calendar, DashboardOverview(), fmt(), Profile, Program (+2 more)
 
 ### Community 52 - "compilerOptions"
 Cohesion: 0.17
 Nodes (11): compilerOptions, allowJs, incremental, jsx, lib, paths, plugins, exclude (+3 more)
 
 ### Community 53 - "estimateOneRm"
-Cohesion: 0.16
-Nodes (16): 12.1 Daftar Event (PostHog), 12.2 Funnel Aktivasi, 12.3 Metrik AI, 12. Analytics, Funnel & KPIs, brzyckiOneRm(), epleyOneRm(), estimateOneRm(), ONE_RM_MAX_REPS (+8 more)
+Cohesion: 0.23
+Nodes (10): brzyckiOneRm(), epleyOneRm(), ONE_RM_MAX_REPS, round2(), valid(), appendPersonalRecords(), BestRecords, PersonalRecord (+2 more)
 
 ### Community 54 - "Phase 1 (Fondasi)"
-Cohesion: 0.15
-Nodes (12): Gates, GymApps, Notes, Observability, Phase 1 (Fondasi), Phase 3 (Data & API inti), Phase 4 (UI loop utama), Phase 5 (AI program generator) (+4 more)
+Cohesion: 0.14
+Nodes (13): Deploy, Gates, GymApps, Notes, Observability, Phase 1 (Fondasi), Phase 3 (Data & API inti), Phase 4 (UI loop utama) (+5 more)
 
 ### Community 55 - "ExportsPanel"
 Cohesion: 0.25
@@ -374,15 +388,15 @@ Nodes (6): dynamic, ExportsPage(), currentMonth(), ExportRow, ExportsPanel(), si
 
 ### Community 56 - "Product Requirements Document — GymApps v1.0 (Beta)"
 Cohesion: 0.18
-Nodes (11): 11. Acceptance Criteria Konsolidasi (Ringkasan), 13.1 Model, 13.2 Alur Monetisasi Mendatang, 13.3 Yang Diprioritaskan Saat Monetisasi, 13. Monetisasi (Rencana, Implementasi v1.2), 15. Risiko & Mitigasi, 16. Pertanyaan Terbuka (Open Questions), Daftar Isi (+3 more)
+Nodes (11): 11. Acceptance Criteria Konsolidasi (Ringkasan), 15. Risiko & Mitigasi, 16. Pertanyaan Terbuka (Open Questions), 2.1 Goals v1, 2.2 Non-Goals v1, 2.3 Success Metrics (North Star & Guardrail), 2. Goals, Non-Goals, dan Success Metrics, Daftar Isi (+3 more)
 
 ### Community 57 - "jobs/package.json"
 Cohesion: 0.20
 Nodes (10): devDependencies, typescript@^5.9.3, typescript, main, name, private, scripts, typecheck (+2 more)
 
 ### Community 58 - "[locale]/layout.tsx"
-Cohesion: 0.16
-Nodes (7): LayoutProps, viewport, ProfileData, TIMEZONES, DesignTokens, THEME_STORAGE_KEY, themeScript
+Cohesion: 0.11
+Nodes (12): dynamic, SettingsPage(), LayoutProps, viewport, ProfileData, SettingsPanel(), applyTheme(), savePreferences() (+4 more)
 
 ### Community 59 - "ADR-001 — Bentuk Program AI (Q-02)"
 Cohesion: 0.20
@@ -464,6 +478,10 @@ Nodes (6): 3.1 `users` — Identitas & Preferensi, 3.2 `user_profiles` — Profi
 Cohesion: 0.29
 Nodes (7): 1. Baseline, 2. Blocker sebelum kode, 4. Protokol perubahan, 5. Sinyal peringatan dini, 6. Urutan kritis, Rencana Implementasi GymApps v1, Status implementasi per 2026-10-22
 
+### Community 79 - "phase4-validation.ts"
+Cohesion: 0.16
+Nodes (12): GET, runtime, analyticsPersonalRecords(), analyticsPrSchema, bodyMetricListSchema, bodyMetricSchema, EQUIPMENT, GOALS (+4 more)
+
 ### Community 80 - "Dokumentasi GymApps"
 Cohesion: 0.33
 Nodes (6): Dokumentasi GymApps, Dokumentasi Keudsaraan, Pertanyaan Terbuka, Peta Dokumen, Ringkasan Keputusan Produk, Urutan Pembacaan yang Disarankan
@@ -479,6 +497,18 @@ Nodes (6): components, $defs, operations, paths, webhooks, WithRequired
 ### Community 83 - "shared/tsconfig.json"
 Cohesion: 0.33
 Nodes (5): compilerOptions, types, extends, include, ../../tsconfig.base.json
+
+### Community 84 - "adherence/route.ts"
+Cohesion: 0.25
+Nodes (9): GET, runtime, GET, runtime, analyticsAdherence(), analyticsCalendar(), isoDate(), startOfWeek() (+1 more)
+
+### Community 85 - "services"
+Cohesion: 0.22
+Nodes (8): depends_on, entrypoint, image, services, minio-init, volumes, gymapps_minio, gymapps_pgdata
+
+### Community 86 - "web"
+Cohesion: 0.22
+Nodes (9): context, dockerfile, web, build, depends_on, env_file, ports, profiles (+1 more)
 
 ### Community 88 - "14. Roadmap"
 Cohesion: 0.40
@@ -501,12 +531,12 @@ Cohesion: 0.11
 Nodes (17): Border Radius, Buttons, Cards, Checkboxes, Chips, Colors, Components, Do's and Don'ts (+9 more)
 
 ### Community 93 - "postgres"
-Cohesion: 0.11
-Nodes (17): POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER, interval, retries, test, timeout, environment (+9 more)
+Cohesion: 0.22
+Nodes (9): POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER, environment, image, ports, restart, volumes (+1 more)
 
 ### Community 94 - "rate-limit-store.ts"
-Cohesion: 0.13
-Nodes (14): consumeRateLimit(), RateLimitPolicy, clockStore(), policy, clockStore(), waitFor(), createDbRateLimitStore(), createMemoryRateLimitStore() (+6 more)
+Cohesion: 0.14
+Nodes (14): runtime, consumeRateLimit(), RateLimitPolicy, clockStore(), policy, clockStore(), createDbRateLimitStore(), createMemoryRateLimitStore() (+6 more)
 
 ### Community 95 - "workout-logger.tsx"
 Cohesion: 0.23
@@ -520,33 +550,57 @@ Nodes (3): extends, include, ../../tsconfig.base.json
 Cohesion: 0.50
 Nodes (3): extends, include, ../../tsconfig.base.json
 
-### Community 101 - "SettingsPanel"
-Cohesion: 0.17
-Nodes (8): dynamic, SettingsPage(), LoginPage(), LoginForm(), SettingsPanel(), applyTheme(), savePreferences(), useRouter
+### Community 101 - "minio"
+Cohesion: 0.22
+Nodes (9): MINIO_ROOT_PASSWORD, MINIO_ROOT_USER, command, environment, image, ports, restart, volumes (+1 more)
+
+### Community 103 - "Deploy (container)"
+Cohesion: 0.25
+Nodes (7): Build, Deploy (container), Env wajib di staging, Lokal dengan container, Migrasi, Rollback, Smoke test
+
+### Community 104 - "environment"
+Cohesion: 0.25
+Nodes (8): APP_BASE_URL, DATABASE_URL, S3_ACCESS_KEY_ID, S3_BUCKET, S3_ENDPOINT, S3_REGION, S3_SECRET_ACCESS_KEY, environment
+
+### Community 105 - "profile/route.ts"
+Cohesion: 0.48
+Nodes (6): GET, PATCH, profileWithUser(), runtime, serializeProfile(), profileSchema
 
 ### Community 106 - "parseJson"
-Cohesion: 0.14
-Nodes (25): POST, runtime, STEPS, POST, runtime, POST, runtime, DELETE (+17 more)
+Cohesion: 0.23
+Nodes (17): POST, runtime, DELETE, PATCH, runtime, POST, runtime, POST (+9 more)
 
 ### Community 107 - "phase8-backup.mjs"
 Cohesion: 0.25
 Nodes (7): compose, counts(), docker(), main(), prisma, root, createPrisma()
 
-### Community 108 - "6. Coach Chat"
-Cohesion: 0.33
-Nodes (6): 6.1 System Prompt — `coach_chat` (v1), 6.2 Tools Coach, 6.3 Format Respons Coach, 6.4 Streaming, 6.5 Deteksi Bahasa, 6. Coach Chat
+### Community 108 - "one-rm/route.ts"
+Cohesion: 0.40
+Nodes (5): GET, runtime, analyticsOneRm(), rangeStart(), analyticsOneRmSchema
 
 ### Community 109 - "WorkoutLogger"
-Cohesion: 0.20
-Nodes (3): dynamic, WorkoutPage(), WorkoutLogger()
+Cohesion: 0.18
+Nodes (4): dynamic, WorkoutPage(), WorkoutLogger(), UnitSystem
+
+### Community 110 - "volume/route.ts"
+Cohesion: 0.40
+Nodes (5): GET, runtime, analyticsVolume(), analyticsVolumeSchema, Index review query panas
+
+### Community 111 - "AiProgramGenerator"
+Cohesion: 0.47
+Nodes (6): AiProgramGenerator(), changeSplit(), poll(), submit(), dayRange(), sleep()
+
+### Community 112 - "healthcheck"
+Cohesion: 0.53
+Nodes (6): interval, retries, test, timeout, healthcheck, healthcheck
 
 ### Community 113 - "fallback-generator.ts"
-Cohesion: 0.13
-Nodes (19): BALANCE_MUSCLES, balanceWeek(), broPlans(), DayPlan, estimatedSeconds(), estimateSecond(), ExerciseMetaMap, FULL_BODY_MUSCLES (+11 more)
+Cohesion: 0.11
+Nodes (19): GOALS, Job, Props, SPLITS, BALANCE_MUSCLES, balanceWeek(), broPlans(), DayPlan (+11 more)
 
 ### Community 115 - "next-intl"
 Cohesion: 0.14
-Nodes (15): ForgotPasswordPage(), RegisterPage(), ResetPasswordPage(), VerifyEmailPage(), PrivacyPage(), TermsPage(), ForgotPasswordForm(), RegisterForm() (+7 more)
+Nodes (12): nextConfig, withNextIntl, ResetPasswordPage(), VerifyEmailPage(), PrivacyPage(), TermsPage(), ResetPasswordForm(), VerifyEmailPanel() (+4 more)
 
 ### Community 117 - "4. Competitive Landscape & Positioning"
 Cohesion: 0.50
@@ -556,25 +610,37 @@ Nodes (4): 4.1 Perbandingan Fitur, 4.2 Positioning Statement, 4.3 Prinsip Produk
 Cohesion: 0.50
 Nodes (4): 7.1 ERD, 7.2 Entitas Utama, 7.3 Aturan Integritas Data, 7. Model Data
 
+### Community 121 - "checkQuota"
+Cohesion: 0.40
+Nodes (4): checkQuota(), QuotaLimits, QuotaRemaining, QuotaResult
+
+### Community 122 - "12. Analytics, Funnel & KPIs"
+Cohesion: 0.50
+Nodes (4): 12.1 Daftar Event (PostHog), 12.2 Funnel Aktivasi, 12.3 Metrik AI, 12. Analytics, Funnel & KPIs
+
+### Community 123 - "13. Monetisasi (Rencana, Implementasi v1.2)"
+Cohesion: 0.50
+Nodes (4): 13.1 Model, 13.2 Alur Monetisasi Mendatang, 13.3 Yang Diprioritaskan Saat Monetisasi, 13. Monetisasi (Rencana, Implementasi v1.2)
+
 ## Knowledge Gaps
 - **8 isolated node(s):** `ADR-0004`, `ADR-0004`, `../../tsconfig.base.json`, `../../tsconfig.base.json`, `ADR-0002` (+3 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 814 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 843 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `next` connect `handler.ts` to `web/package.json`, `prisma`, `orchestrator.ts`, `app-sidebar.tsx`, `session.ts`, `ApiError`, `exports.ts`, `analytics.ts`, `register/route.ts`, `serializers.ts`, `onboarding/page.tsx`, `jobs.ts`, `onboarding-wizard.tsx`, `login/route.ts`, `phase3-validation.ts`, `programs-list.tsx`, `workout-logger.tsx`, `v1/exercises/route.ts`, `threads/route.ts`, `clientIp`, `getSession`, `dashboard-overview.tsx`, `[locale]/layout.tsx`, `exercise-library.tsx`, `workouts-list.tsx`, `next.config.ts`, `workout-logger.tsx`, `SettingsPanel`, `parseJson`, `next-intl`?**
-  _High betweenness centrality (0.148) - this node is a cross-community bridge._
+- **Why does `next` connect `handler.ts` to `prisma`, `client.ts`, `web/package.json`, `prisma`, `orchestrator.ts`, `app-sidebar.tsx`, `session.ts`, `newId`, `exports.ts`, `api/analytics.ts`, `register/route.ts`, `serializers.ts`, `jobs.ts`, `onboarding-wizard.tsx`, `login/route.ts`, `phase3-validation.ts`, `programs-list.tsx`, `workout-logger.tsx`, `admin/exercises/route.ts`, `[workoutId]/route.ts`, `threads/route.ts`, `clientIp`, `body-metrics/route.ts`, `getSession`, `dashboard-overview.tsx`, `[locale]/layout.tsx`, `exercise-library.tsx`, `workouts-list.tsx`, `phase4-validation.ts`, `adherence/route.ts`, `rate-limit-store.ts`, `workout-logger.tsx`, `profile/route.ts`, `parseJson`, `one-rm/route.ts`, `volume/route.ts`, `fallback-generator.ts`, `next-intl`, `register-form.tsx`?**
+  _High betweenness centrality (0.141) - this node is a cross-community bridge._
 - **What connects `ADR-0004`, `ADR-0004`, `../../tsconfig.base.json` to the rest of the system?**
   _8 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `handler.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.0649895178197065 - nodes in this community are weakly interconnected._
-- **Why does `Product Requirements Document — GymApps v1.0 (Beta)` connect `Product Requirements Document — GymApps v1.0 (Beta)` to `5. Epics, User Stories & Prioritas`, `10. Non-Functional Requirements`, `2. Goals, Non-Goals, dan Success Metrics`, `8. Spesifikasi API`, `9. Spesifikasi AI`, `3.1 Persona`, `6. Arsitektur Teknis`, `estimateOneRm`, `4. Competitive Landscape & Positioning`, `plan.md`, `14. Roadmap`, `1. Ringkasan Eksekutif / Executive Summary`, `7. Model Data`, `Lampiran B — Deskripsi Wireframe (Low-fidelity)`?**
-  _High betweenness centrality (0.096) - this node is a cross-community bridge._
-- **Should `client.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.07510204081632653 - nodes in this community are weakly interconnected._
-- **Should `web/package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.0549645390070922 - nodes in this community are weakly interconnected._
 - **Should `prisma` be split into smaller, more focused modules?**
-  _Cohesion score 0.07965860597439545 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11857707509881422 - nodes in this community are weakly interconnected._
+- **Why does `Product Requirements Document — GymApps v1.0 (Beta)` connect `Product Requirements Document — GymApps v1.0 (Beta)` to `5. Epics, User Stories & Prioritas`, `10. Non-Functional Requirements`, `9. Spesifikasi AI`, `8. Spesifikasi API`, `3.1 Persona`, `6. Arsitektur Teknis`, `Lampiran B — Deskripsi Wireframe (Low-fidelity)`, `4. Competitive Landscape & Positioning`, `7. Model Data`, `plan.md`, `14. Roadmap`, `1. Ringkasan Eksekutif / Executive Summary`, `12. Analytics, Funnel & KPIs`, `13. Monetisasi (Rencana, Implementasi v1.2)`?**
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
+- **Should `client.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.07080200501253132 - nodes in this community are weakly interconnected._
+- **Why does `valid()` connect `estimateOneRm` to `12. Analytics, Funnel & KPIs`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **Should `web/package.json` be split into smaller, more focused modules?**
+  _Cohesion score 0.053877551020408164 - nodes in this community are weakly interconnected._
