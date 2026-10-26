@@ -11,6 +11,7 @@ import {
   type Program,
   type ValidationIssue
 } from "@gymapps/domain";
+import { track } from "@/lib/analytics";
 import { ApiError, ValidationError } from "@/lib/api/errors";
 import {
   generateShapeError,
@@ -490,6 +491,17 @@ export async function runProgramGeneration(jobId: string) {
           }
         } as Prisma.InputJsonValue
       }
+    });
+    track("ai_generation_finished", row.userId, {
+      status,
+      model,
+      cost_usd: costUsd,
+      latency_ms: latencyMs,
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      fallback_used: fallbackUsed,
+      repair_attempts: repairAttempts,
+      error_code: errorCode
     });
   } catch (error) {
     log("error", "ai_program_generation_failed", { job_id: jobId, error });

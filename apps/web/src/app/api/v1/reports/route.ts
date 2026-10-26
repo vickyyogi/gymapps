@@ -4,6 +4,7 @@ import { withAuthApi, parseJson, clientIp } from "@/lib/api/handler";
 import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { reportCreateSchema } from "@/lib/api/phase6-validation";
 import { createReportJob } from "@/lib/ai/reports";
+import { track } from "@/lib/analytics";
 import { writeAudit } from "@/lib/audit";
 import { enqueue } from "@/lib/jobs";
 
@@ -26,6 +27,7 @@ export const POST = withAuthApi(async ({ request, session }) => {
     after: { type: "pdf_report", month: input.month },
     ipAddress: clientIp(request)
   });
+  track("report_requested", session.user.id, { month: input.month });
   await enqueue("report", job.id);
   return NextResponse.json(
     { data: { report_id: job.id, status: job.status } },

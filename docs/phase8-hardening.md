@@ -83,7 +83,7 @@ Audit tersimpan di `audit_logs` dengan `actor_id`, `before`, `after`, `ip_addres
 3. **Rate limit** — memakai tabel Postgres `rate_limits` (upsert atomik, konsisten antar instance); fallback in-memory bila DB tidak tersedia. Redis tidak lagi dipakai, service `redis` di `docker-compose.yml` dihapus.
 4. **Object storage (S3/blob)** — selesai: `src/lib/storage.ts` (driver S3 via `@aws-sdk/client-s3` bila `S3_BUCKET` diset, fallback disk `EXPORT_DIR` untuk dev). Butuh bucket + kredensial saat deploy.
 5. **Email provider** — verifikasi email dan reset password butuh Resend/SMTP.
-6. **PostHog / event produk** — `NFR-OBS-03` belum diimplementasikan.
+6. **PostHog / event produk** — selesai: `src/lib/analytics.ts` mengirim event server-side (`POSTHOG_API_KEY` kosong = no-op). Butuh project PostHog + dashboard saat staging.
 
 ## Blocking sebelum gate Fase 8 penuh
 

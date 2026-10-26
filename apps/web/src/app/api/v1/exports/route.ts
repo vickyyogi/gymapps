@@ -5,6 +5,7 @@ import { withAuthApi, parseJson, clientIp } from "@/lib/api/handler";
 import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { exportCreateSchema } from "@/lib/api/phase6-validation";
 import { createExportJob, exportStatus } from "@/lib/ai/exports";
+import { track } from "@/lib/analytics";
 import { writeAudit } from "@/lib/audit";
 import { enqueue } from "@/lib/jobs";
 
@@ -38,6 +39,7 @@ export const POST = withAuthApi(async ({ request, session }) => {
     after: { format: input.format, entities: job.entities },
     ipAddress: clientIp(request)
   });
+  track("export_requested", session.user.id, { type: job.type, entities: job.entities.length });
   await enqueue("export", job.id);
   return NextResponse.json(
     { data: { export_id: job.id, status: job.status } },

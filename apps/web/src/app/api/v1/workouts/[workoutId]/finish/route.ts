@@ -8,6 +8,7 @@ import {
   workoutDetailInclude
 } from "@/lib/api/serializers";
 import { evaluateRecommendationsForUser } from "@/lib/ai/recommendations";
+import { track } from "@/lib/analytics";
 import { writeAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
@@ -72,6 +73,12 @@ export const POST = withAuthApi(async ({ request, params, session }) => {
     : [];
 
   if (wasActive) {
+    track("workout_completed", session.user.id, {
+      total_sets: detail.totalSets,
+      total_volume_kg: Number(detail.totalVolumeKg),
+      duration_seconds: detail.durationSeconds,
+      prs_created: prsCreated
+    });
     await writeAudit({
       userId: session.user.id,
       action: "workout.finished",

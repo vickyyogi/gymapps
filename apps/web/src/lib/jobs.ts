@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@gymapps/db";
+import { captureError, track } from "@/lib/analytics";
 import { runExport } from "@/lib/ai/exports";
 import { runProgramGeneration } from "@/lib/ai/orchestrator";
 import { runReport } from "@/lib/ai/reports";
@@ -106,6 +107,8 @@ async function run(job: Claimed) {
         lockedAt: null
       }
     });
+    captureError(error, { kind: job.kind, attempts: job.attempts, source: "jobs" });
+    track("job_failed", null, { kind: job.kind, attempts: job.attempts, retry });
     log("error", "job_failed", {
       job_id: job.id,
       kind: job.kind,

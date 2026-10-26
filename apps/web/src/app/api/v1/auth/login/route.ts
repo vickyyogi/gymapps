@@ -10,6 +10,7 @@ import {
   loginRateLimitKey,
   recordLoginFailure
 } from "@/lib/auth/rate-limit";
+import { track } from "@/lib/analytics";
 import { createSession, attachSessionCookie, getEntitlement, toCurrentUser } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
@@ -57,6 +58,8 @@ export const POST = withApi(async ({ request }) => {
     ip,
     userAgent: request.headers.get("user-agent") ?? undefined
   });
+
+  track("app_opened", user.id, { via: "login" });
 
   const response = NextResponse.json({
     data: {

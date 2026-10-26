@@ -116,6 +116,11 @@ npm run test:phase6   # self-contained: mock chat SSE + Next dev
 npm run test:phase7   # export, 410/403, PDF, admin publish, PWA
 ```
 
+### Observability
+
+- Log structured JSON ke stdout (`src/lib/log.ts`): `request_id`, `user_id`, `path`, `status`, `duration_ms`.
+- Event produk + error tracking lewat PostHog server-side (`src/lib/analytics.ts`); kosongkan `POSTHOG_API_KEY` untuk mematikan. Daftar event, dashboard, dan alert: `docs/observability.md`.
+
 ### Phase 8 (hardening)
 
 ```bash

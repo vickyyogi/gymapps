@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { z, ZodTypeAny } from "zod";
 import type { ActiveSession } from "@/lib/auth/session";
 import { attachSessionCookie, requireSession } from "@/lib/auth/session";
+import { captureError, track } from "@/lib/analytics";
 import { ApiError, ValidationError } from "@/lib/api/errors";
 import { log } from "@/lib/log";
 
@@ -42,6 +43,7 @@ function failure(error: unknown, requestId: string) {
   }
 
   log("error", "unhandled_api_error", { request_id: requestId, error });
+  captureError(error, { request_id: requestId, source: "api" });
   return NextResponse.json(
     {
       error: {
@@ -61,9 +63,10 @@ export function withApi(
   return async function route(request: NextRequest, routeContext: NextRouteContext) {
     const startedAt = Date.now();
     const requestId = requestIdFor(request);
+    let session: ActiveSession | null = null;
 
     try {
-      const session = options.auth ? await requireSession() : null;
+      session = options.auth ? await requireSession() : null;
       const params = (await routeContext.params) ?? {};
       const response = await handler({ request, requestId, session, params });
 
@@ -83,6 +86,12 @@ export function withApi(
     } catch (error) {
       const response = failure(error, requestId);
       response.headers.set("x-request-id", requestId);
+      if (error instanceof ApiError && error.status === 429) {
+        track("quota_exceeded", session?.user.id ?? null, {
+          code: error.code,
+          path: request.nextUrl.pathname
+        });
+      }
       log("warn", "request_failed", {
         request_id: requestId,
         method: request.method,

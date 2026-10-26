@@ -9,6 +9,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { createSession, attachSessionCookie, toCurrentUser } from "@/lib/auth/session";
 import { issueToken } from "@/lib/auth/verification";
 import { appUrl, emailEnabled, renderEmail, sendEmail } from "@/lib/email";
+import { track } from "@/lib/analytics";
 import { log } from "@/lib/log";
 import { newId } from "@/lib/id";
 
@@ -88,6 +89,8 @@ export const POST = withApi(async ({ request }) => {
     ip: clientIp(request),
     userAgent: request.headers.get("user-agent") ?? undefined
   });
+
+  track("user_registered", user.id, { locale: user.locale });
 
   const response = NextResponse.json(
     {
