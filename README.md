@@ -116,6 +116,12 @@ npm run test:phase6   # self-contained: mock chat SSE + Next dev
 npm run test:phase7   # export, 410/403, PDF, admin publish, PWA
 ```
 
+### Deploy
+
+- Image container: `docker build -f apps/web/Dockerfile .` (Next standalone + Chromium untuk PDF). `next.config.ts` memakai `output: "standalone"`.
+- Compose lokal: `docker compose -f infra/docker-compose.yml up -d postgres minio` lalu `docker compose -f infra/docker-compose.yml --profile app up -d --build web`.
+- Runbook staging (env, migrasi, smoke test, rollback): `docs/deploy.md`.
+
 ### Observability
 
 - Log structured JSON ke stdout (`src/lib/log.ts`): `request_id`, `user_id`, `path`, `status`, `duration_ms`.

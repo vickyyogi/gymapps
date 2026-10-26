@@ -16,5 +16,59 @@ services:
       timeout: 3s
       retries: 10
 
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: gymapps
+      MINIO_ROOT_PASSWORD: gymapps123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - gymapps_minio:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "mc alias set local http://minio:9000 gymapps gymapps123 &&
+      mc mb --ignore-existing local/gymapps-exports"
+
+  # Full stack from the container image; needs a filled apps/web/.env.local.
+  web:
+    profiles: ["app"]
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../apps/web/.env.local
+    environment:
+      DATABASE_URL: postgresql://gymapps:gymapps@postgres:5432/gymapps?schema=public
+      APP_BASE_URL: http://localhost:3000
+      S3_BUCKET: gymapps-exports
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: auto
+      S3_ACCESS_KEY_ID: gymapps
+      S3_SECRET_ACCESS_KEY: gymapps123
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    depends_on:
+      - postgres
+      - minio
+
 volumes:
   gymapps_pgdata:
+  gymapps_minio:
