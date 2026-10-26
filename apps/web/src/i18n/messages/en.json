@@ -50,7 +50,8 @@
       "submit": "Log in",
       "submitting": "Working…",
       "noAccount": "No account yet?",
-      "register": "Sign up"
+      "register": "Sign up",
+      "forgot": "Forgot password?"
     },
     "register": {
       "title": "Create account",
@@ -65,6 +66,36 @@
       "privacyLink": "Privacy Policy",
       "termsRequired": "You must be at least 16 years old and agree to the Terms of Service and Privacy Policy.",
       "login": "Log in"
+    },
+    "forgot": {
+      "title": "Reset password",
+      "description": "Enter your email and we will send a reset link.",
+      "submit": "Send reset link",
+      "submitting": "Working…",
+      "sent": "If that email is registered, a reset link is on its way. Check your inbox.",
+      "backToLogin": "Back to login"
+    },
+    "reset": {
+      "title": "Set a new password",
+      "description": "The link is valid for 60 minutes and can only be used once.",
+      "newPassword": "New password",
+      "submit": "Save password",
+      "submitting": "Working…",
+      "success": "Password updated. Log in with your new password.",
+      "backToLogin": "Back to login"
+    },
+    "verify": {
+      "title": "Email verification",
+      "verifying": "Verifying…",
+      "success": "Your email is verified.",
+      "continue": "Continue",
+      "backToLogin": "Back to login",
+      "checkTitle": "Check your email",
+      "checkDescription": "We sent a verification link to:",
+      "resend": "Resend link",
+      "resending": "Working…",
+      "resent": "A new verification link is on its way.",
+      "recheck": "I have verified — reload"
     }
   },
   "onboarding": {
@@ -496,7 +527,11 @@
     "EXPORT_EXPIRED": "Export link expired. Create a new export.",
     "EXPORT_NOT_READY": "Export is still processing.",
     "EXERCISE_IN_USE": "This custom exercise is already used in a program or workout and cannot be deleted.",
-    "EXERCISE_EXISTS": "An exercise with that name already exists."
+    "EXERCISE_EXISTS": "An exercise with that name already exists.",
+    "INVALID_TOKEN": "The link is invalid or has expired.",
+    "EMAIL_UNAVAILABLE": "Email delivery is not configured.",
+    "EMAIL_SEND_FAILED": "Failed to send the email. Try again later.",
+    "EMAIL_NOT_VERIFIED": "Verify your email first."
   },
   "coach": {
     "newThread": "New chat",

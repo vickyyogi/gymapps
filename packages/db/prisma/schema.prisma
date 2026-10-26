@@ -687,3 +687,14 @@ model RateLimit {
   @@index([resetAt], map: "idx_rate_limits_reset")
   @@map("rate_limits")
 }
+
+model VerificationToken {
+  identifier String    @map("identifier")
+  tokenHash  String    @id @map("token_hash")
+  purpose    String
+  expires    DateTime  @db.Timestamptz(3)
+  usedAt     DateTime? @map("used_at") @db.Timestamptz(3)
+
+  @@index([identifier, purpose], map: "idx_verification_tokens_identifier")
+  @@map("verification_tokens")
+}

@@ -207,6 +207,8 @@ paths:
                 email: { type: string, format: email }
       responses:
         '202': { description: Selalu 202 (respons generik demi keamanan) }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { description: Fitur email tidak dikonfigurasi }
 
   /auth/password/reset:
     post:
@@ -226,6 +228,37 @@ paths:
       responses:
         '204': { description: Berhasil }
         '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/verify/request:
+    post:
+      tags: [Auth]
+      summary: Kirim (ulang) email verifikasi untuk user saat ini
+      responses:
+        '202': { description: Email verifikasi dikirim }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '502': { description: Gagal mengirim email }
+        '503': { description: Fitur email tidak dikonfigurasi }
+
+  /auth/verify:
+    post:
+      tags: [Auth]
+      summary: Verifikasi email dengan token dari link email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '204': { description: Berhasil }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   /auth/password/change:
     post:
@@ -2038,6 +2071,7 @@ components:
         timezone: { type: string }
         theme: { type: string, enum: [light, dark, system] }
         email_opt_in: { type: boolean }
+        email_verified: { type: boolean }
         onboarding_completed: { type: boolean }
         entitlement:
           type: object

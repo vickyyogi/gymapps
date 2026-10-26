@@ -115,6 +115,7 @@ export function toCurrentUser(user: User, entitlement: Entitlement | null): Curr
     unit_system: user.unitSystem as CurrentUser["unit_system"],
     timezone: user.timezone,
     theme: user.theme as CurrentUser["theme"],
+    email_verified: Boolean(user.emailVerifiedAt),
     onboarding_completed: Boolean(user.onboardingCompletedAt),
     entitlement: {
       plan: (entitlement?.plan ?? "free") as "free" | "pro",

@@ -83,6 +83,7 @@ Gate E2E memeriksa bodyweight-only + cedera lutut, konteks tanpa PII, biaya toke
 - Session cookie is refreshed on page navigation by `middleware.ts`, not only by API calls.
 - Rate limits (login + write/heavy endpoints) are stored in Postgres (`rate_limits` table, atomic upsert); when the DB is unreachable they fall back to per-instance memory. Limits live in `packages/shared` (`LOGIN_RATE_LIMIT`, `API_RATE_LIMITS`). Login uses a fixed window of 15 minutes.
 - `TRUST_PROXY_HEADERS` defaults to `false`, so spoofed `X-Forwarded-For` cannot change the rate-limit key. Set it to `true` only behind a reverse proxy that overwrites the header.
+- Email verification + password reset send through a Resend-compatible REST API (`EMAIL_API_KEY`, `EMAIL_FROM`, optional `EMAIL_PROVIDER_BASE_URL`, `APP_BASE_URL`). Without `EMAIL_API_KEY` the feature is off: registration is auto-verified and the onboarding verification gate is skipped. Reset links are single-use and expire in 60 minutes (`FR-01-10`); verification links in 24 hours.
 - Phase 2 domain modules live in `packages/domain` (no React, Next.js, Prisma, or DB).
 - Phase 3 exercise search uses `ILIKE`; migrate to Postgres full-text when the catalog grows. Phase 4 implements `available_only` from the equipment profile.
 - Resume an in-progress workout through `GET /workouts/active`; there is no separate resume mutation.

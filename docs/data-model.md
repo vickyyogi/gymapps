@@ -530,14 +530,18 @@ erDiagram
 **Index:** `unique(session_token_hash)`, `idx_sessions_user(user_id, expires_at DESC)`
 **Catatan:** token mentah hanya ada di cookie `gymapps_session` (`httpOnly; Secure; SameSite=Lax; Max-Age=2592000`). Saat app dibuka, client memanggil `GET /auth/me`; session valid → user langsung dianggap login.
 
-### 6.2 `verification_tokens` (reset password)
+### 6.2 `verification_tokens` (verifikasi email + reset password)
 
 | Kolom | Tipe | Constraint | Keterangan |
 |---|---|---|---|
 | `identifier` | TEXT | NOT NULL | Email user |
-| `token_hash` | TEXT | UNIQUE, NOT NULL | SHA-256 token dari link email |
-| `expires` | TIMESTAMPTZ | NOT NULL | 60 menit |
+| `token_hash` | TEXT | PK (UNIQUE) | SHA-256 token dari link email |
+| `purpose` | TEXT | NOT NULL | `verify_email` \| `reset_password` |
+| `expires` | TIMESTAMPTZ | NOT NULL | Reset 60 menit (`FR-01-10`); verifikasi 24 jam |
 | `used_at` | TIMESTAMPTZ | NULL | Single-use |
+
+**Index:** `idx_verification_tokens_identifier(identifier, purpose)`
+**Catatan:** token lama untuk purpose sama ditandai `used_at` saat token baru diterbitkan. Reset password sukses merevoke semua session (`FR-01-10`).
 
 ### 6.3 `refresh_tokens` (untuk mobile)
 

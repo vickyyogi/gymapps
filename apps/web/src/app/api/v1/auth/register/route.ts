@@ -7,6 +7,9 @@ import { ApiError } from "@/lib/api/errors";
 import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { hashPassword } from "@/lib/auth/password";
 import { createSession, attachSessionCookie, toCurrentUser } from "@/lib/auth/session";
+import { issueToken } from "@/lib/auth/verification";
+import { appUrl, emailEnabled, renderEmail, sendEmail } from "@/lib/email";
+import { log } from "@/lib/log";
 import { newId } from "@/lib/id";
 
 export const runtime = "nodejs";
@@ -25,6 +28,8 @@ export const POST = withApi(async ({ request }) => {
 
   const passwordHash = await hashPassword(input.password);
   const now = new Date();
+  // Tanpa provider email tidak ada yang bisa diverifikasi; jangan kunci user di dev.
+  const emailVerifiedAt = emailEnabled() ? null : now;
 
   let user;
   try {
@@ -35,6 +40,7 @@ export const POST = withApi(async ({ request }) => {
         passwordHash,
         displayName: input.display_name ?? input.email.split("@")[0] ?? null,
         locale: input.locale,
+        emailVerifiedAt,
         lastLoginAt: now,
         entitlements: {
           create: {
@@ -63,6 +69,21 @@ export const POST = withApi(async ({ request }) => {
   }
 
   const entitlement = user.entitlements[0] ?? null;
+
+  if (emailEnabled()) {
+    try {
+      const raw = await issueToken(user.email, "verify_email");
+      const link = appUrl(`/${user.locale}/verify-email?token=${raw}`);
+      await sendEmail({
+        to: user.email,
+        ...renderEmail("verify_email", user.locale, link)
+      });
+    } catch (error) {
+      // Registrasi tetap sukses; user bisa kirim ulang lewat /auth/verify/request.
+      log("warn", "verify_email_send_failed", { user_id: user.id, error });
+    }
+  }
+
   const { session, rawToken } = await createSession(user.id, {
     ip: clientIp(request),
     userAgent: request.headers.get("user-agent") ?? undefined

@@ -7,6 +7,12 @@ type RegisterRequest =
 type LoginRequest = paths["/auth/login"]["post"]["requestBody"]["content"]["application/json"];
 type ChangePasswordRequest =
   paths["/auth/password/change"]["post"]["requestBody"]["content"]["application/json"];
+type ForgotPasswordRequest =
+  paths["/auth/password/forgot"]["post"]["requestBody"]["content"]["application/json"];
+type ResetPasswordRequest =
+  paths["/auth/password/reset"]["post"]["requestBody"]["content"]["application/json"];
+type VerifyEmailRequest =
+  paths["/auth/verify"]["post"]["requestBody"]["content"]["application/json"];
 type DeleteAccountRequest =
   paths["/account"]["delete"]["requestBody"]["content"]["application/json"];
 
@@ -61,7 +67,23 @@ export const deleteAccountSchema = z.object({
   confirm: z.literal("DELETE")
 }) satisfies z.ZodType<DeleteAccountRequest, unknown>;
 
+export const forgotPasswordSchema = z.object({
+  email
+}) satisfies z.ZodType<ForgotPasswordRequest, unknown>;
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1).max(256),
+  password: newPassword
+}) satisfies z.ZodType<ResetPasswordRequest, unknown>;
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1).max(256)
+}) satisfies z.ZodType<VerifyEmailRequest, unknown>;
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;

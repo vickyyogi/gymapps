@@ -56,7 +56,7 @@ Perbaikan kode: `analyticsVolume` sekarang memfilter `created_at >= from` sehing
 | Audit log perubahan data | ✅ | profile, program, workout, admin exercise, ganti password, export/report, dan hapus akun (tanpa PII) |
 | Hapus akun soft→hard delete | ✅ | `DELETE /api/v1/account` (soft delete `pending_delete` + cabut sesi) + `purgeExpiredAccounts()` (hard delete > 30 hari & hapus `.exports`) + UI 2 langkah di `/settings` |
 | Age gate + ToS & Kebijakan Privasi | ✅ | `NFR-PRIV-06` & `NFR-PRIV-10`: halaman `/privacy` & `/terms` dwibahasa, checkbox wajib saat registrasi, validasi usia minimal 16 tahun |
-| Verifikasi email + reset password | ❌ | `FR-01-08`, `US-01.5` (Tahap B — butuh integrasi email provider/token) |
+| Verifikasi email + reset password | ✅ | `POST /auth/verify` + `/auth/verify/request` (token 24 jam), `POST /auth/password/forgot` + `/reset` (token 60 menit single-use, revoke semua session). Provider email Resend-compatible via `EMAIL_API_KEY`; tanpa key fitur nonaktif dan register langsung terverifikasi |
 | Retensi log 30 hari | ❌ | log stdout saja, belum ada rotasi/retensi |
 | Notifikasi email/push | ⚠️ v1.1 | `FR-13-09` (preferensi `email_opt_in` sudah tersedia di `/settings`) |
 

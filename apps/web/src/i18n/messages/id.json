@@ -50,7 +50,8 @@
       "submit": "Masuk",
       "submitting": "Memproses…",
       "noAccount": "Belum punya akun?",
-      "register": "Daftar"
+      "register": "Daftar",
+      "forgot": "Lupa password?"
     },
     "register": {
       "title": "Buat akun",
@@ -65,6 +66,36 @@
       "privacyLink": "Kebijakan Privasi",
       "termsRequired": "Anda harus berusia minimal 16 tahun dan menyetujui Syarat & Ketentuan serta Kebijakan Privasi.",
       "login": "Masuk"
+    },
+    "forgot": {
+      "title": "Reset password",
+      "description": "Masukkan email kamu, kami kirimkan link reset.",
+      "submit": "Kirim link reset",
+      "submitting": "Memproses…",
+      "sent": "Jika email itu terdaftar, link reset sedang dikirim. Cek inbox kamu.",
+      "backToLogin": "Kembali ke login"
+    },
+    "reset": {
+      "title": "Atur password baru",
+      "description": "Link berlaku 60 menit dan hanya bisa dipakai sekali.",
+      "newPassword": "Password baru",
+      "submit": "Simpan password",
+      "submitting": "Memproses…",
+      "success": "Password diperbarui. Login dengan password baru kamu.",
+      "backToLogin": "Kembali ke login"
+    },
+    "verify": {
+      "title": "Verifikasi email",
+      "verifying": "Memverifikasi…",
+      "success": "Email kamu sudah terverifikasi.",
+      "continue": "Lanjutkan",
+      "backToLogin": "Kembali ke login",
+      "checkTitle": "Cek email kamu",
+      "checkDescription": "Kami kirimkan link verifikasi ke:",
+      "resend": "Kirim ulang link",
+      "resending": "Memproses…",
+      "resent": "Link verifikasi baru sedang dikirim.",
+      "recheck": "Sudah verifikasi — muat ulang"
     }
   },
   "onboarding": {
@@ -496,7 +527,11 @@
     "EXPORT_EXPIRED": "Link export sudah kedaluwarsa. Buat export baru.",
     "EXPORT_NOT_READY": "Export belum selesai diproses.",
     "EXERCISE_IN_USE": "Latihan kustom ini sudah digunakan di program atau sesi latihan dan tidak dapat dihapus.",
-    "EXERCISE_EXISTS": "Latihan dengan nama tersebut sudah ada."
+    "EXERCISE_EXISTS": "Latihan dengan nama tersebut sudah ada.",
+    "INVALID_TOKEN": "Link tidak valid atau sudah kedaluwarsa.",
+    "EMAIL_UNAVAILABLE": "Pengiriman email belum dikonfigurasi.",
+    "EMAIL_SEND_FAILED": "Gagal mengirim email. Coba lagi nanti.",
+    "EMAIL_NOT_VERIFIED": "Verifikasi email kamu dulu."
   },
   "coach": {
     "newThread": "Obrolan baru",
