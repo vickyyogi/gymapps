@@ -16,26 +16,19 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: minio/minio
+  # S3-compatible lokal untuk uji jalur object storage (image MinIO tidak lagi
+  # dipublikasikan di Docker Hub/quay, jadi pakai s3mock).
+  s3mock:
+    image: adobe/s3mock
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: gymapps
-      MINIO_ROOT_PASSWORD: gymapps123
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: gymapps-exports
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /s3mockroot
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9090:9090"
     volumes:
-      - gymapps_minio:/data
-
-  minio-init:
-    image: minio/mc
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "mc alias set local http://minio:9000 gymapps gymapps123 &&
-      mc mb --ignore-existing local/gymapps-exports"
+      - gymapps_s3:/s3mockroot
 
   # Full stack from the container image; needs a filled apps/web/.env.local.
   web:
@@ -50,10 +43,10 @@ services:
       DATABASE_URL: postgresql://gymapps:gymapps@postgres:5432/gymapps?schema=public
       APP_BASE_URL: http://localhost:3000
       S3_BUCKET: gymapps-exports
-      S3_ENDPOINT: http://minio:9000
+      S3_ENDPOINT: http://s3mock:9090
       S3_REGION: auto
-      S3_ACCESS_KEY_ID: gymapps
-      S3_SECRET_ACCESS_KEY: gymapps123
+      S3_ACCESS_KEY_ID: test
+      S3_SECRET_ACCESS_KEY: test
     ports:
       - "3000:3000"
     healthcheck:
@@ -67,8 +60,8 @@ services:
       retries: 6
     depends_on:
       - postgres
-      - minio
+      - s3mock
 
 volumes:
   gymapps_pgdata:
-  gymapps_minio:
+  gymapps_s3:

@@ -14,6 +14,7 @@ WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
+    HOSTNAME=0.0.0.0 \
     CHROME_PATH=/usr/bin/chromium \
     EXPORT_DIR=/data/exports
 
@@ -28,6 +29,7 @@ COPY --chown=node:node --from=build /app/apps/web/.next/standalone ./
 COPY --chown=node:node --from=build /app/apps/web/.next/static ./apps/web/.next/static
 COPY --chown=node:node --from=build /app/apps/web/public ./apps/web/public
 COPY --chown=node:node --from=build /app/packages/db/prisma ./prisma
+COPY --chown=node:node --from=build /app/node_modules/playwright-core ./node_modules/playwright-core
 
 USER node
 EXPOSE 3000
