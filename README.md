@@ -106,7 +106,7 @@ npm run test:phase6   # self-contained: mock chat SSE + Next dev
 
 ### Phase 7 (export, PDF, PWA, admin)
 
-- Export CSV/JSON lewat `after()` job; file lokal di `EXPORT_DIR` (default `<cwd>/.exports`), link HMAC 7 hari, wajib session + ownership. Link kedaluwarsa → 410 `EXPORT_EXPIRED`; akses user lain → 403.
+- Export CSV/JSON lewat `after()` job; file disimpan lewat `src/lib/storage.ts` — disk lokal `EXPORT_DIR` (default `<cwd>/.exports`) atau S3-compatible bila `S3_BUCKET` diset. Link HMAC 7 hari, wajib session + ownership. Link kedaluwarsa → 410 `EXPORT_EXPIRED`; akses user lain → 403.
 - PDF bulanan memakai `playwright-core` + Chrome sistem (`CHROME_PATH`, default `/usr/bin/google-chrome`). Isi: ringkasan, grafik volume mingguan, PR, daftar workout, body metrics.
 - PWA: `manifest.webmanifest`, icon 192/512 + maskable, service worker network-first untuk navigasi dan fallback `/offline.html`.
 - Admin CMS `/{locale}/admin/exercises`: edit instruksi + publish langsung ke DB, tercatat di `audit_logs`; tidak perlu deploy.

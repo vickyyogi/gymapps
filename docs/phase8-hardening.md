@@ -81,7 +81,7 @@ Audit tersimpan di `audit_logs` dengan `actor_id`, `before`, `after`, `ip_addres
 1. **Host staging + registry container** — belum ada target deploy. Tanpa itu `prisma migrate deploy` dan rollback otomatis tidak bisa dijalankan.
 2. **Sentry / APM** — error rate < 0,5% dan rollback otomatis butuh observability eksternal; sekarang hanya structured log.
 3. **Rate limit** — memakai tabel Postgres `rate_limits` (upsert atomik, konsisten antar instance); fallback in-memory bila DB tidak tersedia. Redis tidak lagi dipakai, service `redis` di `docker-compose.yml` dihapus.
-4. **Object storage (S3/blob)** — export/PDF masih di disk lokal `.exports`.
+4. **Object storage (S3/blob)** — selesai: `src/lib/storage.ts` (driver S3 via `@aws-sdk/client-s3` bila `S3_BUCKET` diset, fallback disk `EXPORT_DIR` untuk dev). Butuh bucket + kredensial saat deploy.
 5. **Email provider** — verifikasi email dan reset password butuh Resend/SMTP.
 6. **PostHog / event produk** — `NFR-OBS-03` belum diimplementasikan.
 

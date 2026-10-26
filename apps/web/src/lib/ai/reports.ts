@@ -1,17 +1,12 @@
 import "server-only";
 
 import { existsSync } from "node:fs";
-import { mkdir, stat } from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@gymapps/db";
 import { newId } from "@/lib/id";
 import { log } from "@/lib/log";
+import { putObject } from "@/lib/storage";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-function exportDir() {
-  return process.env.EXPORT_DIR || path.join(process.cwd(), ".exports");
-}
 
 function monthRange(month: string) {
   const [year, value] = month.split("-").map(Number);
@@ -276,8 +271,6 @@ export async function runReport(reportId: string) {
   <p class="muted" style="margin-top:28px">${labels.generated}: ${new Date().toISOString()}</p>
 </body></html>`;
 
-    await mkdir(exportDir(), { recursive: true });
-    const filePath = path.join(exportDir(), `${row.id}.pdf`);
     const { chromium } = await import("playwright-core");
     const executablePath =
       process.env.CHROME_PATH ||
@@ -286,23 +279,24 @@ export async function runReport(reportId: string) {
       ...(executablePath ? { executablePath } : {}),
       args: ["--no-sandbox", "--disable-dev-shm-usage"]
     });
+    let stored: Awaited<ReturnType<typeof putObject>>;
     try {
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: "load" });
-      await page.pdf({ path: filePath, format: "A4", printBackground: true });
+      const pdf = await page.pdf({ format: "A4", printBackground: true });
+      stored = await putObject(`exports/${row.id}.pdf`, Buffer.from(pdf), "application/pdf");
     } finally {
       await browser.close();
     }
 
-    const size = (await stat(filePath)).size;
     const expiresAt = new Date(Date.now() + 7 * DAY_MS);
     await prisma.$transaction([
       prisma.export.update({
         where: { id: row.id },
         data: {
           status: "ready",
-          filePath,
-          fileSizeBytes: size,
+          filePath: stored.ref,
+          fileSizeBytes: stored.size,
           expiresAt,
           errorMessage: null,
           periodStart: start,

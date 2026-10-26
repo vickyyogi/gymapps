@@ -578,7 +578,7 @@ Notifikasi dibuat saat rekomendasi baru, export siap, atau laporan PDF siap. Tid
 
 ### 6.8 `exports`
 
-`id`, `user_id`, `type` (`csv` \| `json` \| `pdf_report`), `status` (`queued` \| `running` \| `ready` \| `failed`), `entities` TEXT[], `period_start`, `period_end`, `file_path` (lokal, tidak diekspos), `file_size_bytes`, `error_message`, `metadata` JSONB, `expires_at` (created_at + 7 hari), `created_at`
+`id`, `user_id`, `type` (`csv` \| `json` \| `pdf_report`), `status` (`queued` \| `running` \| `ready` \| `failed`), `entities` TEXT[], `period_start`, `period_end`, `file_path` (referensi storage opaque, tidak diekspos: key S3 `exports/<id>.<ext>` saat `S3_BUCKET` diset, path absolut untuk driver disk), `file_size_bytes`, `error_message`, `metadata` JSONB, `expires_at` (created_at + 7 hari), `created_at`
 
 ### 6.9 `rate_limits`
 
