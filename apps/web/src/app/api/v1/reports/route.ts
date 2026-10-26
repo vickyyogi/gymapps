@@ -1,10 +1,11 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { API_RATE_LIMITS } from "@gymapps/shared";
 import { withAuthApi, parseJson, clientIp } from "@/lib/api/handler";
 import { enforceRateLimit } from "@/lib/api/rate-limit";
 import { reportCreateSchema } from "@/lib/api/phase6-validation";
-import { createReportJob, runReport } from "@/lib/ai/reports";
+import { createReportJob } from "@/lib/ai/reports";
 import { writeAudit } from "@/lib/audit";
+import { enqueue } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,7 +26,7 @@ export const POST = withAuthApi(async ({ request, session }) => {
     after: { type: "pdf_report", month: input.month },
     ipAddress: clientIp(request)
   });
-  after(() => runReport(job.id));
+  await enqueue("report", job.id);
   return NextResponse.json(
     { data: { report_id: job.id, status: job.status } },
     { status: 202 }

@@ -586,6 +586,14 @@ Notifikasi dibuat saat rekomendasi baru, export siap, atau laporan PDF siap. Tid
 
 **Index:** `idx_rate_limits_reset(reset_at)`
 
+### 6.10 `jobs`
+
+`id` (PK), `kind` (`program_generation` \| `export` \| `report`), `ref_id` (id baris `ai_generations` atau `exports`), `status` (`queued` \| `running` \| `done` \| `failed`), `attempts`, `error`, `run_after` (jadwal retry, backoff 30 detik × attempts), `locked_at` (lease klaim), `created_at` — antrean durable pengganti Next.js `after()`.
+
+Worker in-process (`apps/web/src/lib/jobs.ts`) mem-poll tiap 2 detik, klaim satu job dengan `FOR UPDATE SKIP LOCKED` (aman multi-instance), mengembalikan job `running` yang lease-nya lewat 5 menit (proses crash), dan menandai `failed` setelah 3 percobaan.
+
+**Index:** `jobs_kind_ref_id_key(kind, ref_id)` UNIQUE (enqueue duplikat diabaikan), `idx_jobs_queue(status, run_after)`
+
 ---
 
 ## 7. Enum
