@@ -1,14 +1,14 @@
 {
   "apps/web/next-env.d.ts": {
-    "mtime": 1793024898.5593922,
-    "seen": 1793024901.6650302,
+    "mtime": 1793055338.755098,
+    "seen": 1793055342.1217089,
     "ast_hash": "aa94238a90e7d04b7a47ecc3145ba6a0",
     "semantic_hash": ""
   },
   "apps/web/next.config.ts": {
-    "mtime": 1792940252.430418,
-    "seen": 1793018885.2492516,
-    "ast_hash": "631dcb1818aac6a2ba66941a3a11d980",
+    "mtime": 1793055210.8226562,
+    "seen": 1793055342.121713,
+    "ast_hash": "8176a1b57096f16cc6e0de6a6c8a197b",
     "semantic_hash": ""
   },
   "apps/web/package.json": {
@@ -1170,9 +1170,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793024784.6930127,
-    "seen": 1793024901.67391,
-    "ast_hash": "b5d85ceb891a7a514e136e665a0a81c3",
+    "mtime": 1793055276.4415803,
+    "seen": 1793055342.1314723,
+    "ast_hash": "e2b97657c26ec0f2f74764a0fe4c013d",
     "semantic_hash": ""
   },
   "apps/web/public/offline.html": {
@@ -1236,9 +1236,9 @@
     "semantic_hash": ""
   },
   "docs/phase8-hardening.md": {
-    "mtime": 1793024772.7477992,
-    "seen": 1793024901.6742158,
-    "ast_hash": "08b49c917cdf8539eaa5256683369e87",
+    "mtime": 1793055276.4412904,
+    "seen": 1793055342.1318052,
+    "ast_hash": "cda183d2934a0d33364449f0c5e6fc4d",
     "semantic_hash": ""
   },
   "docs/plan.md": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "infra/docker-compose.yml": {
-    "mtime": 1793018714.7860749,
-    "seen": 1793018885.2494597,
-    "ast_hash": "5bb3a05b60f2b9e20c26d08be4972a8b",
+    "mtime": 1793055325.4488564,
+    "seen": 1793055342.129866,
+    "ast_hash": "01179b1cc5ca4321828df23c558eddc0",
     "semantic_hash": ""
   },
   "apps/web/public/icons/icon-192.png": {
@@ -1539,6 +1539,12 @@
     "mtime": 1793024780.6149633,
     "seen": 1793024901.674214,
     "ast_hash": "397a84689a15a24549f3d9ab7ed0e995",
+    "semantic_hash": ""
+  },
+  "docs/deploy.md": {
+    "mtime": 1793055271.9682317,
+    "seen": 1793055342.1317773,
+    "ast_hash": "0ce91d9cc0602d87a4e7b11cfdf28f9a",
     "semantic_hash": ""
   }
 }
