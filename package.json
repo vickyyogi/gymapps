@@ -34,9 +34,5 @@
   },
   "engines": {
     "node": ">=22"
-  },
-  "dependencies": {
-    "@upstash/ratelimit": "^2.2.0",
-    "@upstash/redis": "^1.39.0"
   }
 }

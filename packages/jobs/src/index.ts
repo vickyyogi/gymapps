@@ -1,2 +1,3 @@
-// Trigger.dev tasks land here in Phase 5 (AI generation) and Phase 7 (exports).
+// Background work is queued in the Postgres `jobs` table and drained by the
+// in-process worker in apps/web/src/lib/jobs.ts. No external queue service yet.
 export {};

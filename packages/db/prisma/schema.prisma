@@ -678,3 +678,41 @@ model AuditLog {
   @@index([entityType, entityId], map: "idx_audit_entity")
   @@map("audit_logs")
 }
+
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime @map("reset_at") @db.Timestamptz(3)
+
+  @@index([resetAt], map: "idx_rate_limits_reset")
+  @@map("rate_limits")
+}
+
+model VerificationToken {
+  identifier String    @map("identifier")
+  tokenHash  String    @id @map("token_hash")
+  purpose    String
+  expires    DateTime  @db.Timestamptz(3)
+  usedAt     DateTime? @map("used_at") @db.Timestamptz(3)
+
+  @@index([identifier, purpose], map: "idx_verification_tokens_identifier")
+  @@map("verification_tokens")
+}
+
+/// Durable queue for background work (exports, PDF reports, AI generation).
+/// Rows are claimed with FOR UPDATE SKIP LOCKED so every instance can poll.
+model Job {
+  id        String    @id
+  kind      String
+  refId     String    @map("ref_id")
+  status    String    @default("queued")
+  attempts  Int       @default(0)
+  error     String?
+  runAfter  DateTime  @default(now()) @map("run_after") @db.Timestamptz(3)
+  lockedAt  DateTime? @map("locked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([kind, refId], map: "jobs_kind_ref_id_key")
+  @@index([status, runAfter], map: "idx_jobs_queue")
+  @@map("jobs")
+}

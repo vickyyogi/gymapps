@@ -530,14 +530,18 @@ erDiagram
 **Index:** `unique(session_token_hash)`, `idx_sessions_user(user_id, expires_at DESC)`
 **Catatan:** token mentah hanya ada di cookie `gymapps_session` (`httpOnly; Secure; SameSite=Lax; Max-Age=2592000`). Saat app dibuka, client memanggil `GET /auth/me`; session valid → user langsung dianggap login.
 
-### 6.2 `verification_tokens` (reset password)
+### 6.2 `verification_tokens` (verifikasi email + reset password)
 
 | Kolom | Tipe | Constraint | Keterangan |
 |---|---|---|---|
 | `identifier` | TEXT | NOT NULL | Email user |
-| `token_hash` | TEXT | UNIQUE, NOT NULL | SHA-256 token dari link email |
-| `expires` | TIMESTAMPTZ | NOT NULL | 60 menit |
+| `token_hash` | TEXT | PK (UNIQUE) | SHA-256 token dari link email |
+| `purpose` | TEXT | NOT NULL | `verify_email` \| `reset_password` |
+| `expires` | TIMESTAMPTZ | NOT NULL | Reset 60 menit (`FR-01-10`); verifikasi 24 jam |
 | `used_at` | TIMESTAMPTZ | NULL | Single-use |
+
+**Index:** `idx_verification_tokens_identifier(identifier, purpose)`
+**Catatan:** token lama untuk purpose sama ditandai `used_at` saat token baru diterbitkan. Reset password sukses merevoke semua session (`FR-01-10`).
 
 ### 6.3 `refresh_tokens` (untuk mobile)
 
@@ -574,7 +578,21 @@ Notifikasi dibuat saat rekomendasi baru, export siap, atau laporan PDF siap. Tid
 
 ### 6.8 `exports`
 
-`id`, `user_id`, `type` (`csv` \| `json` \| `pdf_report`), `status` (`queued` \| `running` \| `ready` \| `failed`), `entities` TEXT[], `period_start`, `period_end`, `file_path` (lokal, tidak diekspos), `file_size_bytes`, `error_message`, `metadata` JSONB, `expires_at` (created_at + 7 hari), `created_at`
+`id`, `user_id`, `type` (`csv` \| `json` \| `pdf_report`), `status` (`queued` \| `running` \| `ready` \| `failed`), `entities` TEXT[], `period_start`, `period_end`, `file_path` (referensi storage opaque, tidak diekspos: key S3 `exports/<id>.<ext>` saat `S3_BUCKET` diset, path absolut untuk driver disk), `file_size_bytes`, `error_message`, `metadata` JSONB, `expires_at` (created_at + 7 hari), `created_at`
+
+### 6.9 `rate_limits`
+
+`key` (PK, format `{scope}:{identity}`), `count` INT, `reset_at` TIMESTAMPTZ — pengganti Redis untuk rate limiting. Upsert atomik (`INSERT ... ON CONFLICT`) menjaga counter konsisten antar instance.
+
+**Index:** `idx_rate_limits_reset(reset_at)`
+
+### 6.10 `jobs`
+
+`id` (PK), `kind` (`program_generation` \| `export` \| `report`), `ref_id` (id baris `ai_generations` atau `exports`), `status` (`queued` \| `running` \| `done` \| `failed`), `attempts`, `error`, `run_after` (jadwal retry, backoff 30 detik × attempts), `locked_at` (lease klaim), `created_at` — antrean durable pengganti Next.js `after()`.
+
+Worker in-process (`apps/web/src/lib/jobs.ts`) mem-poll tiap 2 detik, klaim satu job dengan `FOR UPDATE SKIP LOCKED` (aman multi-instance), mengembalikan job `running` yang lease-nya lewat 5 menit (proses crash), dan menandai `failed` setelah 3 percobaan.
+
+**Index:** `jobs_kind_ref_id_key(kind, ref_id)` UNIQUE (enqueue duplikat diabaikan), `idx_jobs_queue(status, run_after)`
 
 ---
 

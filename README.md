@@ -81,12 +81,13 @@ Gate E2E memeriksa bodyweight-only + cedera lutut, konteks tanpa PII, biaya toke
 - Email verification and password reset are not in the Phase 1 deliverable list; email delivery lands with Phase 7.
 - `Secure` cookie flag is enabled only in production so localhost works over http.
 - Session cookie is refreshed on page navigation by `middleware.ts`, not only by API calls.
-- Rate limits (login + write/heavy endpoints) use Upstash Redis when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set; otherwise they fall back to per-instance memory. Limits live in `packages/shared` (`LOGIN_RATE_LIMIT`, `API_RATE_LIMITS`). Login uses a fixed window of 15 minutes.
+- Rate limits (login + write/heavy endpoints) are stored in Postgres (`rate_limits` table, atomic upsert); when the DB is unreachable they fall back to per-instance memory. Limits live in `packages/shared` (`LOGIN_RATE_LIMIT`, `API_RATE_LIMITS`). Login uses a fixed window of 15 minutes.
 - `TRUST_PROXY_HEADERS` defaults to `false`, so spoofed `X-Forwarded-For` cannot change the rate-limit key. Set it to `true` only behind a reverse proxy that overwrites the header.
+- Email verification + password reset send through a Resend-compatible REST API (`EMAIL_API_KEY`, `EMAIL_FROM`, optional `EMAIL_PROVIDER_BASE_URL`, `APP_BASE_URL`). Without `EMAIL_API_KEY` the feature is off: registration is auto-verified and the onboarding verification gate is skipped. Reset links are single-use and expire in 60 minutes (`FR-01-10`); verification links in 24 hours.
 - Phase 2 domain modules live in `packages/domain` (no React, Next.js, Prisma, or DB).
 - Phase 3 exercise search uses `ILIKE`; migrate to Postgres full-text when the catalog grows. Phase 4 implements `available_only` from the equipment profile.
 - Resume an in-progress workout through `GET /workouts/active`; there is no separate resume mutation.
-- AI program generation is asynchronous through Next.js `after()` and the `ai_generations` audit row; swap it for the queue in `packages/jobs` when a durable worker is available.
+- AI program generation is asynchronous: the row lands in `ai_generations` and a `jobs` queue row is claimed by the in-process worker (`src/lib/jobs.ts`), so a restart resumes it.
 - The fallback generator is validated before persist. A structurally impossible request (for example bodyweight-only upper/lower with 2 days) fails the job instead of saving an invalid draft.
 - `OPENCODE_GO_BASE_URL` should include `/v1`; model IDs and prices come from env, never hardcoded. Seed prompt versions are append-only and do not overwrite an existing active row.
 - Sentry is intentionally not wired yet; errors go to structured logs (`apps/web/src/lib/log.ts`).
@@ -105,7 +106,7 @@ npm run test:phase6   # self-contained: mock chat SSE + Next dev
 
 ### Phase 7 (export, PDF, PWA, admin)
 
-- Export CSV/JSON lewat `after()` job; file lokal di `EXPORT_DIR` (default `<cwd>/.exports`), link HMAC 7 hari, wajib session + ownership. Link kedaluwarsa → 410 `EXPORT_EXPIRED`; akses user lain → 403.
+- Export CSV/JSON lewat queue `jobs` (worker in-process, klaim `FOR UPDATE SKIP LOCKED`, retry 3x); file disimpan lewat `src/lib/storage.ts` — disk lokal `EXPORT_DIR` (default `<cwd>/.exports`) atau S3-compatible bila `S3_BUCKET` diset. Link HMAC 7 hari, wajib session + ownership. Link kedaluwarsa → 410 `EXPORT_EXPIRED`; akses user lain → 403.
 - PDF bulanan memakai `playwright-core` + Chrome sistem (`CHROME_PATH`, default `/usr/bin/google-chrome`). Isi: ringkasan, grafik volume mingguan, PR, daftar workout, body metrics.
 - PWA: `manifest.webmanifest`, icon 192/512 + maskable, service worker network-first untuk navigasi dan fallback `/offline.html`.
 - Admin CMS `/{locale}/admin/exercises`: edit instruksi + publish langsung ke DB, tercatat di `audit_logs`; tidak perlu deploy.
@@ -114,6 +115,17 @@ npm run test:phase6   # self-contained: mock chat SSE + Next dev
 ```bash
 npm run test:phase7   # export, 410/403, PDF, admin publish, PWA
 ```
+
+### Deploy
+
+- Image container: `docker build -f apps/web/Dockerfile .` (Next standalone + Chromium untuk PDF). `next.config.ts` memakai `output: "standalone"`.
+- Compose lokal: `docker compose -f infra/docker-compose.yml up -d postgres minio` lalu `docker compose -f infra/docker-compose.yml --profile app up -d --build web`.
+- Runbook staging (env, migrasi, smoke test, rollback): `docs/deploy.md`.
+
+### Observability
+
+- Log structured JSON ke stdout (`src/lib/log.ts`): `request_id`, `user_id`, `path`, `status`, `duration_ms`.
+- Event produk + error tracking lewat PostHog server-side (`src/lib/analytics.ts`); kosongkan `POSTHOG_API_KEY` untuk mematikan. Daftar event, dashboard, dan alert: `docs/observability.md`.
 
 ### Phase 8 (hardening)
 

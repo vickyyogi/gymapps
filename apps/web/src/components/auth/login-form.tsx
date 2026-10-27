@@ -81,6 +81,14 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
             autoComplete="current-password"
             className="input"
           />
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-body-small font-medium text-primary hover:text-primary-hover underline underline-offset-2"
+            >
+              {t("forgot")}
+            </Link>
+          </div>
         </div>
 
         {error ? (

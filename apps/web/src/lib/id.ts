@@ -25,7 +25,8 @@ export type IdPrefix =
   | "rec"
   | "ntf"
   | "exp"
-  | "aud";
+  | "aud"
+  | "job";
 
 export function newId(prefix: IdPrefix) {
   return `${prefix}_${ulid()}`;

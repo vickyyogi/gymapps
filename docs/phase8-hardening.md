@@ -56,7 +56,7 @@ Perbaikan kode: `analyticsVolume` sekarang memfilter `created_at >= from` sehing
 | Audit log perubahan data | ✅ | profile, program, workout, admin exercise, ganti password, export/report, dan hapus akun (tanpa PII) |
 | Hapus akun soft→hard delete | ✅ | `DELETE /api/v1/account` (soft delete `pending_delete` + cabut sesi) + `purgeExpiredAccounts()` (hard delete > 30 hari & hapus `.exports`) + UI 2 langkah di `/settings` |
 | Age gate + ToS & Kebijakan Privasi | ✅ | `NFR-PRIV-06` & `NFR-PRIV-10`: halaman `/privacy` & `/terms` dwibahasa, checkbox wajib saat registrasi, validasi usia minimal 16 tahun |
-| Verifikasi email + reset password | ❌ | `FR-01-08`, `US-01.5` (Tahap B — butuh integrasi email provider/token) |
+| Verifikasi email + reset password | ✅ | `POST /auth/verify` + `/auth/verify/request` (token 24 jam), `POST /auth/password/forgot` + `/reset` (token 60 menit single-use, revoke semua session). Provider email Resend-compatible via `EMAIL_API_KEY`; tanpa key fitur nonaktif dan register langsung terverifikasi |
 | Retensi log 30 hari | ❌ | log stdout saja, belum ada rotasi/retensi |
 | Notifikasi email/push | ⚠️ v1.1 | `FR-13-09` (preferensi `email_opt_in` sudah tersedia di `/settings`) |
 
@@ -78,12 +78,12 @@ Audit tersimpan di `audit_logs` dengan `actor_id`, `before`, `after`, `ip_addres
 
 ## Blocker eksternal staging & beta
 
-1. **Host staging + registry container** — belum ada target deploy. Tanpa itu `prisma migrate deploy` dan rollback otomatis tidak bisa dijalankan.
+1. **Host staging + registry container** — image siap (`apps/web/Dockerfile`, Next standalone + Chromium, `docs/deploy.md`), tapi belum ada host/registry tujuan, jadi belum pernah dibangun dan `prisma migrate deploy` + rollback otomatis belum dijalankan.
 2. **Sentry / APM** — error rate < 0,5% dan rollback otomatis butuh observability eksternal; sekarang hanya structured log.
-3. **Redis** — rate limit sudah memakai Upstash Redis (REST) bila env terisi; fallback in-memory bila tidak. Redis lokal di `docker-compose.yml` belum dipakai.
-4. **Object storage (S3/blob)** — export/PDF masih di disk lokal `.exports`.
+3. **Rate limit** — memakai tabel Postgres `rate_limits` (upsert atomik, konsisten antar instance); fallback in-memory bila DB tidak tersedia. Redis tidak lagi dipakai, service `redis` di `docker-compose.yml` dihapus.
+4. **Object storage (S3/blob)** — selesai: `src/lib/storage.ts` (driver S3 via `@aws-sdk/client-s3` bila `S3_BUCKET` diset, fallback disk `EXPORT_DIR` untuk dev). Butuh bucket + kredensial saat deploy.
 5. **Email provider** — verifikasi email dan reset password butuh Resend/SMTP.
-6. **PostHog / event produk** — `NFR-OBS-03` belum diimplementasikan.
+6. **PostHog / event produk** — selesai: `src/lib/analytics.ts` mengirim event server-side (`POSTHOG_API_KEY` kosong = no-op). Butuh project PostHog + dashboard saat staging.
 
 ## Blocking sebelum gate Fase 8 penuh
 

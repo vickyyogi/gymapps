@@ -1,10 +1,8 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { stat } from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@gymapps/db";
+import { deleteObject, putObject } from "@/lib/storage";
 import { newId } from "@/lib/id";
 import { log } from "@/lib/log";
 
@@ -20,10 +18,6 @@ export const ALL_ENTITIES = [
 ] as const;
 
 type Entity = (typeof ALL_ENTITIES)[number];
-
-function exportDir() {
-  return process.env.EXPORT_DIR || path.join(process.cwd(), ".exports");
-}
 
 function signingSecret() {
   return (
@@ -371,10 +365,11 @@ export async function runExport(exportId: string) {
       extension = "csv";
     }
 
-    await mkdir(exportDir(), { recursive: true });
-    const filePath = path.join(exportDir(), `${row.id}.${extension}`);
-    await writeFile(filePath, content, "utf8");
-    const size = (await stat(filePath)).size;
+    const stored = await putObject(
+      `exports/${row.id}.${extension}`,
+      content,
+      extension === "json" ? "application/json" : "text/csv; charset=utf-8"
+    );
     const expiresAt = new Date(Date.now() + EXPORT_TTL_DAYS * DAY_MS);
 
     await prisma.$transaction([
@@ -382,8 +377,8 @@ export async function runExport(exportId: string) {
         where: { id: row.id },
         data: {
           status: "ready",
-          filePath,
-          fileSizeBytes: size,
+          filePath: stored.ref,
+          fileSizeBytes: stored.size,
           expiresAt,
           errorMessage: null
         }
@@ -418,8 +413,7 @@ export async function runExport(exportId: string) {
 }
 
 export async function deleteExportFile(row: { filePath: string | null }) {
-  if (!row.filePath) return;
-  await rm(row.filePath, { force: true });
+  await deleteObject(row.filePath);
 }
 
 export async function exportStatus(row: {

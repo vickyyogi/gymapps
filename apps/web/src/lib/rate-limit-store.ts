@@ -1,4 +1,4 @@
-import { Redis } from "@upstash/redis";
+import { prisma } from "@gymapps/db";
 import { log } from "@/lib/log";
 
 export type RateLimitWindow = { count: number; resetInMs: number };
@@ -48,24 +48,35 @@ export function createMemoryRateLimitStore(now = () => Date.now()): RateLimitSto
   };
 }
 
-const HIT_SCRIPT = `
-local count = redis.call('INCR', KEYS[1])
-if count == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
-return { count, redis.call('PTTL', KEYS[1]) }
-`;
+// Minimal raw-SQL surface so tests can stub the database.
+export type RawDb = {
+  $queryRaw<T>(query: TemplateStringsArray, ...values: unknown[]): PromiseLike<T>;
+  $executeRaw(query: TemplateStringsArray, ...values: unknown[]): PromiseLike<number>;
+};
 
-function createRedisRateLimitStore(redis: Redis, fallback: RateLimitStore): RateLimitStore {
-  const prefix = "rl:";
+type HitRow = { count: number; reset_at: Date };
 
+// Single-statement upsert: atomic across instances, window resets only when expired.
+export function createDbRateLimitStore(
+  db: RawDb,
+  fallback: RateLimitStore,
+  now = () => Date.now()
+): RateLimitStore {
   return {
     async hit(key, windowMs) {
       try {
-        const [count, ttl] = await redis.eval<string[], [number, number]>(
-          HIT_SCRIPT,
-          [`${prefix}${key}`],
-          [String(windowMs)]
-        );
-        return { count, resetInMs: ttl > 0 ? ttl : windowMs };
+        const at = now();
+        const rows = await db.$queryRaw<HitRow[]>`
+          INSERT INTO "rate_limits" ("key", "count", "reset_at")
+          VALUES (${key}, 1, to_timestamp(${(at + windowMs) / 1000}))
+          ON CONFLICT ("key") DO UPDATE SET
+            "count" = CASE WHEN "rate_limits"."reset_at" <= to_timestamp(${at / 1000}) THEN 1 ELSE "rate_limits"."count" + 1 END,
+            "reset_at" = CASE WHEN "rate_limits"."reset_at" <= to_timestamp(${at / 1000}) THEN to_timestamp(${(at + windowMs) / 1000}) ELSE "rate_limits"."reset_at" END
+          RETURNING "count", "reset_at"
+        `;
+        const row = rows[0];
+        if (!row) throw new Error("rate_limit_hit_no_row");
+        return { count: row.count, resetInMs: row.reset_at.getTime() - at };
       } catch (error) {
         log("warn", "rate_limit_store_failed", { op: "hit", error });
         return fallback.hit(key, windowMs);
@@ -73,12 +84,14 @@ function createRedisRateLimitStore(redis: Redis, fallback: RateLimitStore): Rate
     },
     async current(key) {
       try {
-        const [count, ttl] = await Promise.all([
-          redis.get<number>(`${prefix}${key}`),
-          redis.pttl(`${prefix}${key}`)
-        ]);
-        if (ttl <= 0) return { count: 0, resetInMs: 0 };
-        return { count: Number(count ?? 0), resetInMs: ttl };
+        const at = now();
+        const rows = await db.$queryRaw<HitRow[]>`
+          SELECT "count", "reset_at" FROM "rate_limits"
+          WHERE "key" = ${key} AND "reset_at" > to_timestamp(${at / 1000})
+        `;
+        const row = rows[0];
+        if (!row) return { count: 0, resetInMs: 0 };
+        return { count: row.count, resetInMs: row.reset_at.getTime() - at };
       } catch (error) {
         log("warn", "rate_limit_store_failed", { op: "current", error });
         return fallback.current(key);
@@ -86,7 +99,7 @@ function createRedisRateLimitStore(redis: Redis, fallback: RateLimitStore): Rate
     },
     async reset(key) {
       try {
-        await redis.del(`${prefix}${key}`);
+        await db.$executeRaw`DELETE FROM "rate_limits" WHERE "key" = ${key}`;
       } catch (error) {
         log("warn", "rate_limit_store_failed", { op: "reset", error });
         await fallback.reset(key);
@@ -97,16 +110,5 @@ function createRedisRateLimitStore(redis: Redis, fallback: RateLimitStore): Rate
 
 const memoryStore = createMemoryRateLimitStore();
 
-function resolveRateLimitStore(): RateLimitStore {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) {
-    if (process.env.NODE_ENV === "production") {
-      log("warn", "rate_limit_store_memory_only", {});
-    }
-    return memoryStore;
-  }
-  return createRedisRateLimitStore(new Redis({ url, token }), memoryStore);
-}
-
-export const rateLimitStore = resolveRateLimitStore();
+// ponytail: baris expired dari key mati tetap tinggal; jalankan DELETE reset_at < now() berkala bila tabel membesar
+export const rateLimitStore = createDbRateLimitStore(prisma, memoryStore);

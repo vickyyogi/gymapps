@@ -1,11 +1,9 @@
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 import { withAuthApi, parseJson } from "@/lib/api/handler";
 import { programGenerateSchema } from "@/lib/api/phase5-validation";
 import { getOwnedProgram } from "@/lib/api/resources";
-import {
-  createProgramGenerationJob,
-  runProgramGeneration
-} from "@/lib/ai/orchestrator";
+import { createProgramGenerationJob } from "@/lib/ai/orchestrator";
+import { enqueue } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 
@@ -19,7 +17,7 @@ export const POST = withAuthApi(async ({ request, params, session }) => {
     sourceProgramId: programId
   });
 
-  after(() => runProgramGeneration(job.id));
+  await enqueue("program_generation", job.id);
 
   return NextResponse.json(
     { data: { job_id: job.id, status: job.status } },

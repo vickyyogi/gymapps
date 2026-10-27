@@ -1,9 +1,9 @@
-import { readFile } from "node:fs/promises";
 import { NextResponse } from "next/server";
 import { prisma } from "@gymapps/db";
 import { withAuthApi } from "@/lib/api/handler";
 import { ApiError } from "@/lib/api/errors";
 import { verifyExportSignature } from "@/lib/ai/exports";
+import { getObject } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -26,7 +26,7 @@ export const GET = withAuthApi(async ({ request, params, session }) => {
 
   let file: Buffer;
   try {
-    file = await readFile(row.filePath);
+    file = await getObject(row.filePath);
   } catch {
     throw new ApiError(410, "EXPORT_EXPIRED", "Export file is no longer available");
   }

@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/.next
+**/coverage
+graphify-out
+exports
+**/.exports
+**/*.log
+.env
+**/.env
+**/.env.local
