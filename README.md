@@ -31,7 +31,7 @@ Open http://localhost:3000 — redirects to `/id`.
 | Unit checks | `npm test` (web 10, domain 27) |
 | Build | `npm run build` |
 | Migration from empty DB | `npm run db:migrate` |
-| Seed idempotent | `npm run db:seed` twice, counts stay 20 muscles / 15 equipment / 200 exercises |
+| Seed idempotent | `npm run db:seed` twice, counts stay 20 muscles / 15 equipment / 876 exercises (free-exercise-db) |
 | Auth flow | register → `/api/v1/auth/me` 200; logout-all revokes both devices |
 | Rate limit | 5 failed logins → 6th returns 429 |
 | Health | `GET /api/v1/health` |

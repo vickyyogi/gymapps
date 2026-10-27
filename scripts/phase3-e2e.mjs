@@ -49,7 +49,10 @@ async function main() {
   const exercisePage = await ok("/exercises?limit=5", {}, a.cookie);
   assert.equal(exercisePage.data.length, 5);
   assert.ok(exercisePage.nextCursor);
-  assert.equal(await prisma.exercise.count({ where: { source: "seed", deletedAt: null } }), 200);
+  const libraryCount = await prisma.exercise.count({
+    where: { source: "free-exercise-db", deletedAt: null }
+  });
+  assert.ok(libraryCount >= 800, `exercise library too small: ${libraryCount}`);
   assert.equal(await prisma.muscle.count(), 20);
   assert.equal(await prisma.equipment.count(), 15);
   assert.equal((await ok("/muscles", {}, a.cookie)).data.length, 20);
@@ -271,7 +274,7 @@ async function main() {
   console.log(
     JSON.stringify(
       {
-        exercises: 200,
+        exercises: libraryCount,
         programs: 3,
         workout_volume: finished.data.total_volume_kg,
         prs_created: finished.meta.prs_created,
