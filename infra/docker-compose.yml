@@ -37,6 +37,12 @@ services:
       context: ..
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
+    # Log hanya stdout; rotasi ukuran di sini + retensi 30 hari di host (lihat docs/deploy.md).
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     env_file:
       - ../apps/web/.env.local
     environment:

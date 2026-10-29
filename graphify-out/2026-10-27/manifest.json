@@ -1,14 +1,14 @@
 {
   "apps/web/next-env.d.ts": {
-    "mtime": 1793055338.755098,
-    "seen": 1793055342.1217089,
+    "mtime": 1793057549.9234307,
+    "seen": 1793057553.505128,
     "ast_hash": "aa94238a90e7d04b7a47ecc3145ba6a0",
     "semantic_hash": ""
   },
   "apps/web/next.config.ts": {
-    "mtime": 1793055210.8226562,
-    "seen": 1793055342.121713,
-    "ast_hash": "8176a1b57096f16cc6e0de6a6c8a197b",
+    "mtime": 1793057031.417698,
+    "seen": 1793057553.505133,
+    "ast_hash": "e23d9f9d9435f612b4bc530aec6a55e9",
     "semantic_hash": ""
   },
   "apps/web/package.json": {
@@ -906,9 +906,9 @@
     "semantic_hash": ""
   },
   "packages/db/prisma/seed.ts": {
-    "mtime": 1792940252.4545128,
-    "seen": 1793018885.2494645,
-    "ast_hash": "e708abe6ed20f6738b2ecde07216a822",
+    "mtime": 1793101069.3169277,
+    "seen": 1793101122.6148918,
+    "ast_hash": "f50394e46008b9550e2f9c12c726dcf9",
     "semantic_hash": ""
   },
   "packages/db/src/index.ts": {
@@ -1110,9 +1110,9 @@
     "semantic_hash": ""
   },
   "scripts/phase3-e2e.mjs": {
-    "mtime": 1792940252.4570928,
-    "seen": 1793018885.2495203,
-    "ast_hash": "f2d9809405f77d91d894cecb07aadc14",
+    "mtime": 1793101002.0600333,
+    "seen": 1793101122.6161385,
+    "ast_hash": "1bb251804446900523e927d28b363d64",
     "semantic_hash": ""
   },
   "scripts/phase4-e2e.mjs": {
@@ -1170,9 +1170,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793055276.4415803,
-    "seen": 1793055342.1314723,
-    "ast_hash": "e2b97657c26ec0f2f74764a0fe4c013d",
+    "mtime": 1793101002.0550334,
+    "seen": 1793101122.6163924,
+    "ast_hash": "d540662726fff669f14222488fcbb4b9",
     "semantic_hash": ""
   },
   "apps/web/public/offline.html": {
@@ -1248,9 +1248,9 @@
     "semantic_hash": ""
   },
   "infra/docker-compose.yml": {
-    "mtime": 1793055325.4488564,
-    "seen": 1793055342.129866,
-    "ast_hash": "01179b1cc5ca4321828df23c558eddc0",
+    "mtime": 1793057527.1666932,
+    "seen": 1793057553.5146565,
+    "ast_hash": "4cba61ad72eae0830e47f5d6e8e5ba0d",
     "semantic_hash": ""
   },
   "apps/web/public/icons/icon-192.png": {
@@ -1542,9 +1542,15 @@
     "semantic_hash": ""
   },
   "docs/deploy.md": {
-    "mtime": 1793055271.9682317,
-    "seen": 1793055342.1317773,
-    "ast_hash": "0ce91d9cc0602d87a4e7b11cfdf28f9a",
+    "mtime": 1793057527.1669016,
+    "seen": 1793057553.517167,
+    "ast_hash": "4c8dfcda8d36cfeb7d2afebc8cb1311c",
+    "semantic_hash": ""
+  },
+  "packages/db/prisma/data/free-exercise-db.json": {
+    "mtime": 1793100868.086252,
+    "seen": 1793101122.614889,
+    "ast_hash": "2c7eedecaf389e0dd954b600e3f1105f",
     "semantic_hash": ""
   }
 }

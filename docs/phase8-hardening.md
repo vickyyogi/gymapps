@@ -9,6 +9,7 @@ Dokumen kerja Fase 8: hasil gate, review index, review PDP, dan blocker staging/
 | E2E penuh (build production + fase 3–7) | `npm run test:phase8` |
 | Load test analytics | `npm run test:load` |
 | Backup/restore drill | `npm run test:backup` |
+| Gate AI failure + biaya/WAU | `npm run test:ai-metrics` (opsi `--days=30`) |
 | Lint + typecheck + unit | `npm run lint && npm run typecheck && npm test` |
 
 `test:load` dan `test:backup` butuh `infra/docker-compose.yml` (Postgres) hidup. `test:phase7` butuh Chrome; `scripts/phase7-e2e.mjs` sekarang auto-detect `CHROME_PATH` di Windows dan Linux.
@@ -21,8 +22,8 @@ Dokumen kerja Fase 8: hasil gate, review index, review PDP, dan blocker staging/
 | p95 analytics | ✅ 237 ms | 140 request, 5 concurrent, 104 workout / 1.248 set, gate < 1.000 ms |
 | Error rate analytics | ✅ 0% | 140/140 HTTP 200, gate < 0,5% |
 | Backup/restore drill | ✅ | `pg_dump` → restore ke DB `gymapps_restore_check` → jumlah baris sama → drop |
-| AI failure rate | ⚠️ belum terukur | gate < 2% perlu ≥ 20 generasi AI non-test; fixture E2E sengaja membuat job gagal |
-| Biaya AI / WAU | ⚠️ belum terukur | gate ≤ USD 0,30/WAU perlu data produksi |
+| AI failure rate | ⚠️ belum terukur | gate < 2% perlu ≥ 20 generasi AI non-test; fixture E2E sengaja membuat job gagal. Ukur: `npm run test:ai-metrics` |
+| Biaya AI / WAU | ⚠️ belum terukur | gate ≤ USD 0,30/WAU perlu data produksi + `OPENCODE_GO_PRICE_*` terisi. Ukur: `npm run test:ai-metrics` |
 | Error rate < 0,5% / rollback otomatis | ⚠️ eksternal | perlu Sentry/APM + deploy target |
 | Beta 100 user | ⚠️ eksternal | butuh staging publik + onboarding peserta |
 
@@ -57,7 +58,7 @@ Perbaikan kode: `analyticsVolume` sekarang memfilter `created_at >= from` sehing
 | Hapus akun soft→hard delete | ✅ | `DELETE /api/v1/account` (soft delete `pending_delete` + cabut sesi) + `purgeExpiredAccounts()` (hard delete > 30 hari & hapus `.exports`) + UI 2 langkah di `/settings` |
 | Age gate + ToS & Kebijakan Privasi | ✅ | `NFR-PRIV-06` & `NFR-PRIV-10`: halaman `/privacy` & `/terms` dwibahasa, checkbox wajib saat registrasi, validasi usia minimal 16 tahun |
 | Verifikasi email + reset password | ✅ | `POST /auth/verify` + `/auth/verify/request` (token 24 jam), `POST /auth/password/forgot` + `/reset` (token 60 menit single-use, revoke semua session). Provider email Resend-compatible via `EMAIL_API_KEY`; tanpa key fitur nonaktif dan register langsung terverifikasi |
-| Retensi log 30 hari | ❌ | log stdout saja, belum ada rotasi/retensi |
+| Retensi log 30 hari | ✅ | stdout saja + rotasi `json-file` di `infra/docker-compose.yml`; retensi waktu 30 hari di host (runbook: `docs/deploy.md` → "Retensi log 30 hari") |
 | Notifikasi email/push | ⚠️ v1.1 | `FR-13-09` (preferensi `email_opt_in` sudah tersedia di `/settings`) |
 
 ## Audit log

@@ -62,6 +62,18 @@ Yang sudah diverifikasi pada image: `/api/v1/health` 200, halaman `/{locale}/log
 
 Image lama tetap di registry: deploy ulang tag sebelumnya. Migrasi tidak di-rollback otomatis — pastikan perubahan schema bersifat aditif (semua migrasi saat ini aditif) sebelum rilis.
 
+## Retensi log 30 hari
+
+Aplikasi hanya menulis log ke stdout (JSON terstruktur); container/platform yang mengelola file log. Dua lapis yang dibutuhkan:
+
+1. **Rotasi ukuran** di container: `infra/docker-compose.yml` menyetel `json-file` `max-size: 10m`, `max-file: 5`. Platform lain (Kubernetes, PaaS) punya kebijakan sendiri — setara ~50 MB per kontainer.
+2. **Retensi waktu 30 hari** di host/staging:
+   - journald: `MaxRetentionSec=30day` di `/etc/systemd/journald.conf`
+   - Docker daemon: `log-opts` `max-age=30` (atau `max-file`/`max-size`) di `/etc/docker/daemon.json`
+   - PaaS: set kebijakan retensi log aplikasi ke 30 hari
+
+Verifikasi: `docker inspect --format '{{.HostConfig.LogConfig}}' <container>` menunjukkan opsi terpasang; log lama terhapus setelah lewat 30 hari / batas ukuran.
+
 ## Lokal dengan container
 
 ```bash
