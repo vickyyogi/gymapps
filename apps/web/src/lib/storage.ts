@@ -39,7 +39,7 @@ function localDir() {
 
 // Absolute refs are legacy local paths; relative refs resolve inside EXPORT_DIR.
 function localPath(ref: string) {
-  return path.isAbsolute(ref) ? ref : path.join(localDir(), ref);
+  return path.isAbsolute(ref) ? ref : path.join(/*turbopackIgnore: true*/ localDir(), ref);
 }
 
 /**

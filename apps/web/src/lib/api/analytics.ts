@@ -163,26 +163,24 @@ export async function analyticsSummary(userId: string, range: AnalyticsRange) {
   }
 
   const balance = muscleBalanceRows(sets30d);
-  const insights: string[] = [];
+  // Locale-agnostic: the client translates these with dashboard.insights.*
+  const insights: Array<{ key: string; params: Record<string, string | number> }> = [];
   const deltaVolume = volumeDeltaPct(volume7, volumePrev7);
   if (deltaVolume !== null) {
-    insights.push(
-      deltaVolume >= 0
-        ? `Volume 7 hari naik ${round(deltaVolume)}% dari minggu sebelumnya.`
-        : `Volume 7 hari turun ${round(Math.abs(deltaVolume))}% dari minggu sebelumnya.`
-    );
+    insights.push({
+      key: deltaVolume >= 0 ? "volumeUp" : "volumeDown",
+      params: { pct: round(Math.abs(deltaVolume)) }
+    });
   }
-  if (balance.length) {
-    const top = balance[0];
-    if (top && top.share_pct > 40) {
-      insights.push(`Porsi ${top.muscle} ${top.share_pct}% - pertimbangkan variasi push/pull/legs.`);
-    }
+  const top = balance[0];
+  if (top && top.share_pct > 40) {
+    insights.push({ key: "muscleShare", params: { muscle: top.muscle, pct: top.share_pct } });
   }
   if (workoutsThisWeek === 0) {
-    insights.push("Belum ada sesi minggu ini. Mulai sesi ringan untuk jaga ritme.");
+    insights.push({ key: "noSessions", params: {} });
   }
   if (profile?.goals.length && !activeProgram && workouts.length > 0) {
-    insights.push("Belum ada program aktif. Aktifkan program agar progres lebih terukur.");
+    insights.push({ key: "noProgram", params: {} });
   }
 
   return {
@@ -273,12 +271,8 @@ export async function analyticsVolume(
   return {
     series,
     insight: {
-      text:
-        delta === null
-          ? "Data volume terkumpul untuk analisis."
-          : delta >= 0
-            ? `Volume minggu terakhir naik ${round(delta)}%.`
-            : `Volume minggu terakhir turun ${round(Math.abs(delta))}%.`,
+      key: delta === null ? "volumeCollecting" : delta >= 0 ? "volumeUp" : "volumeDown",
+      params: { pct: round(Math.abs(delta ?? 0)) },
       delta_pct: delta ?? 0
     }
   };

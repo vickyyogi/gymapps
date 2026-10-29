@@ -539,6 +539,12 @@ body {
   color: var(--color-primary);
 }
 
+/* Sentence-length chips (insights): wrap instead of forcing page width */
+.chip-wrap {
+  white-space: normal;
+  text-align: left;
+}
+
 .chip-filter[aria-selected="true"],
 .chip-filter.active {
   background-color: var(--color-primary);
@@ -811,6 +817,7 @@ body {
 .calendar-day {
   aspect-ratio: 1;
   border-radius: var(--radius-small);
+  max-width: 28px;
 }
 
 .calendar-day-empty {

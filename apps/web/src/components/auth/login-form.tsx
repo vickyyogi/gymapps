@@ -64,6 +64,7 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
             name="email"
             type="email"
             required
+            maxLength={254}
             autoComplete="email"
             className="input"
           />
@@ -78,6 +79,7 @@ export function LoginForm({ nextPath }: { nextPath?: string }) {
             name="password"
             type="password"
             required
+            maxLength={128}
             autoComplete="current-password"
             className="input"
           />

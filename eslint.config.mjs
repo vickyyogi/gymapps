@@ -16,7 +16,10 @@ const config = [
       "**/next-env.d.ts",
       "packages/shared/src/openapi.d.ts",
       "packages/db/src/generated/**",
-      "infra/**"
+      "infra/**",
+      "apps/web/*.cjs",
+      "apps/web/shots/**",
+      ".opencode/**"
     ]
   }
 ];

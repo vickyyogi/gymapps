@@ -1,7 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-
 interface EmptyStateProps {
   title: string;
   description: string;
@@ -50,7 +48,6 @@ export function EmptyStateWithAction({
   actionHref: string;
   icon?: React.ReactNode;
 }) {
-  const t = useTranslations("common");
   return (
     <EmptyState
       title={title}
