@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { createHash, randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { prisma, type Entitlement, type Session, type User } from "@gymapps/db";
 import { SESSION_COOKIE_NAME, SESSION_TTL_MS, type CurrentUser } from "@gymapps/shared";
 import { ApiError } from "@/lib/api/errors";
@@ -44,7 +44,10 @@ export { attachSessionCookie, clearSessionCookie } from "@/lib/auth/cookie";
 
 export const getSession = cache(async (): Promise<ActiveSession | null> => {
   const cookieStore = await cookies();
-  const rawToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const bearer = (await headers()).get("authorization");
+  const rawToken =
+    cookieStore.get(SESSION_COOKIE_NAME)?.value ??
+    (bearer?.startsWith("Bearer ") ? bearer.slice(7) : undefined);
   if (!rawToken) return null;
 
   const now = new Date();

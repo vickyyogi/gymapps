@@ -64,7 +64,8 @@ export const POST = withApi(async ({ request }) => {
   const response = NextResponse.json({
     data: {
       user: toCurrentUser(user, entitlement),
-      expires_at: session.expiresAt.toISOString()
+      expires_at: session.expiresAt.toISOString(),
+      token: rawToken
     }
   });
   attachSessionCookie(response, rawToken);

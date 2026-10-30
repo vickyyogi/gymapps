@@ -96,7 +96,8 @@ export const POST = withApi(async ({ request }) => {
     {
       data: {
         user: toCurrentUser(user, entitlement),
-        expires_at: session.expiresAt.toISOString()
+        expires_at: session.expiresAt.toISOString(),
+        token: rawToken
       }
     },
     { status: 201 }
